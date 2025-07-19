@@ -4,6 +4,7 @@ import 'package:orphan_hq/pages/emergency_dashboard_page.dart';
 import 'package:orphan_hq/pages/onboard_orphan_page.dart';
 import 'package:orphan_hq/pages/orphan_details_page.dart';
 import 'package:orphan_hq/pages/orphan_list_page.dart';
+import 'package:orphan_hq/pages/supervisor_orphans_page.dart';
 import 'package:orphan_hq/pages/supervisor_view_page.dart';
 
 final router = GoRouter(
@@ -34,6 +35,13 @@ final router = GoRouter(
       builder: (context, state) {
         final orphanId = state.pathParameters['id']!;
         return OrphanDetailsPage(orphanId: orphanId);
+      },
+    ),
+    GoRoute(
+      path: '/supervisor/:id/orphans',
+      builder: (context, state) {
+        final supervisorId = state.pathParameters['id']!;
+        return SupervisorOrphansPage(supervisorId: supervisorId);
       },
     ),
   ],

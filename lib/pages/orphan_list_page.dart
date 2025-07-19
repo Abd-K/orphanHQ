@@ -56,7 +56,7 @@ class OrphanListPage extends StatelessWidget {
               return Card(
                 margin: const EdgeInsets.all(8.0),
                 child: ListTile(
-                  title: Text(orphan.fullName),
+                  title: Text('${orphan.firstName} ${orphan.lastName}'),
                   subtitle: Text(
                       'Status: ${orphan.status.toString().split('.').last}'),
                   trailing: IconButton(
@@ -86,7 +86,7 @@ class OrphanListPage extends StatelessWidget {
         return AlertDialog(
           title: const Text('Delete Orphan'),
           content: Text(
-              'Are you sure you want to delete ${orphan.fullName}? This action cannot be undone.'),
+              'Are you sure you want to delete ${orphan.firstName} ${orphan.lastName}? This action cannot be undone.'),
           actions: [
             TextButton(
               onPressed: () {
@@ -101,10 +101,11 @@ class OrphanListPage extends StatelessWidget {
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                        content:
-                            Text('${orphan.fullName} deleted successfully')),
+                        content: Text(
+                            '${orphan.firstName} ${orphan.lastName} deleted successfully')),
                   );
                 } catch (e) {
+                  print('Error deleting orphan: $e'); // Console logging
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('Failed to delete orphan: $e')),

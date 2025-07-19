@@ -78,6 +78,7 @@ class _AddSupervisorPageState extends State<AddSupervisorPage> {
                       );
                       Navigator.of(context).pop();
                     } catch (e) {
+                      print('Error creating supervisor: $e'); // Console logging
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                             content: Text('Failed to create supervisor: $e')),

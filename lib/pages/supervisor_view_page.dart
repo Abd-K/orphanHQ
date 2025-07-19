@@ -59,6 +59,10 @@ class SupervisorViewPage extends StatelessWidget {
                     },
                   ),
                   isThreeLine: true,
+                  onTap: () {
+                    context
+                        .push('/supervisor/${supervisor.supervisorId}/orphans');
+                  },
                 ),
               );
             },
@@ -96,6 +100,7 @@ class SupervisorViewPage extends StatelessWidget {
                             '${supervisor.fullName} deleted successfully')),
                   );
                 } catch (e) {
+                  print('Error deleting supervisor: $e'); // Console logging
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('Failed to delete supervisor: $e')),

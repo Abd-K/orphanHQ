@@ -29,7 +29,7 @@ class EmergencyDashboardPage extends StatelessWidget {
             itemBuilder: (context, index) {
               final orphan = orphans[index];
               return ListTile(
-                title: Text(orphan.fullName),
+                title: Text('${orphan.firstName} ${orphan.lastName}'),
                 subtitle:
                     Text(orphan.lastSeenLocation ?? 'No location specified'),
                 trailing: ElevatedButton(
