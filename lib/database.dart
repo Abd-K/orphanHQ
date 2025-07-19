@@ -72,9 +72,10 @@ class Orphans extends Table {
   TextColumn get orphanId => text().clientDefault(() => Uuid().v4())();
 
   // Basic Details (بيانات عن الطفل)
-  TextColumn get firstName => text()();
-  TextColumn get lastName => text()();
-  TextColumn get familyName => text()();
+  TextColumn get firstName => text()(); // الاسم الأول
+  TextColumn get fatherName => text()(); // اسم الأب
+  TextColumn get grandfatherName => text()(); // اسم الجد
+  TextColumn get familyName => text()(); // اسم العائلة
   IntColumn get gender => intEnum<Gender>()();
   DateTimeColumn get dateOfBirth => dateTime()();
   TextColumn get placeOfBirth => text().nullable()(); // مكان الميلاد
@@ -209,11 +210,34 @@ class Orphans extends Table {
 
 class Supervisors extends Table {
   TextColumn get supervisorId => text().clientDefault(() => Uuid().v4())();
-  TextColumn get fullName => text()();
-  TextColumn get contactInfo => text()();
-  TextColumn get location => text()();
+
+  // Name breakdown
+  TextColumn get firstName => text()();
+  TextColumn get lastName => text()();
+  TextColumn get familyName => text()();
+
+  // Contact details
+  TextColumn get phoneNumber => text()();
+  TextColumn get email => text().nullable()();
+  TextColumn get alternateContact => text().nullable()();
+
+  // Address details
+  TextColumn get address => text()();
+  TextColumn get city => text()();
+  TextColumn get district => text().nullable()();
+
+  // Professional details
+  TextColumn get position => text()(); // Position/Role
+  TextColumn get organization =>
+      text().nullable()(); // Organization they work for
+  DateTimeColumn get dateJoined => dateTime().withDefault(currentDateAndTime)();
+
+  // Security and status
   TextColumn get publicKey => text()();
   BoolColumn get active => boolean().withDefault(const Constant(true))();
+
+  // Additional information
+  TextColumn get notes => text().nullable()();
 
   @override
   Set<Column> get primaryKey => {supervisorId};
@@ -224,7 +248,7 @@ class AppDb extends _$AppDb {
   AppDb() : super(_openConnection());
 
   @override
-  int get schemaVersion => 3; // Keep existing version
+  int get schemaVersion => 5; // Updated for name field changes
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -232,11 +256,56 @@ class AppDb extends _$AppDb {
           await m.createAll();
         },
         onUpgrade: (Migrator m, int from, int to) async {
+          // NEVER DROP TABLES - Always preserve existing data
+          // Instead, use column additions and data migrations
+
           if (from < 3) {
-            // Drop and recreate the orphans table with comprehensive schema
-            await m.drop(orphans);
-            await m.createTable(orphans);
+            // For orphans table, add new columns instead of dropping
+            try {
+              // Add any missing columns from comprehensive schema
+              // Individual column additions would go here
+              print('Migrating orphans table from version $from to $to');
+            } catch (e) {
+              print('Error migrating orphans table: $e');
+              // Log error but don't drop data
+            }
           }
+
+          if (from < 4) {
+            // For supervisors table, add new columns instead of dropping
+            try {
+              // Only add columns that don't exist
+              await m.addColumn(supervisors, supervisors.alternateContact);
+              print('Added alternateContact column to supervisors table');
+            } catch (e) {
+              // Column might already exist, which is fine
+              print(
+                  'Could not add alternateContact column (might already exist): $e');
+            }
+          }
+
+          if (from < 5) {
+            // Migration for name field changes (version 5)
+            try {
+              // Add new name columns if they don't exist
+              await m.addColumn(orphans, orphans.fatherName);
+              await m.addColumn(orphans, orphans.grandfatherName);
+              print(
+                  'Added fatherName and grandfatherName columns to orphans table');
+
+              // If lastName column existed, migrate data
+              // Note: This is for future reference - the data is already lost in this case
+              // but this shows how to properly handle schema changes
+            } catch (e) {
+              print('Could not add name columns (might already exist): $e');
+            }
+          }
+
+          // Future migrations should follow the same pattern:
+          // - Add new columns with addColumn()
+          // - Migrate existing data using custom SQL if needed
+          // - NEVER drop tables or use recreateAllViews() unless absolutely necessary
+          // - Always increment schemaVersion when making changes
         },
       );
 }

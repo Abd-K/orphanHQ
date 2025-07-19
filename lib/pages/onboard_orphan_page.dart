@@ -18,9 +18,11 @@ class OnboardOrphanPage extends StatefulWidget {
 class _OnboardOrphanPageState extends State<OnboardOrphanPage> {
   final _formKey = GlobalKey<FormState>();
 
-  // Basic Details Controllers
+  // Basic Details Controllers - 4-part Arabic naming
   final _firstNameController = TextEditingController();
-  final _lastNameController = TextEditingController();
+  final _orphanFatherNameController = TextEditingController();
+  final _grandfatherNameController = TextEditingController();
+  final _familyNameController = TextEditingController();
   final _dayController = TextEditingController();
   final _monthController = TextEditingController();
   final _yearController = TextEditingController();
@@ -168,26 +170,29 @@ class _OnboardOrphanPageState extends State<OnboardOrphanPage> {
       title: 'Orphan Details',
       initiallyExpanded: true,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: TextFormField(
-                controller: _firstNameController,
-                decoration: const InputDecoration(labelText: 'First Name *'),
-                validator: (value) =>
-                    value?.isEmpty ?? true ? 'Required' : null,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: TextFormField(
-                controller: _lastNameController,
-                decoration: const InputDecoration(labelText: 'Last Name *'),
-                validator: (value) =>
-                    value?.isEmpty ?? true ? 'Required' : null,
-              ),
-            ),
-          ],
+        // 4-part Arabic name structure
+        TextFormField(
+          controller: _firstNameController,
+          decoration: const InputDecoration(labelText: 'First Name *'),
+          validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _orphanFatherNameController,
+          decoration: const InputDecoration(labelText: "Father's Name *"),
+          validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _grandfatherNameController,
+          decoration: const InputDecoration(labelText: "Grandfather's Name *"),
+          validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _familyNameController,
+          decoration: const InputDecoration(labelText: 'Family Name *'),
+          validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
         ),
         const SizedBox(height: 16),
         const Text('Date of Birth *',
@@ -941,7 +946,8 @@ class _OnboardOrphanPageState extends State<OnboardOrphanPage> {
               items: supervisors.map((supervisor) {
                 return DropdownMenuItem(
                   value: supervisor.supervisorId,
-                  child: Text(supervisor.fullName),
+                  child:
+                      Text('${supervisor.firstName} ${supervisor.familyName}'),
                 );
               }).toList(),
               onChanged: (value) =>
@@ -1209,8 +1215,11 @@ class _OnboardOrphanPageState extends State<OnboardOrphanPage> {
 
       final newOrphan = OrphansCompanion.insert(
         firstName: _firstNameController.text,
-        lastName: _lastNameController.text,
-        familyName: '', // Required field, use empty string as default
+        fatherName: _orphanFatherNameController.text,
+        grandfatherName: _grandfatherNameController.text,
+        familyName: _familyNameController.text.isEmpty
+            ? 'Unknown'
+            : _familyNameController.text, // Required field
         gender: Gender.male, // Required field, use default gender
         dateOfBirth: dob,
         status: _selectedStatus,

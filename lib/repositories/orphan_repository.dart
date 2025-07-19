@@ -36,6 +36,27 @@ class OrphanRepository {
     );
   }
 
+  Future<int> updateOrphan(Orphan orphan) {
+    return (_db.update(_db.orphans)
+          ..where((tbl) => tbl.orphanId.equals(orphan.orphanId)))
+        .write(OrphansCompanion(
+      firstName: drift.Value(orphan.firstName),
+      fatherName: drift.Value(orphan.fatherName),
+      grandfatherName: drift.Value(orphan.grandfatherName),
+      familyName: drift.Value(orphan.familyName),
+      gender: drift.Value(orphan.gender),
+      status: drift.Value(orphan.status),
+      dateOfBirth: drift.Value(orphan.dateOfBirth),
+      lastUpdated: drift.Value(orphan.lastUpdated),
+    ));
+  }
+
+  Future<int> updateOrphanWithCompanion(OrphansCompanion companion) {
+    return (_db.update(_db.orphans)
+          ..where((tbl) => tbl.orphanId.equals(companion.orphanId.value)))
+        .write(companion);
+  }
+
   Future<void> updateOrphanSupervisor(String orphanId, String newSupervisorId) {
     return (_db.update(_db.orphans)
           ..where((tbl) => tbl.orphanId.equals(orphanId)))

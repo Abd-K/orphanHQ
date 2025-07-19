@@ -17,24 +17,78 @@ class $SupervisorsTable extends Supervisors
       type: DriftSqlType.string,
       requiredDuringInsert: false,
       clientDefault: () => Uuid().v4());
-  static const VerificationMeta _fullNameMeta =
-      const VerificationMeta('fullName');
+  static const VerificationMeta _firstNameMeta =
+      const VerificationMeta('firstName');
   @override
-  late final GeneratedColumn<String> fullName = GeneratedColumn<String>(
-      'full_name', aliasedName, false,
+  late final GeneratedColumn<String> firstName = GeneratedColumn<String>(
+      'first_name', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _contactInfoMeta =
-      const VerificationMeta('contactInfo');
+  static const VerificationMeta _lastNameMeta =
+      const VerificationMeta('lastName');
   @override
-  late final GeneratedColumn<String> contactInfo = GeneratedColumn<String>(
-      'contact_info', aliasedName, false,
+  late final GeneratedColumn<String> lastName = GeneratedColumn<String>(
+      'last_name', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _locationMeta =
-      const VerificationMeta('location');
+  static const VerificationMeta _familyNameMeta =
+      const VerificationMeta('familyName');
   @override
-  late final GeneratedColumn<String> location = GeneratedColumn<String>(
-      'location', aliasedName, false,
+  late final GeneratedColumn<String> familyName = GeneratedColumn<String>(
+      'family_name', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _phoneNumberMeta =
+      const VerificationMeta('phoneNumber');
+  @override
+  late final GeneratedColumn<String> phoneNumber = GeneratedColumn<String>(
+      'phone_number', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _emailMeta = const VerificationMeta('email');
+  @override
+  late final GeneratedColumn<String> email = GeneratedColumn<String>(
+      'email', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _alternateContactMeta =
+      const VerificationMeta('alternateContact');
+  @override
+  late final GeneratedColumn<String> alternateContact = GeneratedColumn<String>(
+      'alternate_contact', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _addressMeta =
+      const VerificationMeta('address');
+  @override
+  late final GeneratedColumn<String> address = GeneratedColumn<String>(
+      'address', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _cityMeta = const VerificationMeta('city');
+  @override
+  late final GeneratedColumn<String> city = GeneratedColumn<String>(
+      'city', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _districtMeta =
+      const VerificationMeta('district');
+  @override
+  late final GeneratedColumn<String> district = GeneratedColumn<String>(
+      'district', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _positionMeta =
+      const VerificationMeta('position');
+  @override
+  late final GeneratedColumn<String> position = GeneratedColumn<String>(
+      'position', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _organizationMeta =
+      const VerificationMeta('organization');
+  @override
+  late final GeneratedColumn<String> organization = GeneratedColumn<String>(
+      'organization', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _dateJoinedMeta =
+      const VerificationMeta('dateJoined');
+  @override
+  late final GeneratedColumn<DateTime> dateJoined = GeneratedColumn<DateTime>(
+      'date_joined', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
   static const VerificationMeta _publicKeyMeta =
       const VerificationMeta('publicKey');
   @override
@@ -50,9 +104,30 @@ class $SupervisorsTable extends Supervisors
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('CHECK ("active" IN (0, 1))'),
       defaultValue: const Constant(true));
+  static const VerificationMeta _notesMeta = const VerificationMeta('notes');
   @override
-  List<GeneratedColumn> get $columns =>
-      [supervisorId, fullName, contactInfo, location, publicKey, active];
+  late final GeneratedColumn<String> notes = GeneratedColumn<String>(
+      'notes', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns => [
+        supervisorId,
+        firstName,
+        lastName,
+        familyName,
+        phoneNumber,
+        email,
+        alternateContact,
+        address,
+        city,
+        district,
+        position,
+        organization,
+        dateJoined,
+        publicKey,
+        active,
+        notes
+      ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -69,25 +144,77 @@ class $SupervisorsTable extends Supervisors
           supervisorId.isAcceptableOrUnknown(
               data['supervisor_id']!, _supervisorIdMeta));
     }
-    if (data.containsKey('full_name')) {
-      context.handle(_fullNameMeta,
-          fullName.isAcceptableOrUnknown(data['full_name']!, _fullNameMeta));
+    if (data.containsKey('first_name')) {
+      context.handle(_firstNameMeta,
+          firstName.isAcceptableOrUnknown(data['first_name']!, _firstNameMeta));
     } else if (isInserting) {
-      context.missing(_fullNameMeta);
+      context.missing(_firstNameMeta);
     }
-    if (data.containsKey('contact_info')) {
+    if (data.containsKey('last_name')) {
+      context.handle(_lastNameMeta,
+          lastName.isAcceptableOrUnknown(data['last_name']!, _lastNameMeta));
+    } else if (isInserting) {
+      context.missing(_lastNameMeta);
+    }
+    if (data.containsKey('family_name')) {
       context.handle(
-          _contactInfoMeta,
-          contactInfo.isAcceptableOrUnknown(
-              data['contact_info']!, _contactInfoMeta));
+          _familyNameMeta,
+          familyName.isAcceptableOrUnknown(
+              data['family_name']!, _familyNameMeta));
     } else if (isInserting) {
-      context.missing(_contactInfoMeta);
+      context.missing(_familyNameMeta);
     }
-    if (data.containsKey('location')) {
-      context.handle(_locationMeta,
-          location.isAcceptableOrUnknown(data['location']!, _locationMeta));
+    if (data.containsKey('phone_number')) {
+      context.handle(
+          _phoneNumberMeta,
+          phoneNumber.isAcceptableOrUnknown(
+              data['phone_number']!, _phoneNumberMeta));
     } else if (isInserting) {
-      context.missing(_locationMeta);
+      context.missing(_phoneNumberMeta);
+    }
+    if (data.containsKey('email')) {
+      context.handle(
+          _emailMeta, email.isAcceptableOrUnknown(data['email']!, _emailMeta));
+    }
+    if (data.containsKey('alternate_contact')) {
+      context.handle(
+          _alternateContactMeta,
+          alternateContact.isAcceptableOrUnknown(
+              data['alternate_contact']!, _alternateContactMeta));
+    }
+    if (data.containsKey('address')) {
+      context.handle(_addressMeta,
+          address.isAcceptableOrUnknown(data['address']!, _addressMeta));
+    } else if (isInserting) {
+      context.missing(_addressMeta);
+    }
+    if (data.containsKey('city')) {
+      context.handle(
+          _cityMeta, city.isAcceptableOrUnknown(data['city']!, _cityMeta));
+    } else if (isInserting) {
+      context.missing(_cityMeta);
+    }
+    if (data.containsKey('district')) {
+      context.handle(_districtMeta,
+          district.isAcceptableOrUnknown(data['district']!, _districtMeta));
+    }
+    if (data.containsKey('position')) {
+      context.handle(_positionMeta,
+          position.isAcceptableOrUnknown(data['position']!, _positionMeta));
+    } else if (isInserting) {
+      context.missing(_positionMeta);
+    }
+    if (data.containsKey('organization')) {
+      context.handle(
+          _organizationMeta,
+          organization.isAcceptableOrUnknown(
+              data['organization']!, _organizationMeta));
+    }
+    if (data.containsKey('date_joined')) {
+      context.handle(
+          _dateJoinedMeta,
+          dateJoined.isAcceptableOrUnknown(
+              data['date_joined']!, _dateJoinedMeta));
     }
     if (data.containsKey('public_key')) {
       context.handle(_publicKeyMeta,
@@ -98,6 +225,10 @@ class $SupervisorsTable extends Supervisors
     if (data.containsKey('active')) {
       context.handle(_activeMeta,
           active.isAcceptableOrUnknown(data['active']!, _activeMeta));
+    }
+    if (data.containsKey('notes')) {
+      context.handle(
+          _notesMeta, notes.isAcceptableOrUnknown(data['notes']!, _notesMeta));
     }
     return context;
   }
@@ -110,16 +241,36 @@ class $SupervisorsTable extends Supervisors
     return Supervisor(
       supervisorId: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}supervisor_id'])!,
-      fullName: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}full_name'])!,
-      contactInfo: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}contact_info'])!,
-      location: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}location'])!,
+      firstName: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}first_name'])!,
+      lastName: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}last_name'])!,
+      familyName: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}family_name'])!,
+      phoneNumber: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}phone_number'])!,
+      email: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}email']),
+      alternateContact: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}alternate_contact']),
+      address: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}address'])!,
+      city: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}city'])!,
+      district: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}district']),
+      position: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}position'])!,
+      organization: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}organization']),
+      dateJoined: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}date_joined'])!,
       publicKey: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}public_key'])!,
       active: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}active'])!,
+      notes: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}notes']),
     );
   }
 
@@ -131,38 +282,96 @@ class $SupervisorsTable extends Supervisors
 
 class Supervisor extends DataClass implements Insertable<Supervisor> {
   final String supervisorId;
-  final String fullName;
-  final String contactInfo;
-  final String location;
+  final String firstName;
+  final String lastName;
+  final String familyName;
+  final String phoneNumber;
+  final String? email;
+  final String? alternateContact;
+  final String address;
+  final String city;
+  final String? district;
+  final String position;
+  final String? organization;
+  final DateTime dateJoined;
   final String publicKey;
   final bool active;
+  final String? notes;
   const Supervisor(
       {required this.supervisorId,
-      required this.fullName,
-      required this.contactInfo,
-      required this.location,
+      required this.firstName,
+      required this.lastName,
+      required this.familyName,
+      required this.phoneNumber,
+      this.email,
+      this.alternateContact,
+      required this.address,
+      required this.city,
+      this.district,
+      required this.position,
+      this.organization,
+      required this.dateJoined,
       required this.publicKey,
-      required this.active});
+      required this.active,
+      this.notes});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['supervisor_id'] = Variable<String>(supervisorId);
-    map['full_name'] = Variable<String>(fullName);
-    map['contact_info'] = Variable<String>(contactInfo);
-    map['location'] = Variable<String>(location);
+    map['first_name'] = Variable<String>(firstName);
+    map['last_name'] = Variable<String>(lastName);
+    map['family_name'] = Variable<String>(familyName);
+    map['phone_number'] = Variable<String>(phoneNumber);
+    if (!nullToAbsent || email != null) {
+      map['email'] = Variable<String>(email);
+    }
+    if (!nullToAbsent || alternateContact != null) {
+      map['alternate_contact'] = Variable<String>(alternateContact);
+    }
+    map['address'] = Variable<String>(address);
+    map['city'] = Variable<String>(city);
+    if (!nullToAbsent || district != null) {
+      map['district'] = Variable<String>(district);
+    }
+    map['position'] = Variable<String>(position);
+    if (!nullToAbsent || organization != null) {
+      map['organization'] = Variable<String>(organization);
+    }
+    map['date_joined'] = Variable<DateTime>(dateJoined);
     map['public_key'] = Variable<String>(publicKey);
     map['active'] = Variable<bool>(active);
+    if (!nullToAbsent || notes != null) {
+      map['notes'] = Variable<String>(notes);
+    }
     return map;
   }
 
   SupervisorsCompanion toCompanion(bool nullToAbsent) {
     return SupervisorsCompanion(
       supervisorId: Value(supervisorId),
-      fullName: Value(fullName),
-      contactInfo: Value(contactInfo),
-      location: Value(location),
+      firstName: Value(firstName),
+      lastName: Value(lastName),
+      familyName: Value(familyName),
+      phoneNumber: Value(phoneNumber),
+      email:
+          email == null && nullToAbsent ? const Value.absent() : Value(email),
+      alternateContact: alternateContact == null && nullToAbsent
+          ? const Value.absent()
+          : Value(alternateContact),
+      address: Value(address),
+      city: Value(city),
+      district: district == null && nullToAbsent
+          ? const Value.absent()
+          : Value(district),
+      position: Value(position),
+      organization: organization == null && nullToAbsent
+          ? const Value.absent()
+          : Value(organization),
+      dateJoined: Value(dateJoined),
       publicKey: Value(publicKey),
       active: Value(active),
+      notes:
+          notes == null && nullToAbsent ? const Value.absent() : Value(notes),
     );
   }
 
@@ -171,11 +380,21 @@ class Supervisor extends DataClass implements Insertable<Supervisor> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Supervisor(
       supervisorId: serializer.fromJson<String>(json['supervisorId']),
-      fullName: serializer.fromJson<String>(json['fullName']),
-      contactInfo: serializer.fromJson<String>(json['contactInfo']),
-      location: serializer.fromJson<String>(json['location']),
+      firstName: serializer.fromJson<String>(json['firstName']),
+      lastName: serializer.fromJson<String>(json['lastName']),
+      familyName: serializer.fromJson<String>(json['familyName']),
+      phoneNumber: serializer.fromJson<String>(json['phoneNumber']),
+      email: serializer.fromJson<String?>(json['email']),
+      alternateContact: serializer.fromJson<String?>(json['alternateContact']),
+      address: serializer.fromJson<String>(json['address']),
+      city: serializer.fromJson<String>(json['city']),
+      district: serializer.fromJson<String?>(json['district']),
+      position: serializer.fromJson<String>(json['position']),
+      organization: serializer.fromJson<String?>(json['organization']),
+      dateJoined: serializer.fromJson<DateTime>(json['dateJoined']),
       publicKey: serializer.fromJson<String>(json['publicKey']),
       active: serializer.fromJson<bool>(json['active']),
+      notes: serializer.fromJson<String?>(json['notes']),
     );
   }
   @override
@@ -183,40 +402,89 @@ class Supervisor extends DataClass implements Insertable<Supervisor> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'supervisorId': serializer.toJson<String>(supervisorId),
-      'fullName': serializer.toJson<String>(fullName),
-      'contactInfo': serializer.toJson<String>(contactInfo),
-      'location': serializer.toJson<String>(location),
+      'firstName': serializer.toJson<String>(firstName),
+      'lastName': serializer.toJson<String>(lastName),
+      'familyName': serializer.toJson<String>(familyName),
+      'phoneNumber': serializer.toJson<String>(phoneNumber),
+      'email': serializer.toJson<String?>(email),
+      'alternateContact': serializer.toJson<String?>(alternateContact),
+      'address': serializer.toJson<String>(address),
+      'city': serializer.toJson<String>(city),
+      'district': serializer.toJson<String?>(district),
+      'position': serializer.toJson<String>(position),
+      'organization': serializer.toJson<String?>(organization),
+      'dateJoined': serializer.toJson<DateTime>(dateJoined),
       'publicKey': serializer.toJson<String>(publicKey),
       'active': serializer.toJson<bool>(active),
+      'notes': serializer.toJson<String?>(notes),
     };
   }
 
   Supervisor copyWith(
           {String? supervisorId,
-          String? fullName,
-          String? contactInfo,
-          String? location,
+          String? firstName,
+          String? lastName,
+          String? familyName,
+          String? phoneNumber,
+          Value<String?> email = const Value.absent(),
+          Value<String?> alternateContact = const Value.absent(),
+          String? address,
+          String? city,
+          Value<String?> district = const Value.absent(),
+          String? position,
+          Value<String?> organization = const Value.absent(),
+          DateTime? dateJoined,
           String? publicKey,
-          bool? active}) =>
+          bool? active,
+          Value<String?> notes = const Value.absent()}) =>
       Supervisor(
         supervisorId: supervisorId ?? this.supervisorId,
-        fullName: fullName ?? this.fullName,
-        contactInfo: contactInfo ?? this.contactInfo,
-        location: location ?? this.location,
+        firstName: firstName ?? this.firstName,
+        lastName: lastName ?? this.lastName,
+        familyName: familyName ?? this.familyName,
+        phoneNumber: phoneNumber ?? this.phoneNumber,
+        email: email.present ? email.value : this.email,
+        alternateContact: alternateContact.present
+            ? alternateContact.value
+            : this.alternateContact,
+        address: address ?? this.address,
+        city: city ?? this.city,
+        district: district.present ? district.value : this.district,
+        position: position ?? this.position,
+        organization:
+            organization.present ? organization.value : this.organization,
+        dateJoined: dateJoined ?? this.dateJoined,
         publicKey: publicKey ?? this.publicKey,
         active: active ?? this.active,
+        notes: notes.present ? notes.value : this.notes,
       );
   Supervisor copyWithCompanion(SupervisorsCompanion data) {
     return Supervisor(
       supervisorId: data.supervisorId.present
           ? data.supervisorId.value
           : this.supervisorId,
-      fullName: data.fullName.present ? data.fullName.value : this.fullName,
-      contactInfo:
-          data.contactInfo.present ? data.contactInfo.value : this.contactInfo,
-      location: data.location.present ? data.location.value : this.location,
+      firstName: data.firstName.present ? data.firstName.value : this.firstName,
+      lastName: data.lastName.present ? data.lastName.value : this.lastName,
+      familyName:
+          data.familyName.present ? data.familyName.value : this.familyName,
+      phoneNumber:
+          data.phoneNumber.present ? data.phoneNumber.value : this.phoneNumber,
+      email: data.email.present ? data.email.value : this.email,
+      alternateContact: data.alternateContact.present
+          ? data.alternateContact.value
+          : this.alternateContact,
+      address: data.address.present ? data.address.value : this.address,
+      city: data.city.present ? data.city.value : this.city,
+      district: data.district.present ? data.district.value : this.district,
+      position: data.position.present ? data.position.value : this.position,
+      organization: data.organization.present
+          ? data.organization.value
+          : this.organization,
+      dateJoined:
+          data.dateJoined.present ? data.dateJoined.value : this.dateJoined,
       publicKey: data.publicKey.present ? data.publicKey.value : this.publicKey,
       active: data.active.present ? data.active.value : this.active,
+      notes: data.notes.present ? data.notes.value : this.notes,
     );
   }
 
@@ -224,94 +492,203 @@ class Supervisor extends DataClass implements Insertable<Supervisor> {
   String toString() {
     return (StringBuffer('Supervisor(')
           ..write('supervisorId: $supervisorId, ')
-          ..write('fullName: $fullName, ')
-          ..write('contactInfo: $contactInfo, ')
-          ..write('location: $location, ')
+          ..write('firstName: $firstName, ')
+          ..write('lastName: $lastName, ')
+          ..write('familyName: $familyName, ')
+          ..write('phoneNumber: $phoneNumber, ')
+          ..write('email: $email, ')
+          ..write('alternateContact: $alternateContact, ')
+          ..write('address: $address, ')
+          ..write('city: $city, ')
+          ..write('district: $district, ')
+          ..write('position: $position, ')
+          ..write('organization: $organization, ')
+          ..write('dateJoined: $dateJoined, ')
           ..write('publicKey: $publicKey, ')
-          ..write('active: $active')
+          ..write('active: $active, ')
+          ..write('notes: $notes')
           ..write(')'))
         .toString();
   }
 
   @override
   int get hashCode => Object.hash(
-      supervisorId, fullName, contactInfo, location, publicKey, active);
+      supervisorId,
+      firstName,
+      lastName,
+      familyName,
+      phoneNumber,
+      email,
+      alternateContact,
+      address,
+      city,
+      district,
+      position,
+      organization,
+      dateJoined,
+      publicKey,
+      active,
+      notes);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is Supervisor &&
           other.supervisorId == this.supervisorId &&
-          other.fullName == this.fullName &&
-          other.contactInfo == this.contactInfo &&
-          other.location == this.location &&
+          other.firstName == this.firstName &&
+          other.lastName == this.lastName &&
+          other.familyName == this.familyName &&
+          other.phoneNumber == this.phoneNumber &&
+          other.email == this.email &&
+          other.alternateContact == this.alternateContact &&
+          other.address == this.address &&
+          other.city == this.city &&
+          other.district == this.district &&
+          other.position == this.position &&
+          other.organization == this.organization &&
+          other.dateJoined == this.dateJoined &&
           other.publicKey == this.publicKey &&
-          other.active == this.active);
+          other.active == this.active &&
+          other.notes == this.notes);
 }
 
 class SupervisorsCompanion extends UpdateCompanion<Supervisor> {
   final Value<String> supervisorId;
-  final Value<String> fullName;
-  final Value<String> contactInfo;
-  final Value<String> location;
+  final Value<String> firstName;
+  final Value<String> lastName;
+  final Value<String> familyName;
+  final Value<String> phoneNumber;
+  final Value<String?> email;
+  final Value<String?> alternateContact;
+  final Value<String> address;
+  final Value<String> city;
+  final Value<String?> district;
+  final Value<String> position;
+  final Value<String?> organization;
+  final Value<DateTime> dateJoined;
   final Value<String> publicKey;
   final Value<bool> active;
+  final Value<String?> notes;
   final Value<int> rowid;
   const SupervisorsCompanion({
     this.supervisorId = const Value.absent(),
-    this.fullName = const Value.absent(),
-    this.contactInfo = const Value.absent(),
-    this.location = const Value.absent(),
+    this.firstName = const Value.absent(),
+    this.lastName = const Value.absent(),
+    this.familyName = const Value.absent(),
+    this.phoneNumber = const Value.absent(),
+    this.email = const Value.absent(),
+    this.alternateContact = const Value.absent(),
+    this.address = const Value.absent(),
+    this.city = const Value.absent(),
+    this.district = const Value.absent(),
+    this.position = const Value.absent(),
+    this.organization = const Value.absent(),
+    this.dateJoined = const Value.absent(),
     this.publicKey = const Value.absent(),
     this.active = const Value.absent(),
+    this.notes = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   SupervisorsCompanion.insert({
     this.supervisorId = const Value.absent(),
-    required String fullName,
-    required String contactInfo,
-    required String location,
+    required String firstName,
+    required String lastName,
+    required String familyName,
+    required String phoneNumber,
+    this.email = const Value.absent(),
+    this.alternateContact = const Value.absent(),
+    required String address,
+    required String city,
+    this.district = const Value.absent(),
+    required String position,
+    this.organization = const Value.absent(),
+    this.dateJoined = const Value.absent(),
     required String publicKey,
     this.active = const Value.absent(),
+    this.notes = const Value.absent(),
     this.rowid = const Value.absent(),
-  })  : fullName = Value(fullName),
-        contactInfo = Value(contactInfo),
-        location = Value(location),
+  })  : firstName = Value(firstName),
+        lastName = Value(lastName),
+        familyName = Value(familyName),
+        phoneNumber = Value(phoneNumber),
+        address = Value(address),
+        city = Value(city),
+        position = Value(position),
         publicKey = Value(publicKey);
   static Insertable<Supervisor> custom({
     Expression<String>? supervisorId,
-    Expression<String>? fullName,
-    Expression<String>? contactInfo,
-    Expression<String>? location,
+    Expression<String>? firstName,
+    Expression<String>? lastName,
+    Expression<String>? familyName,
+    Expression<String>? phoneNumber,
+    Expression<String>? email,
+    Expression<String>? alternateContact,
+    Expression<String>? address,
+    Expression<String>? city,
+    Expression<String>? district,
+    Expression<String>? position,
+    Expression<String>? organization,
+    Expression<DateTime>? dateJoined,
     Expression<String>? publicKey,
     Expression<bool>? active,
+    Expression<String>? notes,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (supervisorId != null) 'supervisor_id': supervisorId,
-      if (fullName != null) 'full_name': fullName,
-      if (contactInfo != null) 'contact_info': contactInfo,
-      if (location != null) 'location': location,
+      if (firstName != null) 'first_name': firstName,
+      if (lastName != null) 'last_name': lastName,
+      if (familyName != null) 'family_name': familyName,
+      if (phoneNumber != null) 'phone_number': phoneNumber,
+      if (email != null) 'email': email,
+      if (alternateContact != null) 'alternate_contact': alternateContact,
+      if (address != null) 'address': address,
+      if (city != null) 'city': city,
+      if (district != null) 'district': district,
+      if (position != null) 'position': position,
+      if (organization != null) 'organization': organization,
+      if (dateJoined != null) 'date_joined': dateJoined,
       if (publicKey != null) 'public_key': publicKey,
       if (active != null) 'active': active,
+      if (notes != null) 'notes': notes,
       if (rowid != null) 'rowid': rowid,
     });
   }
 
   SupervisorsCompanion copyWith(
       {Value<String>? supervisorId,
-      Value<String>? fullName,
-      Value<String>? contactInfo,
-      Value<String>? location,
+      Value<String>? firstName,
+      Value<String>? lastName,
+      Value<String>? familyName,
+      Value<String>? phoneNumber,
+      Value<String?>? email,
+      Value<String?>? alternateContact,
+      Value<String>? address,
+      Value<String>? city,
+      Value<String?>? district,
+      Value<String>? position,
+      Value<String?>? organization,
+      Value<DateTime>? dateJoined,
       Value<String>? publicKey,
       Value<bool>? active,
+      Value<String?>? notes,
       Value<int>? rowid}) {
     return SupervisorsCompanion(
       supervisorId: supervisorId ?? this.supervisorId,
-      fullName: fullName ?? this.fullName,
-      contactInfo: contactInfo ?? this.contactInfo,
-      location: location ?? this.location,
+      firstName: firstName ?? this.firstName,
+      lastName: lastName ?? this.lastName,
+      familyName: familyName ?? this.familyName,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
+      email: email ?? this.email,
+      alternateContact: alternateContact ?? this.alternateContact,
+      address: address ?? this.address,
+      city: city ?? this.city,
+      district: district ?? this.district,
+      position: position ?? this.position,
+      organization: organization ?? this.organization,
+      dateJoined: dateJoined ?? this.dateJoined,
       publicKey: publicKey ?? this.publicKey,
       active: active ?? this.active,
+      notes: notes ?? this.notes,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -322,20 +699,50 @@ class SupervisorsCompanion extends UpdateCompanion<Supervisor> {
     if (supervisorId.present) {
       map['supervisor_id'] = Variable<String>(supervisorId.value);
     }
-    if (fullName.present) {
-      map['full_name'] = Variable<String>(fullName.value);
+    if (firstName.present) {
+      map['first_name'] = Variable<String>(firstName.value);
     }
-    if (contactInfo.present) {
-      map['contact_info'] = Variable<String>(contactInfo.value);
+    if (lastName.present) {
+      map['last_name'] = Variable<String>(lastName.value);
     }
-    if (location.present) {
-      map['location'] = Variable<String>(location.value);
+    if (familyName.present) {
+      map['family_name'] = Variable<String>(familyName.value);
+    }
+    if (phoneNumber.present) {
+      map['phone_number'] = Variable<String>(phoneNumber.value);
+    }
+    if (email.present) {
+      map['email'] = Variable<String>(email.value);
+    }
+    if (alternateContact.present) {
+      map['alternate_contact'] = Variable<String>(alternateContact.value);
+    }
+    if (address.present) {
+      map['address'] = Variable<String>(address.value);
+    }
+    if (city.present) {
+      map['city'] = Variable<String>(city.value);
+    }
+    if (district.present) {
+      map['district'] = Variable<String>(district.value);
+    }
+    if (position.present) {
+      map['position'] = Variable<String>(position.value);
+    }
+    if (organization.present) {
+      map['organization'] = Variable<String>(organization.value);
+    }
+    if (dateJoined.present) {
+      map['date_joined'] = Variable<DateTime>(dateJoined.value);
     }
     if (publicKey.present) {
       map['public_key'] = Variable<String>(publicKey.value);
     }
     if (active.present) {
       map['active'] = Variable<bool>(active.value);
+    }
+    if (notes.present) {
+      map['notes'] = Variable<String>(notes.value);
     }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
@@ -347,11 +754,21 @@ class SupervisorsCompanion extends UpdateCompanion<Supervisor> {
   String toString() {
     return (StringBuffer('SupervisorsCompanion(')
           ..write('supervisorId: $supervisorId, ')
-          ..write('fullName: $fullName, ')
-          ..write('contactInfo: $contactInfo, ')
-          ..write('location: $location, ')
+          ..write('firstName: $firstName, ')
+          ..write('lastName: $lastName, ')
+          ..write('familyName: $familyName, ')
+          ..write('phoneNumber: $phoneNumber, ')
+          ..write('email: $email, ')
+          ..write('alternateContact: $alternateContact, ')
+          ..write('address: $address, ')
+          ..write('city: $city, ')
+          ..write('district: $district, ')
+          ..write('position: $position, ')
+          ..write('organization: $organization, ')
+          ..write('dateJoined: $dateJoined, ')
           ..write('publicKey: $publicKey, ')
           ..write('active: $active, ')
+          ..write('notes: $notes, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -377,11 +794,17 @@ class $OrphansTable extends Orphans with TableInfo<$OrphansTable, Orphan> {
   late final GeneratedColumn<String> firstName = GeneratedColumn<String>(
       'first_name', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _lastNameMeta =
-      const VerificationMeta('lastName');
+  static const VerificationMeta _fatherNameMeta =
+      const VerificationMeta('fatherName');
   @override
-  late final GeneratedColumn<String> lastName = GeneratedColumn<String>(
-      'last_name', aliasedName, false,
+  late final GeneratedColumn<String> fatherName = GeneratedColumn<String>(
+      'father_name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _grandfatherNameMeta =
+      const VerificationMeta('grandfatherName');
+  @override
+  late final GeneratedColumn<String> grandfatherName = GeneratedColumn<String>(
+      'grandfather_name', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _familyNameMeta =
       const VerificationMeta('familyName');
@@ -926,12 +1349,6 @@ class $OrphansTable extends Orphans with TableInfo<$OrphansTable, Orphan> {
   late final GeneratedColumn<String> specialCircumstances =
       GeneratedColumn<String>('special_circumstances', aliasedName, true,
           type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _photoPathMeta =
-      const VerificationMeta('photoPath');
-  @override
-  late final GeneratedColumn<String> photoPath = GeneratedColumn<String>(
-      'photo_path', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _documentsPathMeta =
       const VerificationMeta('documentsPath');
   @override
@@ -942,7 +1359,8 @@ class $OrphansTable extends Orphans with TableInfo<$OrphansTable, Orphan> {
   List<GeneratedColumn> get $columns => [
         orphanId,
         firstName,
-        lastName,
+        fatherName,
+        grandfatherName,
         familyName,
         gender,
         dateOfBirth,
@@ -1029,7 +1447,6 @@ class $OrphansTable extends Orphans with TableInfo<$OrphansTable, Orphan> {
         additionalNotes,
         urgentNeeds,
         specialCircumstances,
-        photoPath,
         documentsPath
       ];
   @override
@@ -1052,11 +1469,21 @@ class $OrphansTable extends Orphans with TableInfo<$OrphansTable, Orphan> {
     } else if (isInserting) {
       context.missing(_firstNameMeta);
     }
-    if (data.containsKey('last_name')) {
-      context.handle(_lastNameMeta,
-          lastName.isAcceptableOrUnknown(data['last_name']!, _lastNameMeta));
+    if (data.containsKey('father_name')) {
+      context.handle(
+          _fatherNameMeta,
+          fatherName.isAcceptableOrUnknown(
+              data['father_name']!, _fatherNameMeta));
     } else if (isInserting) {
-      context.missing(_lastNameMeta);
+      context.missing(_fatherNameMeta);
+    }
+    if (data.containsKey('grandfather_name')) {
+      context.handle(
+          _grandfatherNameMeta,
+          grandfatherName.isAcceptableOrUnknown(
+              data['grandfather_name']!, _grandfatherNameMeta));
+    } else if (isInserting) {
+      context.missing(_grandfatherNameMeta);
     }
     if (data.containsKey('family_name')) {
       context.handle(
@@ -1524,10 +1951,6 @@ class $OrphansTable extends Orphans with TableInfo<$OrphansTable, Orphan> {
           specialCircumstances.isAcceptableOrUnknown(
               data['special_circumstances']!, _specialCircumstancesMeta));
     }
-    if (data.containsKey('photo_path')) {
-      context.handle(_photoPathMeta,
-          photoPath.isAcceptableOrUnknown(data['photo_path']!, _photoPathMeta));
-    }
     if (data.containsKey('documents_path')) {
       context.handle(
           _documentsPathMeta,
@@ -1547,8 +1970,10 @@ class $OrphansTable extends Orphans with TableInfo<$OrphansTable, Orphan> {
           .read(DriftSqlType.string, data['${effectivePrefix}orphan_id'])!,
       firstName: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}first_name'])!,
-      lastName: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}last_name'])!,
+      fatherName: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}father_name'])!,
+      grandfatherName: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}grandfather_name'])!,
       familyName: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}family_name'])!,
       gender: $OrphansTable.$convertergender.fromSql(attachedDatabase
@@ -1745,8 +2170,6 @@ class $OrphansTable extends Orphans with TableInfo<$OrphansTable, Orphan> {
           .read(DriftSqlType.string, data['${effectivePrefix}urgent_needs']),
       specialCircumstances: attachedDatabase.typeMapping.read(
           DriftSqlType.string, data['${effectivePrefix}special_circumstances']),
-      photoPath: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}photo_path']),
       documentsPath: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}documents_path']),
     );
@@ -1799,7 +2222,8 @@ class $OrphansTable extends Orphans with TableInfo<$OrphansTable, Orphan> {
 class Orphan extends DataClass implements Insertable<Orphan> {
   final String orphanId;
   final String firstName;
-  final String lastName;
+  final String fatherName;
+  final String grandfatherName;
   final String familyName;
   final Gender gender;
   final DateTime dateOfBirth;
@@ -1886,12 +2310,12 @@ class Orphan extends DataClass implements Insertable<Orphan> {
   final String? additionalNotes;
   final String? urgentNeeds;
   final String? specialCircumstances;
-  final String? photoPath;
   final String? documentsPath;
   const Orphan(
       {required this.orphanId,
       required this.firstName,
-      required this.lastName,
+      required this.fatherName,
+      required this.grandfatherName,
       required this.familyName,
       required this.gender,
       required this.dateOfBirth,
@@ -1978,14 +2402,14 @@ class Orphan extends DataClass implements Insertable<Orphan> {
       this.additionalNotes,
       this.urgentNeeds,
       this.specialCircumstances,
-      this.photoPath,
       this.documentsPath});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['orphan_id'] = Variable<String>(orphanId);
     map['first_name'] = Variable<String>(firstName);
-    map['last_name'] = Variable<String>(lastName);
+    map['father_name'] = Variable<String>(fatherName);
+    map['grandfather_name'] = Variable<String>(grandfatherName);
     map['family_name'] = Variable<String>(familyName);
     {
       map['gender'] =
@@ -2249,9 +2673,6 @@ class Orphan extends DataClass implements Insertable<Orphan> {
     if (!nullToAbsent || specialCircumstances != null) {
       map['special_circumstances'] = Variable<String>(specialCircumstances);
     }
-    if (!nullToAbsent || photoPath != null) {
-      map['photo_path'] = Variable<String>(photoPath);
-    }
     if (!nullToAbsent || documentsPath != null) {
       map['documents_path'] = Variable<String>(documentsPath);
     }
@@ -2262,7 +2683,8 @@ class Orphan extends DataClass implements Insertable<Orphan> {
     return OrphansCompanion(
       orphanId: Value(orphanId),
       firstName: Value(firstName),
-      lastName: Value(lastName),
+      fatherName: Value(fatherName),
+      grandfatherName: Value(grandfatherName),
       familyName: Value(familyName),
       gender: Value(gender),
       dateOfBirth: Value(dateOfBirth),
@@ -2508,9 +2930,6 @@ class Orphan extends DataClass implements Insertable<Orphan> {
       specialCircumstances: specialCircumstances == null && nullToAbsent
           ? const Value.absent()
           : Value(specialCircumstances),
-      photoPath: photoPath == null && nullToAbsent
-          ? const Value.absent()
-          : Value(photoPath),
       documentsPath: documentsPath == null && nullToAbsent
           ? const Value.absent()
           : Value(documentsPath),
@@ -2523,7 +2942,8 @@ class Orphan extends DataClass implements Insertable<Orphan> {
     return Orphan(
       orphanId: serializer.fromJson<String>(json['orphanId']),
       firstName: serializer.fromJson<String>(json['firstName']),
-      lastName: serializer.fromJson<String>(json['lastName']),
+      fatherName: serializer.fromJson<String>(json['fatherName']),
+      grandfatherName: serializer.fromJson<String>(json['grandfatherName']),
       familyName: serializer.fromJson<String>(json['familyName']),
       gender: $OrphansTable.$convertergender
           .fromJson(serializer.fromJson<int>(json['gender'])),
@@ -2653,7 +3073,6 @@ class Orphan extends DataClass implements Insertable<Orphan> {
       urgentNeeds: serializer.fromJson<String?>(json['urgentNeeds']),
       specialCircumstances:
           serializer.fromJson<String?>(json['specialCircumstances']),
-      photoPath: serializer.fromJson<String?>(json['photoPath']),
       documentsPath: serializer.fromJson<String?>(json['documentsPath']),
     );
   }
@@ -2663,7 +3082,8 @@ class Orphan extends DataClass implements Insertable<Orphan> {
     return <String, dynamic>{
       'orphanId': serializer.toJson<String>(orphanId),
       'firstName': serializer.toJson<String>(firstName),
-      'lastName': serializer.toJson<String>(lastName),
+      'fatherName': serializer.toJson<String>(fatherName),
+      'grandfatherName': serializer.toJson<String>(grandfatherName),
       'familyName': serializer.toJson<String>(familyName),
       'gender':
           serializer.toJson<int>($OrphansTable.$convertergender.toJson(gender)),
@@ -2767,7 +3187,6 @@ class Orphan extends DataClass implements Insertable<Orphan> {
       'additionalNotes': serializer.toJson<String?>(additionalNotes),
       'urgentNeeds': serializer.toJson<String?>(urgentNeeds),
       'specialCircumstances': serializer.toJson<String?>(specialCircumstances),
-      'photoPath': serializer.toJson<String?>(photoPath),
       'documentsPath': serializer.toJson<String?>(documentsPath),
     };
   }
@@ -2775,7 +3194,8 @@ class Orphan extends DataClass implements Insertable<Orphan> {
   Orphan copyWith(
           {String? orphanId,
           String? firstName,
-          String? lastName,
+          String? fatherName,
+          String? grandfatherName,
           String? familyName,
           Gender? gender,
           DateTime? dateOfBirth,
@@ -2863,12 +3283,12 @@ class Orphan extends DataClass implements Insertable<Orphan> {
           Value<String?> additionalNotes = const Value.absent(),
           Value<String?> urgentNeeds = const Value.absent(),
           Value<String?> specialCircumstances = const Value.absent(),
-          Value<String?> photoPath = const Value.absent(),
           Value<String?> documentsPath = const Value.absent()}) =>
       Orphan(
         orphanId: orphanId ?? this.orphanId,
         firstName: firstName ?? this.firstName,
-        lastName: lastName ?? this.lastName,
+        fatherName: fatherName ?? this.fatherName,
+        grandfatherName: grandfatherName ?? this.grandfatherName,
         familyName: familyName ?? this.familyName,
         gender: gender ?? this.gender,
         dateOfBirth: dateOfBirth ?? this.dateOfBirth,
@@ -3067,7 +3487,6 @@ class Orphan extends DataClass implements Insertable<Orphan> {
         specialCircumstances: specialCircumstances.present
             ? specialCircumstances.value
             : this.specialCircumstances,
-        photoPath: photoPath.present ? photoPath.value : this.photoPath,
         documentsPath:
             documentsPath.present ? documentsPath.value : this.documentsPath,
       );
@@ -3075,7 +3494,11 @@ class Orphan extends DataClass implements Insertable<Orphan> {
     return Orphan(
       orphanId: data.orphanId.present ? data.orphanId.value : this.orphanId,
       firstName: data.firstName.present ? data.firstName.value : this.firstName,
-      lastName: data.lastName.present ? data.lastName.value : this.lastName,
+      fatherName:
+          data.fatherName.present ? data.fatherName.value : this.fatherName,
+      grandfatherName: data.grandfatherName.present
+          ? data.grandfatherName.value
+          : this.grandfatherName,
       familyName:
           data.familyName.present ? data.familyName.value : this.familyName,
       gender: data.gender.present ? data.gender.value : this.gender,
@@ -3304,7 +3727,6 @@ class Orphan extends DataClass implements Insertable<Orphan> {
       specialCircumstances: data.specialCircumstances.present
           ? data.specialCircumstances.value
           : this.specialCircumstances,
-      photoPath: data.photoPath.present ? data.photoPath.value : this.photoPath,
       documentsPath: data.documentsPath.present
           ? data.documentsPath.value
           : this.documentsPath,
@@ -3316,7 +3738,8 @@ class Orphan extends DataClass implements Insertable<Orphan> {
     return (StringBuffer('Orphan(')
           ..write('orphanId: $orphanId, ')
           ..write('firstName: $firstName, ')
-          ..write('lastName: $lastName, ')
+          ..write('fatherName: $fatherName, ')
+          ..write('grandfatherName: $grandfatherName, ')
           ..write('familyName: $familyName, ')
           ..write('gender: $gender, ')
           ..write('dateOfBirth: $dateOfBirth, ')
@@ -3403,7 +3826,6 @@ class Orphan extends DataClass implements Insertable<Orphan> {
           ..write('additionalNotes: $additionalNotes, ')
           ..write('urgentNeeds: $urgentNeeds, ')
           ..write('specialCircumstances: $specialCircumstances, ')
-          ..write('photoPath: $photoPath, ')
           ..write('documentsPath: $documentsPath')
           ..write(')'))
         .toString();
@@ -3413,7 +3835,8 @@ class Orphan extends DataClass implements Insertable<Orphan> {
   int get hashCode => Object.hashAll([
         orphanId,
         firstName,
-        lastName,
+        fatherName,
+        grandfatherName,
         familyName,
         gender,
         dateOfBirth,
@@ -3500,7 +3923,6 @@ class Orphan extends DataClass implements Insertable<Orphan> {
         additionalNotes,
         urgentNeeds,
         specialCircumstances,
-        photoPath,
         documentsPath
       ]);
   @override
@@ -3509,7 +3931,8 @@ class Orphan extends DataClass implements Insertable<Orphan> {
       (other is Orphan &&
           other.orphanId == this.orphanId &&
           other.firstName == this.firstName &&
-          other.lastName == this.lastName &&
+          other.fatherName == this.fatherName &&
+          other.grandfatherName == this.grandfatherName &&
           other.familyName == this.familyName &&
           other.gender == this.gender &&
           other.dateOfBirth == this.dateOfBirth &&
@@ -3596,14 +4019,14 @@ class Orphan extends DataClass implements Insertable<Orphan> {
           other.additionalNotes == this.additionalNotes &&
           other.urgentNeeds == this.urgentNeeds &&
           other.specialCircumstances == this.specialCircumstances &&
-          other.photoPath == this.photoPath &&
           other.documentsPath == this.documentsPath);
 }
 
 class OrphansCompanion extends UpdateCompanion<Orphan> {
   final Value<String> orphanId;
   final Value<String> firstName;
-  final Value<String> lastName;
+  final Value<String> fatherName;
+  final Value<String> grandfatherName;
   final Value<String> familyName;
   final Value<Gender> gender;
   final Value<DateTime> dateOfBirth;
@@ -3690,13 +4113,13 @@ class OrphansCompanion extends UpdateCompanion<Orphan> {
   final Value<String?> additionalNotes;
   final Value<String?> urgentNeeds;
   final Value<String?> specialCircumstances;
-  final Value<String?> photoPath;
   final Value<String?> documentsPath;
   final Value<int> rowid;
   const OrphansCompanion({
     this.orphanId = const Value.absent(),
     this.firstName = const Value.absent(),
-    this.lastName = const Value.absent(),
+    this.fatherName = const Value.absent(),
+    this.grandfatherName = const Value.absent(),
     this.familyName = const Value.absent(),
     this.gender = const Value.absent(),
     this.dateOfBirth = const Value.absent(),
@@ -3783,14 +4206,14 @@ class OrphansCompanion extends UpdateCompanion<Orphan> {
     this.additionalNotes = const Value.absent(),
     this.urgentNeeds = const Value.absent(),
     this.specialCircumstances = const Value.absent(),
-    this.photoPath = const Value.absent(),
     this.documentsPath = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   OrphansCompanion.insert({
     this.orphanId = const Value.absent(),
     required String firstName,
-    required String lastName,
+    required String fatherName,
+    required String grandfatherName,
     required String familyName,
     required Gender gender,
     required DateTime dateOfBirth,
@@ -3877,11 +4300,11 @@ class OrphansCompanion extends UpdateCompanion<Orphan> {
     this.additionalNotes = const Value.absent(),
     this.urgentNeeds = const Value.absent(),
     this.specialCircumstances = const Value.absent(),
-    this.photoPath = const Value.absent(),
     this.documentsPath = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : firstName = Value(firstName),
-        lastName = Value(lastName),
+        fatherName = Value(fatherName),
+        grandfatherName = Value(grandfatherName),
         familyName = Value(familyName),
         gender = Value(gender),
         dateOfBirth = Value(dateOfBirth),
@@ -3891,7 +4314,8 @@ class OrphansCompanion extends UpdateCompanion<Orphan> {
   static Insertable<Orphan> custom({
     Expression<String>? orphanId,
     Expression<String>? firstName,
-    Expression<String>? lastName,
+    Expression<String>? fatherName,
+    Expression<String>? grandfatherName,
     Expression<String>? familyName,
     Expression<int>? gender,
     Expression<DateTime>? dateOfBirth,
@@ -3978,14 +4402,14 @@ class OrphansCompanion extends UpdateCompanion<Orphan> {
     Expression<String>? additionalNotes,
     Expression<String>? urgentNeeds,
     Expression<String>? specialCircumstances,
-    Expression<String>? photoPath,
     Expression<String>? documentsPath,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (orphanId != null) 'orphan_id': orphanId,
       if (firstName != null) 'first_name': firstName,
-      if (lastName != null) 'last_name': lastName,
+      if (fatherName != null) 'father_name': fatherName,
+      if (grandfatherName != null) 'grandfather_name': grandfatherName,
       if (familyName != null) 'family_name': familyName,
       if (gender != null) 'gender': gender,
       if (dateOfBirth != null) 'date_of_birth': dateOfBirth,
@@ -4100,7 +4524,6 @@ class OrphansCompanion extends UpdateCompanion<Orphan> {
       if (urgentNeeds != null) 'urgent_needs': urgentNeeds,
       if (specialCircumstances != null)
         'special_circumstances': specialCircumstances,
-      if (photoPath != null) 'photo_path': photoPath,
       if (documentsPath != null) 'documents_path': documentsPath,
       if (rowid != null) 'rowid': rowid,
     });
@@ -4109,7 +4532,8 @@ class OrphansCompanion extends UpdateCompanion<Orphan> {
   OrphansCompanion copyWith(
       {Value<String>? orphanId,
       Value<String>? firstName,
-      Value<String>? lastName,
+      Value<String>? fatherName,
+      Value<String>? grandfatherName,
       Value<String>? familyName,
       Value<Gender>? gender,
       Value<DateTime>? dateOfBirth,
@@ -4196,13 +4620,13 @@ class OrphansCompanion extends UpdateCompanion<Orphan> {
       Value<String?>? additionalNotes,
       Value<String?>? urgentNeeds,
       Value<String?>? specialCircumstances,
-      Value<String?>? photoPath,
       Value<String?>? documentsPath,
       Value<int>? rowid}) {
     return OrphansCompanion(
       orphanId: orphanId ?? this.orphanId,
       firstName: firstName ?? this.firstName,
-      lastName: lastName ?? this.lastName,
+      fatherName: fatherName ?? this.fatherName,
+      grandfatherName: grandfatherName ?? this.grandfatherName,
       familyName: familyName ?? this.familyName,
       gender: gender ?? this.gender,
       dateOfBirth: dateOfBirth ?? this.dateOfBirth,
@@ -4298,7 +4722,6 @@ class OrphansCompanion extends UpdateCompanion<Orphan> {
       additionalNotes: additionalNotes ?? this.additionalNotes,
       urgentNeeds: urgentNeeds ?? this.urgentNeeds,
       specialCircumstances: specialCircumstances ?? this.specialCircumstances,
-      photoPath: photoPath ?? this.photoPath,
       documentsPath: documentsPath ?? this.documentsPath,
       rowid: rowid ?? this.rowid,
     );
@@ -4313,8 +4736,11 @@ class OrphansCompanion extends UpdateCompanion<Orphan> {
     if (firstName.present) {
       map['first_name'] = Variable<String>(firstName.value);
     }
-    if (lastName.present) {
-      map['last_name'] = Variable<String>(lastName.value);
+    if (fatherName.present) {
+      map['father_name'] = Variable<String>(fatherName.value);
+    }
+    if (grandfatherName.present) {
+      map['grandfather_name'] = Variable<String>(grandfatherName.value);
     }
     if (familyName.present) {
       map['family_name'] = Variable<String>(familyName.value);
@@ -4605,9 +5031,6 @@ class OrphansCompanion extends UpdateCompanion<Orphan> {
       map['special_circumstances'] =
           Variable<String>(specialCircumstances.value);
     }
-    if (photoPath.present) {
-      map['photo_path'] = Variable<String>(photoPath.value);
-    }
     if (documentsPath.present) {
       map['documents_path'] = Variable<String>(documentsPath.value);
     }
@@ -4622,7 +5045,8 @@ class OrphansCompanion extends UpdateCompanion<Orphan> {
     return (StringBuffer('OrphansCompanion(')
           ..write('orphanId: $orphanId, ')
           ..write('firstName: $firstName, ')
-          ..write('lastName: $lastName, ')
+          ..write('fatherName: $fatherName, ')
+          ..write('grandfatherName: $grandfatherName, ')
           ..write('familyName: $familyName, ')
           ..write('gender: $gender, ')
           ..write('dateOfBirth: $dateOfBirth, ')
@@ -4709,7 +5133,6 @@ class OrphansCompanion extends UpdateCompanion<Orphan> {
           ..write('additionalNotes: $additionalNotes, ')
           ..write('urgentNeeds: $urgentNeeds, ')
           ..write('specialCircumstances: $specialCircumstances, ')
-          ..write('photoPath: $photoPath, ')
           ..write('documentsPath: $documentsPath, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -4732,21 +5155,41 @@ abstract class _$AppDb extends GeneratedDatabase {
 typedef $$SupervisorsTableCreateCompanionBuilder = SupervisorsCompanion
     Function({
   Value<String> supervisorId,
-  required String fullName,
-  required String contactInfo,
-  required String location,
+  required String firstName,
+  required String lastName,
+  required String familyName,
+  required String phoneNumber,
+  Value<String?> email,
+  Value<String?> alternateContact,
+  required String address,
+  required String city,
+  Value<String?> district,
+  required String position,
+  Value<String?> organization,
+  Value<DateTime> dateJoined,
   required String publicKey,
   Value<bool> active,
+  Value<String?> notes,
   Value<int> rowid,
 });
 typedef $$SupervisorsTableUpdateCompanionBuilder = SupervisorsCompanion
     Function({
   Value<String> supervisorId,
-  Value<String> fullName,
-  Value<String> contactInfo,
-  Value<String> location,
+  Value<String> firstName,
+  Value<String> lastName,
+  Value<String> familyName,
+  Value<String> phoneNumber,
+  Value<String?> email,
+  Value<String?> alternateContact,
+  Value<String> address,
+  Value<String> city,
+  Value<String?> district,
+  Value<String> position,
+  Value<String?> organization,
+  Value<DateTime> dateJoined,
   Value<String> publicKey,
   Value<bool> active,
+  Value<String?> notes,
   Value<int> rowid,
 });
 
@@ -4783,20 +5226,51 @@ class $$SupervisorsTableFilterComposer
   ColumnFilters<String> get supervisorId => $composableBuilder(
       column: $table.supervisorId, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get fullName => $composableBuilder(
-      column: $table.fullName, builder: (column) => ColumnFilters(column));
+  ColumnFilters<String> get firstName => $composableBuilder(
+      column: $table.firstName, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get contactInfo => $composableBuilder(
-      column: $table.contactInfo, builder: (column) => ColumnFilters(column));
+  ColumnFilters<String> get lastName => $composableBuilder(
+      column: $table.lastName, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get location => $composableBuilder(
-      column: $table.location, builder: (column) => ColumnFilters(column));
+  ColumnFilters<String> get familyName => $composableBuilder(
+      column: $table.familyName, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get phoneNumber => $composableBuilder(
+      column: $table.phoneNumber, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get email => $composableBuilder(
+      column: $table.email, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get alternateContact => $composableBuilder(
+      column: $table.alternateContact,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get address => $composableBuilder(
+      column: $table.address, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get city => $composableBuilder(
+      column: $table.city, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get district => $composableBuilder(
+      column: $table.district, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get position => $composableBuilder(
+      column: $table.position, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get organization => $composableBuilder(
+      column: $table.organization, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get dateJoined => $composableBuilder(
+      column: $table.dateJoined, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get publicKey => $composableBuilder(
       column: $table.publicKey, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<bool> get active => $composableBuilder(
       column: $table.active, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get notes => $composableBuilder(
+      column: $table.notes, builder: (column) => ColumnFilters(column));
 
   Expression<bool> orphansRefs(
       Expression<bool> Function($$OrphansTableFilterComposer f) f) {
@@ -4833,20 +5307,52 @@ class $$SupervisorsTableOrderingComposer
       column: $table.supervisorId,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get fullName => $composableBuilder(
-      column: $table.fullName, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<String> get firstName => $composableBuilder(
+      column: $table.firstName, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get contactInfo => $composableBuilder(
-      column: $table.contactInfo, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<String> get lastName => $composableBuilder(
+      column: $table.lastName, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get location => $composableBuilder(
-      column: $table.location, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<String> get familyName => $composableBuilder(
+      column: $table.familyName, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get phoneNumber => $composableBuilder(
+      column: $table.phoneNumber, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get email => $composableBuilder(
+      column: $table.email, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get alternateContact => $composableBuilder(
+      column: $table.alternateContact,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get address => $composableBuilder(
+      column: $table.address, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get city => $composableBuilder(
+      column: $table.city, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get district => $composableBuilder(
+      column: $table.district, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get position => $composableBuilder(
+      column: $table.position, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get organization => $composableBuilder(
+      column: $table.organization,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get dateJoined => $composableBuilder(
+      column: $table.dateJoined, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get publicKey => $composableBuilder(
       column: $table.publicKey, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<bool> get active => $composableBuilder(
       column: $table.active, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get notes => $composableBuilder(
+      column: $table.notes, builder: (column) => ColumnOrderings(column));
 }
 
 class $$SupervisorsTableAnnotationComposer
@@ -4861,20 +5367,50 @@ class $$SupervisorsTableAnnotationComposer
   GeneratedColumn<String> get supervisorId => $composableBuilder(
       column: $table.supervisorId, builder: (column) => column);
 
-  GeneratedColumn<String> get fullName =>
-      $composableBuilder(column: $table.fullName, builder: (column) => column);
+  GeneratedColumn<String> get firstName =>
+      $composableBuilder(column: $table.firstName, builder: (column) => column);
 
-  GeneratedColumn<String> get contactInfo => $composableBuilder(
-      column: $table.contactInfo, builder: (column) => column);
+  GeneratedColumn<String> get lastName =>
+      $composableBuilder(column: $table.lastName, builder: (column) => column);
 
-  GeneratedColumn<String> get location =>
-      $composableBuilder(column: $table.location, builder: (column) => column);
+  GeneratedColumn<String> get familyName => $composableBuilder(
+      column: $table.familyName, builder: (column) => column);
+
+  GeneratedColumn<String> get phoneNumber => $composableBuilder(
+      column: $table.phoneNumber, builder: (column) => column);
+
+  GeneratedColumn<String> get email =>
+      $composableBuilder(column: $table.email, builder: (column) => column);
+
+  GeneratedColumn<String> get alternateContact => $composableBuilder(
+      column: $table.alternateContact, builder: (column) => column);
+
+  GeneratedColumn<String> get address =>
+      $composableBuilder(column: $table.address, builder: (column) => column);
+
+  GeneratedColumn<String> get city =>
+      $composableBuilder(column: $table.city, builder: (column) => column);
+
+  GeneratedColumn<String> get district =>
+      $composableBuilder(column: $table.district, builder: (column) => column);
+
+  GeneratedColumn<String> get position =>
+      $composableBuilder(column: $table.position, builder: (column) => column);
+
+  GeneratedColumn<String> get organization => $composableBuilder(
+      column: $table.organization, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get dateJoined => $composableBuilder(
+      column: $table.dateJoined, builder: (column) => column);
 
   GeneratedColumn<String> get publicKey =>
       $composableBuilder(column: $table.publicKey, builder: (column) => column);
 
   GeneratedColumn<bool> get active =>
       $composableBuilder(column: $table.active, builder: (column) => column);
+
+  GeneratedColumn<String> get notes =>
+      $composableBuilder(column: $table.notes, builder: (column) => column);
 
   Expression<T> orphansRefs<T extends Object>(
       Expression<T> Function($$OrphansTableAnnotationComposer a) f) {
@@ -4922,38 +5458,78 @@ class $$SupervisorsTableTableManager extends RootTableManager<
               $$SupervisorsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback: ({
             Value<String> supervisorId = const Value.absent(),
-            Value<String> fullName = const Value.absent(),
-            Value<String> contactInfo = const Value.absent(),
-            Value<String> location = const Value.absent(),
+            Value<String> firstName = const Value.absent(),
+            Value<String> lastName = const Value.absent(),
+            Value<String> familyName = const Value.absent(),
+            Value<String> phoneNumber = const Value.absent(),
+            Value<String?> email = const Value.absent(),
+            Value<String?> alternateContact = const Value.absent(),
+            Value<String> address = const Value.absent(),
+            Value<String> city = const Value.absent(),
+            Value<String?> district = const Value.absent(),
+            Value<String> position = const Value.absent(),
+            Value<String?> organization = const Value.absent(),
+            Value<DateTime> dateJoined = const Value.absent(),
             Value<String> publicKey = const Value.absent(),
             Value<bool> active = const Value.absent(),
+            Value<String?> notes = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               SupervisorsCompanion(
             supervisorId: supervisorId,
-            fullName: fullName,
-            contactInfo: contactInfo,
-            location: location,
+            firstName: firstName,
+            lastName: lastName,
+            familyName: familyName,
+            phoneNumber: phoneNumber,
+            email: email,
+            alternateContact: alternateContact,
+            address: address,
+            city: city,
+            district: district,
+            position: position,
+            organization: organization,
+            dateJoined: dateJoined,
             publicKey: publicKey,
             active: active,
+            notes: notes,
             rowid: rowid,
           ),
           createCompanionCallback: ({
             Value<String> supervisorId = const Value.absent(),
-            required String fullName,
-            required String contactInfo,
-            required String location,
+            required String firstName,
+            required String lastName,
+            required String familyName,
+            required String phoneNumber,
+            Value<String?> email = const Value.absent(),
+            Value<String?> alternateContact = const Value.absent(),
+            required String address,
+            required String city,
+            Value<String?> district = const Value.absent(),
+            required String position,
+            Value<String?> organization = const Value.absent(),
+            Value<DateTime> dateJoined = const Value.absent(),
             required String publicKey,
             Value<bool> active = const Value.absent(),
+            Value<String?> notes = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               SupervisorsCompanion.insert(
             supervisorId: supervisorId,
-            fullName: fullName,
-            contactInfo: contactInfo,
-            location: location,
+            firstName: firstName,
+            lastName: lastName,
+            familyName: familyName,
+            phoneNumber: phoneNumber,
+            email: email,
+            alternateContact: alternateContact,
+            address: address,
+            city: city,
+            district: district,
+            position: position,
+            organization: organization,
+            dateJoined: dateJoined,
             publicKey: publicKey,
             active: active,
+            notes: notes,
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
@@ -5004,7 +5580,8 @@ typedef $$SupervisorsTableProcessedTableManager = ProcessedTableManager<
 typedef $$OrphansTableCreateCompanionBuilder = OrphansCompanion Function({
   Value<String> orphanId,
   required String firstName,
-  required String lastName,
+  required String fatherName,
+  required String grandfatherName,
   required String familyName,
   required Gender gender,
   required DateTime dateOfBirth,
@@ -5091,14 +5668,14 @@ typedef $$OrphansTableCreateCompanionBuilder = OrphansCompanion Function({
   Value<String?> additionalNotes,
   Value<String?> urgentNeeds,
   Value<String?> specialCircumstances,
-  Value<String?> photoPath,
   Value<String?> documentsPath,
   Value<int> rowid,
 });
 typedef $$OrphansTableUpdateCompanionBuilder = OrphansCompanion Function({
   Value<String> orphanId,
   Value<String> firstName,
-  Value<String> lastName,
+  Value<String> fatherName,
+  Value<String> grandfatherName,
   Value<String> familyName,
   Value<Gender> gender,
   Value<DateTime> dateOfBirth,
@@ -5185,7 +5762,6 @@ typedef $$OrphansTableUpdateCompanionBuilder = OrphansCompanion Function({
   Value<String?> additionalNotes,
   Value<String?> urgentNeeds,
   Value<String?> specialCircumstances,
-  Value<String?> photoPath,
   Value<String?> documentsPath,
   Value<int> rowid,
 });
@@ -5224,8 +5800,12 @@ class $$OrphansTableFilterComposer extends Composer<_$AppDb, $OrphansTable> {
   ColumnFilters<String> get firstName => $composableBuilder(
       column: $table.firstName, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get lastName => $composableBuilder(
-      column: $table.lastName, builder: (column) => ColumnFilters(column));
+  ColumnFilters<String> get fatherName => $composableBuilder(
+      column: $table.fatherName, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get grandfatherName => $composableBuilder(
+      column: $table.grandfatherName,
+      builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get familyName => $composableBuilder(
       column: $table.familyName, builder: (column) => ColumnFilters(column));
@@ -5550,9 +6130,6 @@ class $$OrphansTableFilterComposer extends Composer<_$AppDb, $OrphansTable> {
       column: $table.specialCircumstances,
       builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get photoPath => $composableBuilder(
-      column: $table.photoPath, builder: (column) => ColumnFilters(column));
-
   ColumnFilters<String> get documentsPath => $composableBuilder(
       column: $table.documentsPath, builder: (column) => ColumnFilters(column));
 
@@ -5591,8 +6168,12 @@ class $$OrphansTableOrderingComposer extends Composer<_$AppDb, $OrphansTable> {
   ColumnOrderings<String> get firstName => $composableBuilder(
       column: $table.firstName, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get lastName => $composableBuilder(
-      column: $table.lastName, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<String> get fatherName => $composableBuilder(
+      column: $table.fatherName, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get grandfatherName => $composableBuilder(
+      column: $table.grandfatherName,
+      builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get familyName => $composableBuilder(
       column: $table.familyName, builder: (column) => ColumnOrderings(column));
@@ -5912,9 +6493,6 @@ class $$OrphansTableOrderingComposer extends Composer<_$AppDb, $OrphansTable> {
       column: $table.specialCircumstances,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get photoPath => $composableBuilder(
-      column: $table.photoPath, builder: (column) => ColumnOrderings(column));
-
   ColumnOrderings<String> get documentsPath => $composableBuilder(
       column: $table.documentsPath,
       builder: (column) => ColumnOrderings(column));
@@ -5955,8 +6533,11 @@ class $$OrphansTableAnnotationComposer
   GeneratedColumn<String> get firstName =>
       $composableBuilder(column: $table.firstName, builder: (column) => column);
 
-  GeneratedColumn<String> get lastName =>
-      $composableBuilder(column: $table.lastName, builder: (column) => column);
+  GeneratedColumn<String> get fatherName => $composableBuilder(
+      column: $table.fatherName, builder: (column) => column);
+
+  GeneratedColumn<String> get grandfatherName => $composableBuilder(
+      column: $table.grandfatherName, builder: (column) => column);
 
   GeneratedColumn<String> get familyName => $composableBuilder(
       column: $table.familyName, builder: (column) => column);
@@ -6219,9 +6800,6 @@ class $$OrphansTableAnnotationComposer
   GeneratedColumn<String> get specialCircumstances => $composableBuilder(
       column: $table.specialCircumstances, builder: (column) => column);
 
-  GeneratedColumn<String> get photoPath =>
-      $composableBuilder(column: $table.photoPath, builder: (column) => column);
-
   GeneratedColumn<String> get documentsPath => $composableBuilder(
       column: $table.documentsPath, builder: (column) => column);
 
@@ -6271,7 +6849,8 @@ class $$OrphansTableTableManager extends RootTableManager<
           updateCompanionCallback: ({
             Value<String> orphanId = const Value.absent(),
             Value<String> firstName = const Value.absent(),
-            Value<String> lastName = const Value.absent(),
+            Value<String> fatherName = const Value.absent(),
+            Value<String> grandfatherName = const Value.absent(),
             Value<String> familyName = const Value.absent(),
             Value<Gender> gender = const Value.absent(),
             Value<DateTime> dateOfBirth = const Value.absent(),
@@ -6359,14 +6938,14 @@ class $$OrphansTableTableManager extends RootTableManager<
             Value<String?> additionalNotes = const Value.absent(),
             Value<String?> urgentNeeds = const Value.absent(),
             Value<String?> specialCircumstances = const Value.absent(),
-            Value<String?> photoPath = const Value.absent(),
             Value<String?> documentsPath = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               OrphansCompanion(
             orphanId: orphanId,
             firstName: firstName,
-            lastName: lastName,
+            fatherName: fatherName,
+            grandfatherName: grandfatherName,
             familyName: familyName,
             gender: gender,
             dateOfBirth: dateOfBirth,
@@ -6453,14 +7032,14 @@ class $$OrphansTableTableManager extends RootTableManager<
             additionalNotes: additionalNotes,
             urgentNeeds: urgentNeeds,
             specialCircumstances: specialCircumstances,
-            photoPath: photoPath,
             documentsPath: documentsPath,
             rowid: rowid,
           ),
           createCompanionCallback: ({
             Value<String> orphanId = const Value.absent(),
             required String firstName,
-            required String lastName,
+            required String fatherName,
+            required String grandfatherName,
             required String familyName,
             required Gender gender,
             required DateTime dateOfBirth,
@@ -6548,14 +7127,14 @@ class $$OrphansTableTableManager extends RootTableManager<
             Value<String?> additionalNotes = const Value.absent(),
             Value<String?> urgentNeeds = const Value.absent(),
             Value<String?> specialCircumstances = const Value.absent(),
-            Value<String?> photoPath = const Value.absent(),
             Value<String?> documentsPath = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               OrphansCompanion.insert(
             orphanId: orphanId,
             firstName: firstName,
-            lastName: lastName,
+            fatherName: fatherName,
+            grandfatherName: grandfatherName,
             familyName: familyName,
             gender: gender,
             dateOfBirth: dateOfBirth,
@@ -6642,7 +7221,6 @@ class $$OrphansTableTableManager extends RootTableManager<
             additionalNotes: additionalNotes,
             urgentNeeds: urgentNeeds,
             specialCircumstances: specialCircumstances,
-            photoPath: photoPath,
             documentsPath: documentsPath,
             rowid: rowid,
           ),

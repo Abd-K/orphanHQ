@@ -21,7 +21,7 @@ class SupervisorOrphansPage extends StatelessWidget {
       ),
       body: Column(
         children: [
-          // Supervisor info card
+          // Supervisor Info Card
           FutureBuilder<List<Supervisor>>(
             future: supervisorRepository.getAllSupervisors(),
             builder: (context, snapshot) {
@@ -31,19 +31,21 @@ class SupervisorOrphansPage extends StatelessWidget {
               if (supervisor == null) return const SizedBox.shrink();
 
               return Card(
-                margin: const EdgeInsets.all(8.0),
-                color: Colors.blue[50],
+                margin: const EdgeInsets.all(16.0),
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        supervisor.fullName,
-                        style: Theme.of(context).textTheme.titleLarge,
+                        SupervisorRepository.getFullName(supervisor),
+                        style: Theme.of(context).textTheme.headlineSmall,
                       ),
-                      Text('Contact: ${supervisor.contactInfo}'),
-                      Text('Location: ${supervisor.location}'),
+                      const SizedBox(height: 8),
+                      Text(
+                          'Contact: ${SupervisorRepository.getContactInfo(supervisor)}'),
+                      Text(
+                          'Location: ${SupervisorRepository.getLocation(supervisor)}'),
                     ],
                   ),
                 ),
@@ -70,7 +72,8 @@ class SupervisorOrphansPage extends StatelessWidget {
                     return Card(
                       margin: const EdgeInsets.all(8.0),
                       child: ListTile(
-                        title: Text('${orphan.firstName} ${orphan.lastName}'),
+                        title: Text(
+                            '${orphan.firstName} ${orphan.fatherName} ${orphan.grandfatherName} ${orphan.familyName}'),
                         subtitle: Text(
                             'Status: ${orphan.status.toString().split('.').last}'),
                         onTap: () {
