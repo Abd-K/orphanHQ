@@ -20,12 +20,29 @@ class OrphanRepository {
         .watch();
   }
 
+  Stream<List<Orphan>> getOrphansBySupervisor(String supervisorId) {
+    return (_db.select(_db.orphans)
+          ..where((tbl) => tbl.supervisorId.equals(supervisorId)))
+        .watch();
+  }
+
   Future<void> updateOrphanStatus(String orphanId, OrphanStatus status) {
     return (_db.update(_db.orphans)
           ..where((tbl) => tbl.orphanId.equals(orphanId)))
         .write(
       OrphansCompanion(
         status: drift.Value(status),
+      ),
+    );
+  }
+
+  Future<void> updateOrphanSupervisor(String orphanId, String newSupervisorId) {
+    return (_db.update(_db.orphans)
+          ..where((tbl) => tbl.orphanId.equals(orphanId)))
+        .write(
+      OrphansCompanion(
+        supervisorId: drift.Value(newSupervisorId),
+        lastUpdated: drift.Value(DateTime.now()),
       ),
     );
   }
