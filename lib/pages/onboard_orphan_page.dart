@@ -20,7 +20,7 @@ class _OnboardOrphanPageState extends State<OnboardOrphanPage> {
 
   // Basic Details Controllers - 4-part Arabic naming
   final _firstNameController = TextEditingController();
-  final _orphanFatherNameController = TextEditingController();
+
   final _grandfatherNameController = TextEditingController();
   final _familyNameController = TextEditingController();
   final _dayController = TextEditingController();
@@ -86,6 +86,18 @@ class _OnboardOrphanPageState extends State<OnboardOrphanPage> {
   // Additional Info Controllers
   final _additionalNotesController = TextEditingController();
   final _urgentNeedsController = TextEditingController();
+
+  // Additional Comments Controllers for each section
+  final _orphanDetailsCommentsController = TextEditingController();
+  final _fatherDetailsCommentsController = TextEditingController();
+  final _motherDetailsCommentsController = TextEditingController();
+  final _carerDetailsCommentsController = TextEditingController();
+  final _educationCommentsController = TextEditingController();
+  final _healthCommentsController = TextEditingController();
+  final _accommodationCommentsController = TextEditingController();
+  final _islamicEducationCommentsController = TextEditingController();
+  final _hobbiesCommentsController = TextEditingController();
+  final _siblingsCommentsController = TextEditingController();
 
   // Document attachments management - specific documents
   File? _birthCertificatePhoto;
@@ -178,7 +190,7 @@ class _OnboardOrphanPageState extends State<OnboardOrphanPage> {
         ),
         const SizedBox(height: 16),
         TextFormField(
-          controller: _orphanFatherNameController,
+          controller: _fatherNameController,
           decoration: const InputDecoration(labelText: "Father's Name *"),
           validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
         ),
@@ -218,6 +230,12 @@ class _OnboardOrphanPageState extends State<OnboardOrphanPage> {
             );
           }).toList(),
           onChanged: (value) => setState(() => _selectedStatus = value!),
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _orphanDetailsCommentsController,
+          decoration: const InputDecoration(labelText: 'Additional Comments'),
+          maxLines: 3,
         ),
       ],
     );
@@ -259,6 +277,12 @@ class _OnboardOrphanPageState extends State<OnboardOrphanPage> {
         TextFormField(
           controller: _fatherOccupationController,
           decoration: const InputDecoration(labelText: 'Occupation'),
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _fatherDetailsCommentsController,
+          decoration: const InputDecoration(labelText: 'Additional Comments'),
+          maxLines: 3,
         ),
       ],
     );
@@ -313,6 +337,12 @@ class _OnboardOrphanPageState extends State<OnboardOrphanPage> {
           controller: _motherOccupationController,
           decoration: const InputDecoration(labelText: 'Occupation'),
         ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _motherDetailsCommentsController,
+          decoration: const InputDecoration(labelText: 'Additional Comments'),
+          maxLines: 3,
+        ),
       ],
     );
   }
@@ -341,6 +371,12 @@ class _OnboardOrphanPageState extends State<OnboardOrphanPage> {
           controller: _carerAddressController,
           decoration: const InputDecoration(labelText: 'Address'),
           maxLines: 2,
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _carerDetailsCommentsController,
+          decoration: const InputDecoration(labelText: 'Additional Comments'),
+          maxLines: 3,
         ),
       ],
     );
@@ -388,6 +424,12 @@ class _OnboardOrphanPageState extends State<OnboardOrphanPage> {
           onChanged: (value) =>
               setState(() => _needsEducationalSupport = value),
         ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _educationCommentsController,
+          decoration: const InputDecoration(labelText: 'Additional Comments'),
+          maxLines: 3,
+        ),
       ],
     );
   }
@@ -434,6 +476,12 @@ class _OnboardOrphanPageState extends State<OnboardOrphanPage> {
           ],
           onChanged: (value) => setState(() => _needsMedicalSupport = value),
         ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _healthCommentsController,
+          decoration: const InputDecoration(labelText: 'Additional Comments'),
+          maxLines: 3,
+        ),
       ],
     );
   }
@@ -474,6 +522,12 @@ class _OnboardOrphanPageState extends State<OnboardOrphanPage> {
           ],
           onChanged: (value) => setState(() => _needsHousingSupport = value),
         ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _accommodationCommentsController,
+          decoration: const InputDecoration(labelText: 'Additional Comments'),
+          maxLines: 3,
+        ),
       ],
     );
   }
@@ -504,6 +558,12 @@ class _OnboardOrphanPageState extends State<OnboardOrphanPage> {
           decoration:
               const InputDecoration(labelText: 'Islamic Education Level'),
         ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _islamicEducationCommentsController,
+          decoration: const InputDecoration(labelText: 'Additional Comments'),
+          maxLines: 3,
+        ),
       ],
     );
   }
@@ -529,6 +589,12 @@ class _OnboardOrphanPageState extends State<OnboardOrphanPage> {
           decoration: const InputDecoration(labelText: 'Aspirations & Dreams'),
           maxLines: 2,
         ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _hobbiesCommentsController,
+          decoration: const InputDecoration(labelText: 'Additional Comments'),
+          maxLines: 3,
+        ),
       ],
     );
   }
@@ -548,6 +614,12 @@ class _OnboardOrphanPageState extends State<OnboardOrphanPage> {
           controller: _siblingsDetailsController,
           decoration: const InputDecoration(
               labelText: 'Siblings Details (names, ages, status)'),
+          maxLines: 3,
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _siblingsCommentsController,
+          decoration: const InputDecoration(labelText: 'Additional Comments'),
           maxLines: 3,
         ),
       ],
@@ -1215,7 +1287,7 @@ class _OnboardOrphanPageState extends State<OnboardOrphanPage> {
 
       final newOrphan = OrphansCompanion.insert(
         firstName: _firstNameController.text,
-        fatherName: _orphanFatherNameController.text,
+        fatherName: _fatherNameController.text,
         grandfatherName: _grandfatherNameController.text,
         familyName: _familyNameController.text.isEmpty
             ? 'Unknown'

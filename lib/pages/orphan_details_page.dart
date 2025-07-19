@@ -1,8 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:orphan_hq/database.dart';
 import 'package:orphan_hq/repositories/orphan_repository.dart';
 import 'package:orphan_hq/repositories/supervisor_repository.dart';
+import 'package:orphan_hq/services/image_service.dart';
 import 'package:provider/provider.dart';
 import 'package:drift/drift.dart' as drift;
 
@@ -18,6 +20,9 @@ class OrphanDetailsPage extends StatefulWidget {
 class _OrphanDetailsPageState extends State<OrphanDetailsPage> {
   // Track which sections are in edit mode
   final Map<String, bool> _editingSections = {};
+
+  // Scroll controller to maintain position
+  final ScrollController _scrollController = ScrollController();
 
   // Check if we're in add mode (no orphanId provided)
   bool get isAddMode => widget.orphanId == null;
@@ -97,6 +102,39 @@ class _OrphanDetailsPageState extends State<OrphanDetailsPage> {
   final TextEditingController _specialCircumstancesController =
       TextEditingController();
 
+  // Additional Comments Controllers for each section
+  final TextEditingController _orphanDetailsCommentsController =
+      TextEditingController();
+  final TextEditingController _fatherDetailsCommentsController =
+      TextEditingController();
+  final TextEditingController _motherDetailsCommentsController =
+      TextEditingController();
+  final TextEditingController _carerDetailsCommentsController =
+      TextEditingController();
+  final TextEditingController _educationCommentsController =
+      TextEditingController();
+  final TextEditingController _healthCommentsController =
+      TextEditingController();
+  final TextEditingController _accommodationCommentsController =
+      TextEditingController();
+  final TextEditingController _islamicEducationCommentsController =
+      TextEditingController();
+  final TextEditingController _hobbiesCommentsController =
+      TextEditingController();
+  final TextEditingController _siblingsCommentsController =
+      TextEditingController();
+
+  // Document attachment variables
+  File? _birthCertificatePhoto;
+  File? _deathCertificatePhoto;
+  File? _orphanIdPhoto;
+  File? _fatherIdPhoto;
+  File? _motherIdPhoto;
+  File? _familyIdPhoto;
+  File? _passportPhoto;
+  File? _recentPhoto;
+  List<File> _additionalDocuments = [];
+
   Gender? _selectedGender;
   OrphanStatus? _selectedStatus;
   DateTime? _selectedBirthDate;
@@ -165,6 +203,9 @@ class _OrphanDetailsPageState extends State<OrphanDetailsPage> {
     _medicalConditionsController.dispose();
     _medicationsController.dispose();
 
+    // Scroll controller
+    _scrollController.dispose();
+
     super.dispose();
   }
 
@@ -178,7 +219,9 @@ class _OrphanDetailsPageState extends State<OrphanDetailsPage> {
     _selectedStatus = orphan.status;
 
     // Family info
-    _fatherFirstNameController.text = orphan.fatherFirstName ?? '';
+    _fatherNameController.text = orphan.fatherName ?? '';
+    _fatherFirstNameController.text =
+        orphan.fatherName ?? ''; // Sync with fatherName
     _fatherCauseOfDeathController.text = orphan.fatherCauseOfDeath ?? '';
     _fatherWorkController.text = orphan.fatherWork ?? '';
     _motherFirstNameController.text = orphan.motherFirstName ?? '';
@@ -204,7 +247,7 @@ class _OrphanDetailsPageState extends State<OrphanDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final orphanRepository = context.watch<OrphanRepository>();
+    final orphanRepository = context.read<OrphanRepository>();
     final supervisorRepository = context.read<SupervisorRepository>();
 
     if (isAddMode) {
@@ -257,11 +300,12 @@ class _OrphanDetailsPageState extends State<OrphanDetailsPage> {
                   .firstOrNull;
 
               return SingleChildScrollView(
+                controller: _scrollController,
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Basic Information Section
+                    // Orphan Details Section
                     _buildEditableSection(
                       'basic',
                       'Orphan Details',
@@ -273,13 +317,37 @@ class _OrphanDetailsPageState extends State<OrphanDetailsPage> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Family Information Section
+                    // Father Details Section
                     _buildEditableSection(
-                      'family',
-                      'Family Information',
+                      'father',
+                      'Father Details',
                       Icons.family_restroom,
-                      () => _buildFamilyInfoView(orphan),
-                      () => _buildFamilyInfoEdit(orphan),
+                      () => _buildFatherDetailsView(orphan),
+                      () => _buildFatherDetailsEdit(orphan),
+                      orphan,
+                      orphanRepository,
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Mother Details Section
+                    _buildEditableSection(
+                      'mother',
+                      'Mother Details',
+                      Icons.family_restroom,
+                      () => _buildMotherDetailsView(orphan),
+                      () => _buildMotherDetailsEdit(orphan),
+                      orphan,
+                      orphanRepository,
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Carer Details Section
+                    _buildEditableSection(
+                      'carer',
+                      'Carer Details',
+                      Icons.family_restroom,
+                      () => _buildCarerDetailsView(orphan),
+                      () => _buildCarerDetailsEdit(orphan),
                       orphan,
                       orphanRepository,
                     ),
@@ -291,7 +359,7 @@ class _OrphanDetailsPageState extends State<OrphanDetailsPage> {
                       'Education',
                       Icons.school,
                       () => _buildEducationView(orphan),
-                      () => _buildEducationInfoEdit(orphan),
+                      () => _buildEducationEdit(orphan),
                       orphan,
                       orphanRepository,
                     ),
@@ -300,22 +368,10 @@ class _OrphanDetailsPageState extends State<OrphanDetailsPage> {
                     // Health Section
                     _buildEditableSection(
                       'health',
-                      'Health Information',
+                      'Health',
                       Icons.health_and_safety,
                       () => _buildHealthView(orphan),
-                      () => _buildHealthInfoEdit(orphan),
-                      orphan,
-                      orphanRepository,
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Current Address Section
-                    _buildEditableSection(
-                      'address',
-                      'Current Address',
-                      Icons.location_on,
-                      () => _buildAddressView(orphan),
-                      () => _buildAddressEdit(orphan),
+                      () => _buildHealthEdit(orphan),
                       orphan,
                       orphanRepository,
                     ),
@@ -324,7 +380,7 @@ class _OrphanDetailsPageState extends State<OrphanDetailsPage> {
                     // Accommodation Section
                     _buildEditableSection(
                       'accommodation',
-                      'Living Conditions',
+                      'Accommodation',
                       Icons.home,
                       () => _buildAccommodationView(orphan),
                       () => _buildAccommodationEdit(orphan),
@@ -333,13 +389,25 @@ class _OrphanDetailsPageState extends State<OrphanDetailsPage> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Islamic Education & Personal Development
+                    // Islamic Education Section
                     _buildEditableSection(
                       'islamic',
-                      'Islamic Education & Personal Development',
+                      'Islamic Education',
                       Icons.mosque,
-                      () => _buildIslamicView(orphan),
-                      () => _buildIslamicEdit(orphan),
+                      () => _buildIslamicEducationView(orphan),
+                      () => _buildIslamicEducationEdit(orphan),
+                      orphan,
+                      orphanRepository,
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Hobbies Section
+                    _buildEditableSection(
+                      'hobbies',
+                      'Hobbies',
+                      Icons.sports_esports,
+                      () => _buildHobbiesView(orphan),
+                      () => _buildHobbiesEdit(orphan),
                       orphan,
                       orphanRepository,
                     ),
@@ -348,7 +416,7 @@ class _OrphanDetailsPageState extends State<OrphanDetailsPage> {
                     // Siblings Section
                     _buildEditableSection(
                       'siblings',
-                      'Siblings Information',
+                      'Siblings',
                       Icons.people,
                       () => _buildSiblingsView(orphan),
                       () => _buildSiblingsEdit(orphan),
@@ -357,13 +425,26 @@ class _OrphanDetailsPageState extends State<OrphanDetailsPage> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Additional Information Section
+                    // Additional Info Section
                     _buildEditableSection(
                       'additional',
-                      'Additional Information',
+                      'Additional Info',
                       Icons.note_add,
-                      () => _buildAdditionalView(orphan),
-                      () => _buildAdditionalEdit(orphan),
+                      () => _buildAdditionalInfoView(orphan),
+                      () => _buildAdditionalInfoEdit(orphan),
+                      orphan,
+                      orphanRepository,
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Documents & Attachments Section
+                    _buildEditableSection(
+                      'attachments',
+                      'Required Documents',
+                      Icons.attach_file,
+                      () => _buildAttachmentsView(orphan),
+                      () => _buildAttachmentsView(
+                          orphan), // Same for view and edit
                       orphan,
                       orphanRepository,
                     ),
@@ -374,6 +455,247 @@ class _OrphanDetailsPageState extends State<OrphanDetailsPage> {
           );
         },
       ),
+    );
+  }
+
+  void _toggleSection(String sectionKey) {
+    setState(() {
+      _editingSections[sectionKey] = !(_editingSections[sectionKey] ?? false);
+    });
+  }
+
+  // Placeholder methods for the new section structure
+  Widget _buildFatherDetailsEdit(Orphan orphan) => _buildFatherInfoEdit(orphan);
+  Widget _buildFatherDetailsView(Orphan orphan) => _buildFatherInfoView(orphan);
+  Widget _buildMotherDetailsEdit(Orphan orphan) => _buildMotherInfoEdit(orphan);
+  Widget _buildMotherDetailsView(Orphan orphan) => _buildMotherInfoView(orphan);
+  Widget _buildCarerDetailsEdit(Orphan orphan) => _buildCarerInfoEdit(orphan);
+  Widget _buildCarerDetailsView(Orphan orphan) => _buildCarerInfoView(orphan);
+  Widget _buildEducationEdit(Orphan orphan) => _buildEducationInfoEdit(orphan);
+  Widget _buildHealthEdit(Orphan orphan) => _buildHealthInfoEdit(orphan);
+  Widget _buildIslamicEducationEdit(Orphan orphan) => _buildIslamicEdit(orphan);
+  Widget _buildIslamicEducationView(Orphan orphan) => _buildIslamicView(orphan);
+  Widget _buildHobbiesEdit(Orphan orphan) => _buildHobbiesInfoEdit(orphan);
+  Widget _buildHobbiesView(Orphan orphan) => _buildHobbiesInfoView(orphan);
+  Widget _buildAdditionalInfoEdit(Orphan orphan) =>
+      _buildAdditionalEdit(orphan);
+  Widget _buildAdditionalInfoView(Orphan orphan) =>
+      _buildAdditionalView(orphan);
+  Widget _buildAttachmentsView(Orphan orphan) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.only(bottom: 16.0),
+          child: Text(
+            'Please attach photos of the following documents:',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+
+        // Birth Certificate of Orphan
+        _buildDocumentAttachment(
+          title: 'Birth Certificate of Orphan',
+          subtitle: 'Official birth certificate document',
+          icon: Icons.child_care,
+          photo: _birthCertificatePhoto,
+          onSelect: () => _selectDocumentPhoto('birth_certificate'),
+          onRemove: () => _removeDocumentPhoto('birth_certificate'),
+          isRequired: true,
+        ),
+
+        // Death Certificate of Father
+        _buildDocumentAttachment(
+          title: 'Death Certificate of Father',
+          subtitle: 'Official death certificate document',
+          icon: Icons.person_off,
+          photo: _deathCertificatePhoto,
+          onSelect: () => _selectDocumentPhoto('death_certificate'),
+          onRemove: () => _removeDocumentPhoto('death_certificate'),
+          isRequired: true,
+        ),
+
+        // ID Card of Orphan
+        _buildDocumentAttachment(
+          title: 'ID Card or Other for Orphan',
+          subtitle: 'Identity document, passport, or similar',
+          icon: Icons.badge,
+          photo: _orphanIdPhoto,
+          onSelect: () => _selectDocumentPhoto('orphan_id'),
+          onRemove: () => _removeDocumentPhoto('orphan_id'),
+          isRequired: true,
+        ),
+
+        // ID Card of Father
+        _buildDocumentAttachment(
+          title: 'ID Card or Other for Father',
+          subtitle: 'Father\'s identity document',
+          icon: Icons.badge_outlined,
+          photo: _fatherIdPhoto,
+          onSelect: () => _selectDocumentPhoto('father_id'),
+          onRemove: () => _removeDocumentPhoto('father_id'),
+          isRequired: true,
+        ),
+
+        // ID Card of Mother
+        _buildDocumentAttachment(
+          title: 'ID Card or Other for Mother',
+          subtitle: 'Mother\'s identity document',
+          icon: Icons.badge_outlined,
+          photo: _motherIdPhoto,
+          onSelect: () => _selectDocumentPhoto('mother_id'),
+          onRemove: () => _removeDocumentPhoto('mother_id'),
+          isRequired: true,
+        ),
+
+        // ID Card of Family
+        _buildDocumentAttachment(
+          title: 'ID Card or Other for Family',
+          subtitle: 'Family member or guardian identity document',
+          icon: Icons.family_restroom,
+          photo: _familyIdPhoto,
+          onSelect: () => _selectDocumentPhoto('family_id'),
+          onRemove: () => _removeDocumentPhoto('family_id'),
+          isRequired: true,
+        ),
+
+        // Passport Photo of Orphan
+        _buildDocumentAttachment(
+          title: 'Passport Photo of Orphan',
+          subtitle: 'Official passport-style photo',
+          icon: Icons.portrait,
+          photo: _passportPhoto,
+          onSelect: () => _selectDocumentPhoto('passport_photo'),
+          onRemove: () => _removeDocumentPhoto('passport_photo'),
+          isRequired: true,
+        ),
+
+        // Recent Photo of Orphan
+        _buildDocumentAttachment(
+          title: 'Recent Photo of Orphan',
+          subtitle: 'Current photo for identification',
+          icon: Icons.photo_camera,
+          photo: _recentPhoto,
+          onSelect: () => _selectDocumentPhoto('recent_photo'),
+          onRemove: () => _removeDocumentPhoto('recent_photo'),
+          isRequired: true,
+        ),
+
+        // Additional Documents
+        Card(
+          elevation: 1,
+          margin: const EdgeInsets.only(bottom: 12),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.add_photo_alternate,
+                        color: Colors.blue.shade600),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Additional Documents',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                            ),
+                          ),
+                          Text(
+                            'Any other supporting documents (optional)',
+                            style: TextStyle(
+                              color: Colors.grey,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // Additional documents list
+                if (_additionalDocuments.isNotEmpty) ...[
+                  SizedBox(
+                    height: 80,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _additionalDocuments.length,
+                      itemBuilder: (context, index) {
+                        return Container(
+                          width: 60,
+                          margin: const EdgeInsets.only(right: 8),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey.shade300),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Stack(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.file(
+                                  _additionalDocuments[index],
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                ),
+                              ),
+                              Positioned(
+                                top: 2,
+                                right: 2,
+                                child: GestureDetector(
+                                  onTap: () => _removeAdditionalDocument(index),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(2),
+                                    decoration: const BoxDecoration(
+                                      color: Colors.red,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.close,
+                                      color: Colors.white,
+                                      size: 12,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+
+                // Add additional document button
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: _selectAdditionalDocument,
+                    icon: const Icon(Icons.add_photo_alternate),
+                    label: const Text('Add Additional Document'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.blue.shade600,
+                      side: BorderSide(color: Colors.blue.shade600),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -458,8 +780,19 @@ class _OrphanDetailsPageState extends State<OrphanDetailsPage> {
   }
 
   void _startEdit(String sectionKey) {
+    final currentPosition = _scrollController.position.pixels;
     setState(() {
       _editingSections[sectionKey] = true;
+    });
+    // Restore scroll position after rebuild with a small delay
+    Future.delayed(const Duration(milliseconds: 50), () {
+      if (_scrollController.hasClients && mounted) {
+        _scrollController.animateTo(
+          currentPosition,
+          duration: const Duration(milliseconds: 100),
+          curve: Curves.easeInOut,
+        );
+      }
     });
   }
 
@@ -471,34 +804,69 @@ class _OrphanDetailsPageState extends State<OrphanDetailsPage> {
 
   Future<void> _saveSection(
       String sectionKey, Orphan orphan, OrphanRepository repository) async {
-    switch (sectionKey) {
-      case 'basic':
-        await _saveBasicInfo(orphan, repository);
-        break;
-      case 'family':
-        await _saveFamilyInfo(orphan, repository);
-        break;
-      case 'education':
-        await _saveEducationInfo(orphan, repository);
-        break;
-      case 'health':
-        await _saveHealthInfo(orphan, repository);
-        break;
-      case 'address':
-        await _saveAddressInfo(orphan, repository);
-        break;
-      case 'accommodation':
-        await _saveAccommodationInfo(orphan, repository);
-        break;
-      case 'islamic':
-        await _saveIslamicInfo(orphan, repository);
-        break;
-      case 'siblings':
-        await _saveSiblingsInfo(orphan, repository);
-        break;
-      case 'additional':
-        await _saveAdditionalInfo(orphan, repository);
-        break;
+    try {
+      print('Saving section: $sectionKey'); // Debug log
+      switch (sectionKey) {
+        case 'basic':
+          await _saveBasicInfo(orphan, repository);
+          break;
+        case 'father':
+          await _saveFatherInfo(orphan, repository);
+          break;
+        case 'mother':
+          await _saveMotherInfo(orphan, repository);
+          break;
+        case 'carer':
+          await _saveCarerInfo(orphan, repository);
+          break;
+        case 'education':
+          await _saveEducationInfo(orphan, repository);
+          break;
+        case 'health':
+          await _saveHealthInfo(orphan, repository);
+          break;
+        case 'address':
+          await _saveAddressInfo(orphan, repository);
+          break;
+        case 'accommodation':
+          await _saveAccommodationInfo(orphan, repository);
+          break;
+        case 'islamic':
+          await _saveIslamicInfo(orphan, repository);
+          break;
+        case 'hobbies':
+          await _saveHobbiesInfo(orphan, repository);
+          break;
+        case 'siblings':
+          await _saveSiblingsInfo(orphan, repository);
+          break;
+        case 'additional':
+          await _saveAdditionalInfo(orphan, repository);
+          break;
+        case 'attachments':
+          await _saveAttachmentsInfo(orphan, repository);
+          break;
+        default:
+          print('Unknown section key: $sectionKey'); // Debug log
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Unknown section: $sectionKey'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+      }
+    } catch (e) {
+      print('Error in _saveSection: $e'); // Debug log
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error saving section: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -509,6 +877,9 @@ class _OrphanDetailsPageState extends State<OrphanDetailsPage> {
         orphanId: drift.Value(orphan.orphanId),
         firstName: drift.Value(_firstNameController.text),
         fatherName: drift.Value(_fatherNameController.text),
+        fatherFirstName: drift.Value(_fatherNameController.text.isEmpty
+            ? null
+            : _fatherNameController.text),
         grandfatherName: drift.Value(_grandfatherNameController.text),
         familyName: drift.Value(_familyNameController.text),
         gender: drift.Value(_selectedGender!),
@@ -542,14 +913,15 @@ class _OrphanDetailsPageState extends State<OrphanDetailsPage> {
     }
   }
 
-  Future<void> _saveFamilyInfo(
+  Future<void> _saveFatherInfo(
       Orphan orphan, OrphanRepository repository) async {
     try {
       final companion = OrphansCompanion(
         orphanId: drift.Value(orphan.orphanId),
-        fatherFirstName: drift.Value(_fatherFirstNameController.text.isEmpty
+        fatherName: drift.Value(_fatherNameController.text),
+        fatherFirstName: drift.Value(_fatherNameController.text.isEmpty
             ? null
-            : _fatherFirstNameController.text),
+            : _fatherNameController.text),
         fatherDateOfDeath: drift.Value(_fatherDateOfDeath),
         fatherCauseOfDeath: drift.Value(
             _fatherCauseOfDeathController.text.isEmpty
@@ -558,6 +930,40 @@ class _OrphanDetailsPageState extends State<OrphanDetailsPage> {
         fatherWork: drift.Value(_fatherWorkController.text.isEmpty
             ? null
             : _fatherWorkController.text),
+        lastUpdated: drift.Value(DateTime.now()),
+      );
+
+      await repository.updateOrphanWithCompanion(companion);
+
+      setState(() {
+        _editingSections['father'] = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Father information updated successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error updating father information: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _saveMotherInfo(
+      Orphan orphan, OrphanRepository repository) async {
+    try {
+      final companion = OrphansCompanion(
+        orphanId: drift.Value(orphan.orphanId),
         motherFirstName: drift.Value(_motherFirstNameController.text.isEmpty
             ? null
             : _motherFirstNameController.text),
@@ -570,6 +976,40 @@ class _OrphanDetailsPageState extends State<OrphanDetailsPage> {
         motherWork: drift.Value(_motherWorkController.text.isEmpty
             ? null
             : _motherWorkController.text),
+        lastUpdated: drift.Value(DateTime.now()),
+      );
+
+      await repository.updateOrphanWithCompanion(companion);
+
+      setState(() {
+        _editingSections['mother'] = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Mother information updated successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error updating mother information: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _saveCarerInfo(
+      Orphan orphan, OrphanRepository repository) async {
+    try {
+      final companion = OrphansCompanion(
+        orphanId: drift.Value(orphan.orphanId),
         guardianName: drift.Value(_guardianNameController.text.isEmpty
             ? null
             : _guardianNameController.text),
@@ -583,13 +1023,13 @@ class _OrphanDetailsPageState extends State<OrphanDetailsPage> {
       await repository.updateOrphanWithCompanion(companion);
 
       setState(() {
-        _editingSections['family'] = false;
+        _editingSections['carer'] = false;
       });
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Family information updated successfully'),
+            content: Text('Carer information updated successfully'),
             backgroundColor: Colors.green,
           ),
         );
@@ -598,7 +1038,7 @@ class _OrphanDetailsPageState extends State<OrphanDetailsPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error updating family information: $e'),
+            content: Text('Error updating carer information: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -782,6 +1222,63 @@ class _OrphanDetailsPageState extends State<OrphanDetailsPage> {
             });
           },
         ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _orphanDetailsCommentsController,
+          decoration: const InputDecoration(
+            labelText: 'Additional Comments',
+            border: OutlineInputBorder(),
+          ),
+          maxLines: 3,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFatherInfoView(Orphan orphan) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildDetailRow('Father\'s Name', orphan.fatherName ?? 'Not specified'),
+        if (orphan.fatherDateOfDeath != null)
+          _buildDetailRow('Father\'s Date of Death',
+              _formatDate(orphan.fatherDateOfDeath!)),
+        _buildDetailRow('Father\'s Cause of Death',
+            orphan.fatherCauseOfDeath ?? 'Not specified'),
+        _buildDetailRow('Father\'s Work', orphan.fatherWork ?? 'Not specified'),
+      ],
+    );
+  }
+
+  Widget _buildMotherInfoView(Orphan orphan) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildDetailRow(
+            'Mother\'s Name', orphan.motherFirstName ?? 'Not specified'),
+        _buildDetailRow(
+            'Mother Alive',
+            orphan.motherAlive != null
+                ? (orphan.motherAlive! ? 'Yes' : 'No')
+                : 'Unknown'),
+        if (orphan.motherDateOfDeath != null)
+          _buildDetailRow('Mother\'s Date of Death',
+              _formatDate(orphan.motherDateOfDeath!)),
+        _buildDetailRow('Mother\'s Cause of Death',
+            orphan.motherCauseOfDeath ?? 'Not specified'),
+        _buildDetailRow('Mother\'s Work', orphan.motherWork ?? 'Not specified'),
+      ],
+    );
+  }
+
+  Widget _buildCarerInfoView(Orphan orphan) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildDetailRow(
+            'Guardian/Carer Name', orphan.guardianName ?? 'Not specified'),
+        _buildDetailRow('Guardian Relationship',
+            orphan.guardianRelationship ?? 'Not specified'),
       ],
     );
   }
@@ -849,6 +1346,135 @@ class _OrphanDetailsPageState extends State<OrphanDetailsPage> {
             orphan.needsMedicalSupport != null
                 ? (orphan.needsMedicalSupport! ? 'Yes' : 'No')
                 : 'Unknown'),
+      ],
+    );
+  }
+
+  Widget _buildFatherInfoEdit(Orphan? orphan) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextFormField(
+          controller: _fatherNameController,
+          decoration: const InputDecoration(
+            labelText: 'Father\'s Name',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _fatherCauseOfDeathController,
+          decoration: const InputDecoration(
+            labelText: 'Cause of Death',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _fatherWorkController,
+          decoration: const InputDecoration(
+            labelText: 'Occupation',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _fatherDetailsCommentsController,
+          decoration: const InputDecoration(
+            labelText: 'Additional Comments',
+            border: OutlineInputBorder(),
+          ),
+          maxLines: 3,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMotherInfoEdit(Orphan? orphan) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextFormField(
+          controller: _motherFirstNameController,
+          decoration: const InputDecoration(
+            labelText: 'Mother\'s Name',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        const SizedBox(height: 16),
+        DropdownButtonFormField<bool>(
+          value: _motherAlive,
+          decoration: const InputDecoration(
+            labelText: 'Mother Alive',
+            border: OutlineInputBorder(),
+          ),
+          items: const [
+            DropdownMenuItem(value: true, child: Text('Yes')),
+            DropdownMenuItem(value: false, child: Text('No')),
+          ],
+          onChanged: (value) {
+            setState(() {
+              _motherAlive = value;
+            });
+          },
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _motherCauseOfDeathController,
+          decoration: const InputDecoration(
+            labelText: 'Cause of Death',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _motherWorkController,
+          decoration: const InputDecoration(
+            labelText: 'Occupation',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _motherDetailsCommentsController,
+          decoration: const InputDecoration(
+            labelText: 'Additional Comments',
+            border: OutlineInputBorder(),
+          ),
+          maxLines: 3,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCarerInfoEdit(Orphan? orphan) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextFormField(
+          controller: _guardianNameController,
+          decoration: const InputDecoration(
+            labelText: 'Carer Name',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _guardianRelationshipController,
+          decoration: const InputDecoration(
+            labelText: 'Relationship to Orphan',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _carerDetailsCommentsController,
+          decoration: const InputDecoration(
+            labelText: 'Additional Comments',
+            border: OutlineInputBorder(),
+          ),
+          maxLines: 3,
+        ),
       ],
     );
   }
@@ -988,6 +1614,15 @@ class _OrphanDetailsPageState extends State<OrphanDetailsPage> {
             border: OutlineInputBorder(),
           ),
         ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _educationCommentsController,
+          decoration: const InputDecoration(
+            labelText: 'Additional Comments',
+            border: OutlineInputBorder(),
+          ),
+          maxLines: 3,
+        ),
       ],
     );
   }
@@ -1049,6 +1684,15 @@ class _OrphanDetailsPageState extends State<OrphanDetailsPage> {
               _needsMedicalSupport = value;
             });
           },
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _healthCommentsController,
+          decoration: const InputDecoration(
+            labelText: 'Additional Comments',
+            border: OutlineInputBorder(),
+          ),
+          maxLines: 3,
         ),
       ],
     );
@@ -1332,6 +1976,13 @@ class _OrphanDetailsPageState extends State<OrphanDetailsPage> {
             orphan.attendsIslamicSchool?.toString() ?? 'Not specified'),
         _buildDetailRow('Islamic Education Level',
             orphan.islamicEducationLevel ?? 'Not specified'),
+      ],
+    );
+  }
+
+  Widget _buildHobbiesInfoView(Orphan orphan) {
+    return Column(
+      children: [
         _buildDetailRow('Hobbies', orphan.hobbies ?? 'Not specified'),
         _buildDetailRow('Skills', orphan.skills ?? 'Not specified'),
         _buildDetailRow('Aspirations', orphan.aspirations ?? 'Not specified'),
@@ -1370,9 +2021,24 @@ class _OrphanDetailsPageState extends State<OrphanDetailsPage> {
         ),
         const SizedBox(height: 16),
         TextFormField(
+          controller: _islamicEducationCommentsController,
+          decoration: const InputDecoration(
+            labelText: 'Additional Comments',
+            border: OutlineInputBorder(),
+          ),
+          maxLines: 3,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHobbiesInfoEdit(Orphan? orphan) {
+    return Column(
+      children: [
+        TextFormField(
           controller: _hobbiesController,
           decoration: const InputDecoration(
-            labelText: 'Hobbies',
+            labelText: 'Hobbies & Interests',
             border: OutlineInputBorder(),
           ),
           maxLines: 2,
@@ -1381,7 +2047,7 @@ class _OrphanDetailsPageState extends State<OrphanDetailsPage> {
         TextFormField(
           controller: _skillsController,
           decoration: const InputDecoration(
-            labelText: 'Skills',
+            labelText: 'Skills & Talents',
             border: OutlineInputBorder(),
           ),
           maxLines: 2,
@@ -1390,10 +2056,19 @@ class _OrphanDetailsPageState extends State<OrphanDetailsPage> {
         TextFormField(
           controller: _aspirationsController,
           decoration: const InputDecoration(
-            labelText: 'Aspirations',
+            labelText: 'Aspirations & Dreams',
             border: OutlineInputBorder(),
           ),
           maxLines: 2,
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _hobbiesCommentsController,
+          decoration: const InputDecoration(
+            labelText: 'Additional Comments',
+            border: OutlineInputBorder(),
+          ),
+          maxLines: 3,
         ),
       ],
     );
@@ -1401,28 +2076,85 @@ class _OrphanDetailsPageState extends State<OrphanDetailsPage> {
 
   Future<void> _saveIslamicInfo(
       Orphan orphan, OrphanRepository repository) async {
-    final updatedOrphan = orphan.copyWith(
-      quranMemorization: _quranMemorizationController.text.trim().isEmpty
-          ? drift.Value.absent()
-          : drift.Value(_quranMemorizationController.text.trim()),
-      attendsIslamicSchool: _attendsIslamicSchool == null
-          ? drift.Value.absent()
-          : drift.Value(_attendsIslamicSchool!),
-      islamicEducationLevel:
-          _islamicEducationLevelController.text.trim().isEmpty
-              ? drift.Value.absent()
-              : drift.Value(_islamicEducationLevelController.text.trim()),
-      hobbies: _hobbiesController.text.trim().isEmpty
-          ? drift.Value.absent()
-          : drift.Value(_hobbiesController.text.trim()),
-      skills: _skillsController.text.trim().isEmpty
-          ? drift.Value.absent()
-          : drift.Value(_skillsController.text.trim()),
-      aspirations: _aspirationsController.text.trim().isEmpty
-          ? drift.Value.absent()
-          : drift.Value(_aspirationsController.text.trim()),
-    );
-    await repository.updateOrphan(updatedOrphan);
+    try {
+      final companion = OrphansCompanion(
+        orphanId: drift.Value(orphan.orphanId),
+        quranMemorization: drift.Value(_quranMemorizationController.text.isEmpty
+            ? null
+            : _quranMemorizationController.text),
+        attendsIslamicSchool: drift.Value(_attendsIslamicSchool),
+        islamicEducationLevel: drift.Value(
+            _islamicEducationLevelController.text.isEmpty
+                ? null
+                : _islamicEducationLevelController.text),
+        lastUpdated: drift.Value(DateTime.now()),
+      );
+
+      await repository.updateOrphanWithCompanion(companion);
+
+      setState(() {
+        _editingSections['islamic'] = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Islamic education information updated successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error updating Islamic education information: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _saveHobbiesInfo(
+      Orphan orphan, OrphanRepository repository) async {
+    try {
+      final companion = OrphansCompanion(
+        orphanId: drift.Value(orphan.orphanId),
+        hobbies: drift.Value(
+            _hobbiesController.text.isEmpty ? null : _hobbiesController.text),
+        skills: drift.Value(
+            _skillsController.text.isEmpty ? null : _skillsController.text),
+        aspirations: drift.Value(_aspirationsController.text.isEmpty
+            ? null
+            : _aspirationsController.text),
+        lastUpdated: drift.Value(DateTime.now()),
+      );
+
+      await repository.updateOrphanWithCompanion(companion);
+
+      setState(() {
+        _editingSections['hobbies'] = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Hobbies information updated successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error updating hobbies information: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   // Siblings Section Methods
@@ -1457,21 +2189,58 @@ class _OrphanDetailsPageState extends State<OrphanDetailsPage> {
           ),
           maxLines: 3,
         ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _siblingsCommentsController,
+          decoration: const InputDecoration(
+            labelText: 'Additional Comments',
+            border: OutlineInputBorder(),
+          ),
+          maxLines: 3,
+        ),
       ],
     );
   }
 
   Future<void> _saveSiblingsInfo(
       Orphan orphan, OrphanRepository repository) async {
-    final updatedOrphan = orphan.copyWith(
-      numberOfSiblings: _numberOfSiblingsController.text.trim().isEmpty
-          ? drift.Value.absent()
-          : drift.Value(int.tryParse(_numberOfSiblingsController.text.trim())),
-      siblingsDetails: _siblingsDetailsController.text.trim().isEmpty
-          ? drift.Value.absent()
-          : drift.Value(_siblingsDetailsController.text.trim()),
-    );
-    await repository.updateOrphan(updatedOrphan);
+    try {
+      final companion = OrphansCompanion(
+        orphanId: drift.Value(orphan.orphanId),
+        numberOfSiblings: _numberOfSiblingsController.text.trim().isEmpty
+            ? drift.Value.absent()
+            : drift.Value(
+                int.tryParse(_numberOfSiblingsController.text.trim())),
+        siblingsDetails: _siblingsDetailsController.text.trim().isEmpty
+            ? drift.Value.absent()
+            : drift.Value(_siblingsDetailsController.text.trim()),
+        lastUpdated: drift.Value(DateTime.now()),
+      );
+
+      await repository.updateOrphanWithCompanion(companion);
+
+      setState(() {
+        _editingSections['siblings'] = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Siblings information updated successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error updating siblings information: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   // Additional Information Section Methods
@@ -1521,18 +2290,148 @@ class _OrphanDetailsPageState extends State<OrphanDetailsPage> {
 
   Future<void> _saveAdditionalInfo(
       Orphan orphan, OrphanRepository repository) async {
-    final updatedOrphan = orphan.copyWith(
-      additionalNotes: _additionalNotesController.text.trim().isEmpty
-          ? drift.Value.absent()
-          : drift.Value(_additionalNotesController.text.trim()),
-      urgentNeeds: _urgentNeedsController.text.trim().isEmpty
-          ? drift.Value.absent()
-          : drift.Value(_urgentNeedsController.text.trim()),
-      specialCircumstances: _specialCircumstancesController.text.trim().isEmpty
-          ? drift.Value.absent()
-          : drift.Value(_specialCircumstancesController.text.trim()),
-    );
-    await repository.updateOrphan(updatedOrphan);
+    try {
+      final companion = OrphansCompanion(
+        orphanId: drift.Value(orphan.orphanId),
+        additionalNotes: _additionalNotesController.text.trim().isEmpty
+            ? drift.Value.absent()
+            : drift.Value(_additionalNotesController.text.trim()),
+        urgentNeeds: _urgentNeedsController.text.trim().isEmpty
+            ? drift.Value.absent()
+            : drift.Value(_urgentNeedsController.text.trim()),
+        specialCircumstances:
+            _specialCircumstancesController.text.trim().isEmpty
+                ? drift.Value.absent()
+                : drift.Value(_specialCircumstancesController.text.trim()),
+        lastUpdated: drift.Value(DateTime.now()),
+      );
+
+      await repository.updateOrphanWithCompanion(companion);
+
+      setState(() {
+        _editingSections['additional'] = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Additional information updated successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error updating additional information: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _saveAttachmentsInfo(
+      Orphan orphan, OrphanRepository repository) async {
+    try {
+      // Generate orphan ID for document saving
+      final orphanId = orphan.orphanId;
+
+      // Declare allDocumentPaths outside try block for cleanup access
+      List<String> allDocumentPaths = [];
+
+      // Save specific documents
+      if (_birthCertificatePhoto != null) {
+        final savedPath = await ImageService.saveDocumentPhoto(
+            _birthCertificatePhoto!, orphanId);
+        if (savedPath != null) allDocumentPaths.add('birth_cert:$savedPath');
+      }
+
+      if (_deathCertificatePhoto != null) {
+        final savedPath = await ImageService.saveDocumentPhoto(
+            _deathCertificatePhoto!, orphanId);
+        if (savedPath != null) allDocumentPaths.add('death_cert:$savedPath');
+      }
+
+      if (_orphanIdPhoto != null) {
+        final savedPath =
+            await ImageService.saveDocumentPhoto(_orphanIdPhoto!, orphanId);
+        if (savedPath != null) allDocumentPaths.add('orphan_id:$savedPath');
+      }
+
+      if (_fatherIdPhoto != null) {
+        final savedPath =
+            await ImageService.saveDocumentPhoto(_fatherIdPhoto!, orphanId);
+        if (savedPath != null) allDocumentPaths.add('father_id:$savedPath');
+      }
+
+      if (_motherIdPhoto != null) {
+        final savedPath =
+            await ImageService.saveDocumentPhoto(_motherIdPhoto!, orphanId);
+        if (savedPath != null) allDocumentPaths.add('mother_id:$savedPath');
+      }
+
+      if (_familyIdPhoto != null) {
+        final savedPath =
+            await ImageService.saveDocumentPhoto(_familyIdPhoto!, orphanId);
+        if (savedPath != null) allDocumentPaths.add('family_id:$savedPath');
+      }
+
+      if (_passportPhoto != null) {
+        final savedPath =
+            await ImageService.saveDocumentPhoto(_passportPhoto!, orphanId);
+        if (savedPath != null)
+          allDocumentPaths.add('passport_photo:$savedPath');
+      }
+
+      if (_recentPhoto != null) {
+        final savedPath =
+            await ImageService.saveDocumentPhoto(_recentPhoto!, orphanId);
+        if (savedPath != null) allDocumentPaths.add('recent_photo:$savedPath');
+      }
+
+      // Save additional documents
+      for (int i = 0; i < _additionalDocuments.length; i++) {
+        final savedPath = await ImageService.saveDocumentPhoto(
+            _additionalDocuments[i], orphanId);
+        if (savedPath != null) allDocumentPaths.add('additional_$i:$savedPath');
+      }
+
+      // Store document paths as comma-separated string
+      final documentsPathString =
+          allDocumentPaths.isNotEmpty ? allDocumentPaths.join(',') : null;
+
+      final companion = OrphansCompanion(
+        orphanId: drift.Value(orphan.orphanId),
+        documentsPath: drift.Value(documentsPathString),
+        lastUpdated: drift.Value(DateTime.now()),
+      );
+
+      await repository.updateOrphanWithCompanion(companion);
+
+      setState(() {
+        _editingSections['attachments'] = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Documents updated successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error updating documents: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _showDeleteConfirmation(
@@ -1980,5 +2879,231 @@ class _OrphanDetailsPageState extends State<OrphanDetailsPage> {
         );
       }
     }
+  }
+
+  // Document attachment methods
+  Future<void> _selectDocumentPhoto(String documentType) async {
+    try {
+      final File? photoFile = await ImageService.selectPhoto();
+      if (photoFile != null) {
+        setState(() {
+          switch (documentType) {
+            case 'birth_certificate':
+              _birthCertificatePhoto = photoFile;
+              break;
+            case 'death_certificate':
+              _deathCertificatePhoto = photoFile;
+              break;
+            case 'orphan_id':
+              _orphanIdPhoto = photoFile;
+              break;
+            case 'father_id':
+              _fatherIdPhoto = photoFile;
+              break;
+            case 'mother_id':
+              _motherIdPhoto = photoFile;
+              break;
+            case 'family_id':
+              _familyIdPhoto = photoFile;
+              break;
+            case 'passport_photo':
+              _passportPhoto = photoFile;
+              break;
+            case 'recent_photo':
+              _recentPhoto = photoFile;
+              break;
+          }
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Document attached successfully!')),
+        );
+      }
+    } catch (e) {
+      print('Error selecting document photo: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to select photo: $e')),
+      );
+    }
+  }
+
+  void _removeDocumentPhoto(String documentType) {
+    setState(() {
+      switch (documentType) {
+        case 'birth_certificate':
+          _birthCertificatePhoto = null;
+          break;
+        case 'death_certificate':
+          _deathCertificatePhoto = null;
+          break;
+        case 'orphan_id':
+          _orphanIdPhoto = null;
+          break;
+        case 'father_id':
+          _fatherIdPhoto = null;
+          break;
+        case 'mother_id':
+          _motherIdPhoto = null;
+          break;
+        case 'family_id':
+          _familyIdPhoto = null;
+          break;
+        case 'passport_photo':
+          _passportPhoto = null;
+          break;
+        case 'recent_photo':
+          _recentPhoto = null;
+          break;
+      }
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Document removed')),
+    );
+  }
+
+  Future<void> _selectAdditionalDocument() async {
+    try {
+      final File? photoFile = await ImageService.selectPhoto();
+      if (photoFile != null) {
+        setState(() {
+          _additionalDocuments.add(photoFile);
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Additional document attached!')),
+        );
+      }
+    } catch (e) {
+      print('Error selecting additional document: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to select photo: $e')),
+      );
+    }
+  }
+
+  void _removeAdditionalDocument(int index) {
+    setState(() {
+      _additionalDocuments.removeAt(index);
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Additional document removed')),
+    );
+  }
+
+  Widget _buildDocumentAttachment({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required File? photo,
+    required VoidCallback onSelect,
+    required VoidCallback onRemove,
+    required bool isRequired,
+  }) {
+    return Card(
+      elevation: 1,
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          children: [
+            Icon(icon, color: Colors.blue.shade600, size: 24),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                      if (isRequired) ...[
+                        const SizedBox(width: 4),
+                        Text(
+                          '*',
+                          style: TextStyle(
+                            color: Colors.red.shade600,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      color: Colors.grey,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            if (photo != null) ...[
+              // Show attached photo preview
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.green.shade300),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.file(
+                        photo,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        height: double.infinity,
+                      ),
+                    ),
+                    Positioned(
+                      top: 2,
+                      right: 2,
+                      child: GestureDetector(
+                        onTap: onRemove,
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: const BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.close,
+                            color: Colors.white,
+                            size: 12,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(Icons.check_circle, color: Colors.green.shade600, size: 20),
+            ] else ...[
+              // Show attach button
+              ElevatedButton.icon(
+                onPressed: onSelect,
+                icon: const Icon(Icons.attach_file, size: 16),
+                label: const Text('Attach'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue.shade600,
+                  foregroundColor: Colors.white,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  minimumSize: const Size(80, 36),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 }

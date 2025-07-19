@@ -257,7 +257,7 @@ class SupervisorDetailsPage extends StatelessWidget {
                             leading: CircleAvatar(
                               backgroundColor: Colors.blue.shade100,
                               child: Text(
-                                '${orphan.firstName[0]}${orphan.fatherName[0]}'
+                                '${orphan.firstName.isNotEmpty ? orphan.firstName[0] : '?'}${orphan.fatherName.isNotEmpty ? orphan.fatherName[0] : '?'}'
                                     .toUpperCase(),
                                 style: TextStyle(
                                   color: Colors.blue.shade700,
@@ -266,7 +266,8 @@ class SupervisorDetailsPage extends StatelessWidget {
                               ),
                             ),
                             title: Text(
-                                '${orphan.firstName} ${orphan.fatherName} ${orphan.grandfatherName} ${orphan.familyName}'),
+                                '${orphan.firstName.isNotEmpty ? orphan.firstName : 'Unknown'} ${orphan.fatherName.isNotEmpty ? orphan.fatherName : ''} ${orphan.grandfatherName.isNotEmpty ? orphan.grandfatherName : ''} ${orphan.familyName.isNotEmpty ? orphan.familyName : ''}'
+                                    .trim()),
                             subtitle: Text(
                               'Status: ${orphan.status.toString().split('.').last}',
                             ),

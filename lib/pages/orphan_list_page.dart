@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:orphan_hq/database.dart';
 import 'package:orphan_hq/repositories/orphan_repository.dart';
 import 'package:orphan_hq/repositories/supervisor_repository.dart';
-import 'package:orphan_hq/layouts/desktop_layout.dart';
 import 'package:provider/provider.dart';
 
 class OrphanListPage extends StatelessWidget {
@@ -14,37 +13,67 @@ class OrphanListPage extends StatelessWidget {
     final orphanRepository = context.watch<OrphanRepository>();
     final supervisorRepository = context.read<SupervisorRepository>();
 
-    return DesktopLayout(
-      currentRoute: '/',
-      pageTitle: 'Orphans',
-      actions: [
-        // Primary action - clearly separated and prominent
-        ElevatedButton.icon(
-          onPressed: () => context.push('/onboard'),
-          icon: const Icon(Icons.person_add),
-          label: const Text('Add Orphan'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.blue[600],
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+    return Column(
+      children: [
+        // Action Bar
+        Container(
+          height: 80,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border(
+              bottom: BorderSide(color: Colors.grey[300]!, width: 1),
+            ),
+          ),
+          child: Row(
+            children: [
+              // Page Title
+              const Expanded(
+                child: Text(
+                  'Orphans',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+
+              // Page Actions
+              ElevatedButton.icon(
+                onPressed: () => context.push('/onboard'),
+                icon: const Icon(Icons.person_add),
+                label: const Text('Add Orphan'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue[600],
+                  foregroundColor: Colors.white,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Page Content
+        Expanded(
+          child: StreamBuilder<List<Orphan>>(
+            stream: orphanRepository.getAllOrphans(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return _buildEmptyState(context);
+              }
+
+              final orphans = snapshot.data!;
+              return _buildOrphanGrid(context, orphans, supervisorRepository);
+            },
           ),
         ),
       ],
-      child: StreamBuilder<List<Orphan>>(
-        stream: orphanRepository.getAllOrphans(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return _buildEmptyState(context);
-          }
-
-          final orphans = snapshot.data!;
-          return _buildOrphanGrid(context, orphans, supervisorRepository);
-        },
-      ),
     );
   }
 
@@ -202,7 +231,7 @@ class OrphanListPage extends StatelessWidget {
         leading: CircleAvatar(
           backgroundColor: statusColor.withOpacity(0.1),
           child: Text(
-            '${orphan.firstName[0]}${orphan.familyName[0]}',
+            '${orphan.firstName.isNotEmpty ? orphan.firstName[0] : '?'}${orphan.familyName.isNotEmpty ? orphan.familyName[0] : '?'}',
             style: TextStyle(
               color: statusColor,
               fontWeight: FontWeight.bold,
@@ -210,7 +239,8 @@ class OrphanListPage extends StatelessWidget {
           ),
         ),
         title: Text(
-          '${orphan.firstName} ${orphan.fatherName} ${orphan.grandfatherName} ${orphan.familyName}',
+          '${orphan.firstName.isNotEmpty ? orphan.firstName : 'Unknown'} ${orphan.fatherName.isNotEmpty ? orphan.fatherName : ''} ${orphan.grandfatherName.isNotEmpty ? orphan.grandfatherName : ''} ${orphan.familyName.isNotEmpty ? orphan.familyName : ''}'
+              .trim(),
           style: const TextStyle(fontWeight: FontWeight.w600),
         ),
         subtitle: Column(

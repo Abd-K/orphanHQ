@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:orphan_hq/database.dart';
 import 'package:orphan_hq/repositories/orphan_repository.dart';
-import 'package:orphan_hq/layouts/desktop_layout.dart';
 import 'package:provider/provider.dart';
 
 class EmergencyDashboardPage extends StatelessWidget {
@@ -11,43 +11,71 @@ class EmergencyDashboardPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final orphanRepository = context.watch<OrphanRepository>();
 
-    return DesktopLayout(
-      currentRoute: '/emergency',
-      pageTitle: 'Emergency Dashboard',
-      actions: [
-        // Emergency-specific action
-        ElevatedButton.icon(
-          onPressed: () {
-            // Could add functionality to export emergency report
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                  content: Text('Emergency report feature coming soon')),
-            );
-          },
-          icon: const Icon(Icons.file_download),
-          label: const Text('Export Report'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.red[600],
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+    return Column(
+      children: [
+        // Action Bar
+        Container(
+          height: 80,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border(
+              bottom: BorderSide(color: Colors.grey[300]!, width: 1),
+            ),
+          ),
+          child: Row(
+            children: [
+              // Page Title
+              const Expanded(
+                child: Text(
+                  'Emergency Dashboard',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+
+              // Page Actions
+              ElevatedButton.icon(
+                onPressed: () => context.push('/emergency-report'),
+                icon: const Icon(Icons.report),
+                label: const Text('Report Emergency'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red[600],
+                  foregroundColor: Colors.white,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Page Content
+        Expanded(
+          child: StreamBuilder<List<Orphan>>(
+            stream: orphanRepository.getAllOrphans(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return _buildEmptyState(context);
+              }
+
+              final orphans = snapshot.data!;
+              final missingOrphans = orphans
+                  .where((o) => o.status == OrphanStatus.missing)
+                  .toList();
+
+              return _buildEmergencyDashboard(context, missingOrphans, orphans);
+            },
           ),
         ),
       ],
-      child: StreamBuilder<List<Orphan>>(
-        stream: orphanRepository.getMissingOrphans(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return _buildEmptyState(context);
-          }
-
-          final orphans = snapshot.data!;
-          return _buildEmergencyContent(context, orphans, orphanRepository);
-        },
-      ),
     );
   }
 
@@ -56,10 +84,10 @@ class EmergencyDashboardPage extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.check_circle_outline, size: 80, color: Colors.green[400]),
+          Icon(Icons.warning, size: 80, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
-            'No Emergency Cases',
+            'No emergency data',
             style: TextStyle(fontSize: 24, color: Colors.grey[600]),
           ),
           const SizedBox(height: 8),
@@ -72,119 +100,167 @@ class EmergencyDashboardPage extends StatelessWidget {
     );
   }
 
-  Widget _buildEmergencyContent(BuildContext context, List<Orphan> orphans,
-      OrphanRepository orphanRepository) {
+  Widget _buildEmergencyDashboard(BuildContext context,
+      List<Orphan> missingOrphans, List<Orphan> allOrphans) {
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Emergency Stats
-          Card(
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-              side: BorderSide(color: Colors.red[200]!),
-            ),
-            color: Colors.red[50],
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.red[100],
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child:
-                        Icon(Icons.warning, color: Colors.red[700], size: 32),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${orphans.length}',
-                          style: TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.red[700],
-                          ),
-                        ),
-                        Text(
-                          'Missing Orphans Requiring Immediate Attention',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.red[600],
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+          Row(
+            children: [
+              _buildEmergencyStatCard(
+                'Missing Orphans',
+                missingOrphans.length.toString(),
+                Icons.warning,
+                Colors.red,
+                isEmergency: missingOrphans.isNotEmpty,
               ),
-            ),
+              const SizedBox(width: 16),
+              _buildEmergencyStatCard(
+                'Total Orphans',
+                allOrphans.length.toString(),
+                Icons.child_care,
+                Colors.blue,
+              ),
+              const SizedBox(width: 16),
+              _buildEmergencyStatCard(
+                'Active Orphans',
+                allOrphans
+                    .where((o) => o.status == OrphanStatus.active)
+                    .length
+                    .toString(),
+                Icons.check_circle,
+                Colors.green,
+              ),
+            ],
           ),
           const SizedBox(height: 24),
 
           // Missing Orphans List
-          Expanded(
-            child: Card(
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-                side: BorderSide(color: Colors.grey[300]!),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(color: Colors.grey[300]!),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.list, color: Colors.grey[700]),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Missing Orphans',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey[700],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    child: ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: orphans.length,
-                      itemBuilder: (context, index) {
-                        final orphan = orphans[index];
-                        return _buildEmergencyOrphanCard(
-                            context, orphan, orphanRepository);
-                      },
-                    ),
-                  ),
-                ],
+          if (missingOrphans.isNotEmpty) ...[
+            Text(
+              'Missing Orphans (${missingOrphans.length})',
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.red,
               ),
             ),
-          ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: Card(
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  side: BorderSide(color: Colors.red[300]!),
+                ),
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: missingOrphans.length,
+                  itemBuilder: (context, index) {
+                    final orphan = missingOrphans[index];
+                    return _buildMissingOrphanCard(context, orphan);
+                  },
+                ),
+              ),
+            ),
+          ] else ...[
+            // All Clear Message
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.check_circle,
+                        size: 80, color: Colors.green[400]),
+                    const SizedBox(height: 16),
+                    Text(
+                      'All Clear!',
+                      style: TextStyle(
+                          fontSize: 24,
+                          color: Colors.green[600],
+                          fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'All orphans are accounted for and safe',
+                      style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildEmergencyOrphanCard(
-      BuildContext context, Orphan orphan, OrphanRepository orphanRepository) {
+  Widget _buildEmergencyStatCard(
+      String title, String value, IconData icon, Color color,
+      {bool isEmergency = false}) {
+    return Expanded(
+      child: Card(
+        elevation: isEmergency ? 4 : 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: BorderSide(color: isEmergency ? color : Colors.grey[300]!),
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: isEmergency
+              ? BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  gradient: LinearGradient(
+                    colors: [color.withOpacity(0.1), color.withOpacity(0.05)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                )
+              : null,
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: color, size: 24),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      value,
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: isEmergency ? color : null,
+                      ),
+                    ),
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMissingOrphanCard(BuildContext context, Orphan orphan) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 0,
@@ -192,100 +268,61 @@ class EmergencyDashboardPage extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         side: BorderSide(color: Colors.red[200]!),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            // Urgency indicator
-            Container(
-              width: 4,
-              height: 60,
-              decoration: BoxDecoration(
-                color: Colors.red[600],
-                borderRadius: BorderRadius.circular(2),
-              ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.all(16),
+        leading: CircleAvatar(
+          backgroundColor: Colors.red[100],
+          child: Text(
+            '${orphan.firstName.isNotEmpty ? orphan.firstName[0] : '?'}${orphan.familyName.isNotEmpty ? orphan.familyName[0] : '?'}',
+            style: TextStyle(
+              color: Colors.red[700],
+              fontWeight: FontWeight.bold,
             ),
-            const SizedBox(width: 16),
-
-            // Orphan info
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${orphan.firstName} ${orphan.fatherName} ${orphan.grandfatherName} ${orphan.familyName}',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
+          ),
+        ),
+        title: Text(
+          '${orphan.firstName} ${orphan.fatherName} ${orphan.grandfatherName} ${orphan.familyName}',
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.red[100],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Text(
+                    'MISSING',
+                    style: TextStyle(
+                      color: Colors.red,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(Icons.location_on,
-                          size: 16, color: Colors.grey[600]),
-                      const SizedBox(width: 4),
-                      Text(
-                        orphan.lastSeenLocation ?? 'No location specified',
-                        style: TextStyle(color: Colors.grey[600], fontSize: 14),
-                      ),
-                    ],
+                ),
+                const SizedBox(width: 8),
+                if (orphan.lastSeenLocation != null &&
+                    orphan.lastSeenLocation!.isNotEmpty)
+                  Text(
+                    'Last seen: ${orphan.lastSeenLocation}',
+                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
                   ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(Icons.access_time,
-                          size: 16, color: Colors.grey[600]),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Last updated: ${_formatDate(orphan.lastUpdated)}',
-                        style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            // Action button
-            ElevatedButton.icon(
-              onPressed: () {
-                orphanRepository.updateOrphanStatus(
-                    orphan.orphanId, OrphanStatus.found);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('${orphan.firstName} marked as found'),
-                    backgroundColor: Colors.green,
-                  ),
-                );
-              },
-              icon: const Icon(Icons.check, size: 16),
-              label: const Text('Mark as Found'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green[600],
-                foregroundColor: Colors.white,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              ),
+              ],
             ),
           ],
         ),
+        trailing: IconButton(
+          icon: const Icon(Icons.arrow_forward_ios, size: 16),
+          onPressed: () => context.push('/orphan/${orphan.orphanId}'),
+        ),
+        onTap: () => context.push('/orphan/${orphan.orphanId}'),
       ),
     );
-  }
-
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final difference = now.difference(date);
-
-    if (difference.inDays > 0) {
-      return '${difference.inDays} days ago';
-    } else if (difference.inHours > 0) {
-      return '${difference.inHours} hours ago';
-    } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes} minutes ago';
-    } else {
-      return 'Just now';
-    }
   }
 }

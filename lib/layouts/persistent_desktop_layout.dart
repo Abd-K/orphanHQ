@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-class DesktopLayout extends StatelessWidget {
+class PersistentDesktopLayout extends StatefulWidget {
   final Widget child;
   final String currentRoute;
   final String pageTitle;
   final List<Widget>? actions;
 
-  const DesktopLayout({
+  const PersistentDesktopLayout({
     super.key,
     required this.child,
     required this.currentRoute,
@@ -16,25 +16,31 @@ class DesktopLayout extends StatelessWidget {
   });
 
   @override
+  State<PersistentDesktopLayout> createState() =>
+      _PersistentDesktopLayoutState();
+}
+
+class _PersistentDesktopLayoutState extends State<PersistentDesktopLayout> {
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Row(
         children: [
-          // Left Sidebar Navigation - This stays static
-          _buildSidebar(context),
+          // Static Sidebar - Never rebuilds
+          _buildStaticSidebar(),
 
-          // Main Content Area - This updates dynamically
+          // Dynamic Content Area - Only this updates
           Expanded(
             child: Column(
               children: [
-                // Top Action Bar - Updates with page content
-                _buildActionBar(),
+                // Dynamic Action Bar
+                _buildDynamicActionBar(),
 
-                // Page Content - This is where the magic happens
+                // Dynamic Content
                 Expanded(
                   child: Container(
                     color: Colors.grey[50],
-                    child: child,
+                    child: widget.child,
                   ),
                 ),
               ],
@@ -45,7 +51,7 @@ class DesktopLayout extends StatelessWidget {
     );
   }
 
-  Widget _buildSidebar(BuildContext context) {
+  Widget _buildStaticSidebar() {
     return Container(
       width: 280,
       decoration: BoxDecoration(
@@ -56,7 +62,7 @@ class DesktopLayout extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // App Header - Static
+          // Static App Header
           Container(
             height: 80,
             padding: const EdgeInsets.all(16),
@@ -82,42 +88,38 @@ class DesktopLayout extends StatelessWidget {
             ),
           ),
 
-          // Navigation Items - Static with dynamic highlighting
+          // Static Navigation Items
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(vertical: 16),
               children: [
                 _buildNavItem(
-                  context,
                   icon: Icons.child_care,
                   title: 'Orphans',
                   route: '/',
-                  isActive:
-                      currentRoute == '/' || currentRoute.startsWith('/orphan'),
+                  isActive: widget.currentRoute == '/' ||
+                      widget.currentRoute.startsWith('/orphan'),
                 ),
                 _buildNavItem(
-                  context,
                   icon: Icons.people,
                   title: 'Supervisors',
                   route: '/supervisors',
-                  isActive: currentRoute == '/supervisors' ||
-                      currentRoute.startsWith('/supervisor'),
+                  isActive: widget.currentRoute == '/supervisors' ||
+                      widget.currentRoute.startsWith('/supervisor'),
                 ),
                 _buildNavItem(
-                  context,
                   icon: Icons.warning,
                   title: 'Emergency',
                   route: '/emergency',
-                  isActive: currentRoute == '/emergency',
+                  isActive: widget.currentRoute == '/emergency',
                   iconColor: Colors.red[600],
                 ),
                 const Divider(height: 32),
                 _buildNavItem(
-                  context,
                   icon: Icons.settings,
                   title: 'Settings',
                   route: '/settings',
-                  isActive: currentRoute == '/settings',
+                  isActive: widget.currentRoute == '/settings',
                 ),
               ],
             ),
@@ -127,7 +129,7 @@ class DesktopLayout extends StatelessWidget {
     );
   }
 
-  Widget _buildActionBar() {
+  Widget _buildDynamicActionBar() {
     return Container(
       height: 80,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
@@ -142,7 +144,7 @@ class DesktopLayout extends StatelessWidget {
           // Page Title
           Expanded(
             child: Text(
-              pageTitle,
+              widget.pageTitle,
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -152,14 +154,13 @@ class DesktopLayout extends StatelessWidget {
           ),
 
           // Page Actions
-          if (actions != null) ...actions!,
+          if (widget.actions != null) ...widget.actions!,
         ],
       ),
     );
   }
 
-  Widget _buildNavItem(
-    BuildContext context, {
+  Widget _buildNavItem({
     required IconData icon,
     required String title,
     required String route,
@@ -187,7 +188,7 @@ class DesktopLayout extends StatelessWidget {
           ),
         ),
         onTap: () {
-          // Only navigate if not already on the target route to prevent unnecessary rebuilds
+          // Only navigate if not already on the target route
           final currentLocation = GoRouterState.of(context).uri.path;
           if (currentLocation != route) {
             context.go(route);

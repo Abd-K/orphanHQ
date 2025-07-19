@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:orphan_hq/database.dart';
 import 'package:orphan_hq/repositories/supervisor_repository.dart';
-import 'package:orphan_hq/layouts/desktop_layout.dart';
 import 'package:provider/provider.dart';
 
 class SupervisorViewPage extends StatelessWidget {
@@ -12,51 +11,67 @@ class SupervisorViewPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final supervisorRepository = context.watch<SupervisorRepository>();
 
-    return DesktopLayout(
-      currentRoute: '/supervisors',
-      pageTitle: 'Supervisors',
-      actions: [
-        // Secondary action
-        OutlinedButton.icon(
-          onPressed: () => context.push('/supervisor-reports'),
-          icon: const Icon(Icons.analytics),
-          label: const Text('Reports'),
-          style: OutlinedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    return Column(
+      children: [
+        // Action Bar
+        Container(
+          height: 80,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border(
+              bottom: BorderSide(color: Colors.grey[300]!, width: 1),
+            ),
+          ),
+          child: Row(
+            children: [
+              // Page Title
+              const Expanded(
+                child: Text(
+                  'Supervisors',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+
+              // Page Actions
+              ElevatedButton.icon(
+                onPressed: () => context.push('/add-supervisor'),
+                icon: const Icon(Icons.person_add),
+                label: const Text('Add Supervisor'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue[600],
+                  foregroundColor: Colors.white,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                ),
+              ),
+            ],
           ),
         ),
-        const SizedBox(width: 12),
-        // Primary action
-        ElevatedButton.icon(
-          onPressed: () => context.push('/add-supervisor'),
-          icon: const Icon(Icons.person_add),
-          label: const Text('Add Supervisor'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.blue[600],
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+
+        // Page Content
+        Expanded(
+          child: StreamBuilder<List<Supervisor>>(
+            stream: supervisorRepository.watchAllSupervisors(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return _buildEmptyState(context);
+              }
+
+              final supervisors = snapshot.data!;
+              return _buildSupervisorGrid(context, supervisors);
+            },
           ),
         ),
       ],
-      child: StreamBuilder<List<Supervisor>>(
-        stream: supervisorRepository.watchAllSupervisors(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (snapshot.hasError) {
-            return _buildErrorState(context, snapshot.error.toString());
-          }
-
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return _buildEmptyState(context);
-          }
-
-          final supervisors = snapshot.data!;
-          return _buildSupervisorGrid(context, supervisors);
-        },
-      ),
     );
   }
 
@@ -65,7 +80,7 @@ class SupervisorViewPage extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.people_outline, size: 80, color: Colors.grey[400]),
+          Icon(Icons.people, size: 80, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
             'No supervisors found',
@@ -73,7 +88,7 @@ class SupervisorViewPage extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Add supervisors to manage orphan care',
+            'Get started by adding your first supervisor',
             style: TextStyle(fontSize: 16, color: Colors.grey[500]),
           ),
           const SizedBox(height: 24),
@@ -86,34 +101,6 @@ class SupervisorViewPage extends StatelessWidget {
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildErrorState(BuildContext context, String error) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.error_outline, size: 80, color: Colors.red[400]),
-          const SizedBox(height: 16),
-          Text(
-            'Error loading supervisors',
-            style: TextStyle(fontSize: 20, color: Colors.grey[600]),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            error,
-            style: TextStyle(fontSize: 14, color: Colors.grey[500]),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: () => (context as Element).markNeedsBuild(),
-            icon: const Icon(Icons.refresh),
-            label: const Text('Retry'),
           ),
         ],
       ),
@@ -140,9 +127,9 @@ class SupervisorViewPage extends StatelessWidget {
                   Colors.green),
               const SizedBox(width: 16),
               _buildStatCard(
-                  'Locations',
-                  supervisors.map((s) => s.city).toSet().length.toString(),
-                  Icons.location_city,
+                  'Inactive',
+                  supervisors.where((s) => !s.active).length.toString(),
+                  Icons.pause_circle,
                   Colors.orange),
             ],
           ),
@@ -150,26 +137,18 @@ class SupervisorViewPage extends StatelessWidget {
 
           // Supervisors Grid
           Expanded(
-            child: Card(
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-                side: BorderSide(color: Colors.grey[300]!),
+            child: GridView.builder(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                childAspectRatio: 1.2,
               ),
-              child: GridView.builder(
-                padding: const EdgeInsets.all(24),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  childAspectRatio: 1.2,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                ),
-                itemCount: supervisors.length,
-                itemBuilder: (context, index) {
-                  final supervisor = supervisors[index];
-                  return _buildSupervisorCard(context, supervisor);
-                },
-              ),
+              itemCount: supervisors.length,
+              itemBuilder: (context, index) {
+                final supervisor = supervisors[index];
+                return _buildSupervisorCard(context, supervisor);
+              },
             ),
           ),
         ],
@@ -228,110 +207,90 @@ class SupervisorViewPage extends StatelessWidget {
   }
 
   Widget _buildSupervisorCard(BuildContext context, Supervisor supervisor) {
+    Color statusColor = _getStatusColor(supervisor.active);
+
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
         side: BorderSide(color: Colors.grey[200]!),
       ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
         onTap: () => context.push('/supervisor/${supervisor.supervisorId}'),
+        borderRadius: BorderRadius.circular(8),
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
                   CircleAvatar(
-                    backgroundColor: Colors.blue[100],
-                    radius: 24,
+                    backgroundColor: statusColor.withOpacity(0.1),
                     child: Text(
                       '${supervisor.firstName.isNotEmpty ? supervisor.firstName[0] : '?'}${supervisor.lastName.isNotEmpty ? supervisor.lastName[0] : '?'}',
                       style: TextStyle(
-                        color: Colors.blue[700],
+                        color: statusColor,
                         fontWeight: FontWeight.bold,
-                        fontSize: 16,
                       ),
                     ),
                   ),
-                  const Spacer(),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: supervisor.active
-                          ? Colors.green[100]
-                          : Colors.grey[200],
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      supervisor.active ? 'Active' : 'Inactive',
-                      style: TextStyle(
-                        color: supervisor.active
-                            ? Colors.green[700]
-                            : Colors.grey[600],
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${supervisor.firstName} ${supervisor.lastName}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          supervisor.phoneNumber,
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-              Text(
-                SupervisorRepository.getFullName(supervisor),
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: statusColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                supervisor.position,
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 14,
+                child: Text(
+                  supervisor.active ? 'ACTIVE' : 'INACTIVE',
+                  style: TextStyle(
+                    color: statusColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 8),
+              const Spacer(),
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Icon(Icons.location_on, size: 14, color: Colors.grey[500]),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      SupervisorRepository.getLocation(supervisor),
-                      style: TextStyle(
-                        color: Colors.grey[500],
-                        fontSize: 12,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                  Text(
+                    'View details',
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 12,
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  Icon(Icons.phone, size: 14, color: Colors.grey[500]),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      supervisor.phoneNumber,
-                      style: TextStyle(
-                        color: Colors.grey[500],
-                        fontSize: 12,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    size: 16,
+                    color: Colors.grey[400],
                   ),
                 ],
               ),
@@ -340,5 +299,9 @@ class SupervisorViewPage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Color _getStatusColor(bool active) {
+    return active ? Colors.green : Colors.orange;
   }
 }
