@@ -28,5 +28,12 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
+	<key>NSNetworkUsageDescription</key>
+	<string>This app needs network access to provide internet tunneling services.</string>
 </dict>
 </plist>

@@ -1282,56 +1282,58 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
           const Text('Date of Birth *',
               style: TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: MouseRegion(
-                  onEnter: (event) =>
-                      _showTooltip(context, event.position, 'اليوم'),
-                  onExit: (event) => _hideTooltip(),
-                  child: _buildStyledTextField(
-                    controller: _dayController,
-                    labelText: 'Day',
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    validator: (value) =>
-                        value?.isEmpty ?? true ? 'Required' : null,
+          IntrinsicHeight(
+            child: Row(
+              children: [
+                Expanded(
+                  child: MouseRegion(
+                    onEnter: (event) =>
+                        _showTooltip(context, event.position, 'اليوم'),
+                    onExit: (event) => _hideTooltip(),
+                    child: _buildStyledTextField(
+                      controller: _dayController,
+                      labelText: 'Day',
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      validator: (value) =>
+                          value?.isEmpty ?? true ? 'Required' : null,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: MouseRegion(
-                  onEnter: (event) =>
-                      _showTooltip(context, event.position, 'الشهر'),
-                  onExit: (event) => _hideTooltip(),
-                  child: _buildStyledTextField(
-                    controller: _monthController,
-                    labelText: 'Month',
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    validator: (value) =>
-                        value?.isEmpty ?? true ? 'Required' : null,
+                const SizedBox(width: 8),
+                Expanded(
+                  child: MouseRegion(
+                    onEnter: (event) =>
+                        _showTooltip(context, event.position, 'الشهر'),
+                    onExit: (event) => _hideTooltip(),
+                    child: _buildStyledTextField(
+                      controller: _monthController,
+                      labelText: 'Month',
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      validator: (value) =>
+                          value?.isEmpty ?? true ? 'Required' : null,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: MouseRegion(
-                  onEnter: (event) =>
-                      _showTooltip(context, event.position, 'السنة'),
-                  onExit: (event) => _hideTooltip(),
-                  child: _buildStyledTextField(
-                    controller: _yearController,
-                    labelText: 'Year',
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    validator: (value) =>
-                        value?.isEmpty ?? true ? 'Required' : null,
+                const SizedBox(width: 8),
+                Expanded(
+                  child: MouseRegion(
+                    onEnter: (event) =>
+                        _showTooltip(context, event.position, 'السنة'),
+                    onExit: (event) => _hideTooltip(),
+                    child: _buildStyledTextField(
+                      controller: _yearController,
+                      labelText: 'Year',
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      validator: (value) =>
+                          value?.isEmpty ?? true ? 'Required' : null,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           const SizedBox(height: 16),
           MouseRegion(
@@ -1431,44 +1433,46 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
           const Text('Date of Death',
               style: TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: TextFormField(
-                  controller: _fatherDeathDayController,
-                  style: TextStyle(
-                    color: theme.textTheme.bodyLarge?.color,
+          IntrinsicHeight(
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: _fatherDeathDayController,
+                    style: TextStyle(
+                      color: theme.textTheme.bodyLarge?.color,
+                    ),
+                    decoration: const InputDecoration(labelText: 'Day'),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   ),
-                  decoration: const InputDecoration(labelText: 'Day'),
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: TextFormField(
-                  controller: _fatherDeathMonthController,
-                  style: TextStyle(
-                    color: theme.textTheme.bodyLarge?.color,
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextFormField(
+                    controller: _fatherDeathMonthController,
+                    style: TextStyle(
+                      color: theme.textTheme.bodyLarge?.color,
+                    ),
+                    decoration: const InputDecoration(labelText: 'Month'),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   ),
-                  decoration: const InputDecoration(labelText: 'Month'),
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: TextFormField(
-                  controller: _fatherDeathYearController,
-                  style: TextStyle(
-                    color: theme.textTheme.bodyLarge?.color,
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextFormField(
+                    controller: _fatherDeathYearController,
+                    style: TextStyle(
+                      color: theme.textTheme.bodyLarge?.color,
+                    ),
+                    decoration: const InputDecoration(labelText: 'Year'),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   ),
-                  decoration: const InputDecoration(labelText: 'Year'),
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           const SizedBox(height: 16),
           TextFormField(
@@ -1564,44 +1568,46 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
             const Text('Date of Death',
                 style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _motherDeathDayController,
-                    style: TextStyle(
-                      color: theme.textTheme.bodyLarge?.color,
+            IntrinsicHeight(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _motherDeathDayController,
+                      style: TextStyle(
+                        color: theme.textTheme.bodyLarge?.color,
+                      ),
+                      decoration: const InputDecoration(labelText: 'Day'),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     ),
-                    decoration: const InputDecoration(labelText: 'Day'),
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextFormField(
-                    controller: _motherDeathMonthController,
-                    style: TextStyle(
-                      color: theme.textTheme.bodyLarge?.color,
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _motherDeathMonthController,
+                      style: TextStyle(
+                        color: theme.textTheme.bodyLarge?.color,
+                      ),
+                      decoration: const InputDecoration(labelText: 'Month'),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     ),
-                    decoration: const InputDecoration(labelText: 'Month'),
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextFormField(
-                    controller: _motherDeathYearController,
-                    style: TextStyle(
-                      color: theme.textTheme.bodyLarge?.color,
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _motherDeathYearController,
+                      style: TextStyle(
+                        color: theme.textTheme.bodyLarge?.color,
+                      ),
+                      decoration: const InputDecoration(labelText: 'Year'),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     ),
-                    decoration: const InputDecoration(labelText: 'Year'),
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
             const SizedBox(height: 16),
             TextFormField(

@@ -365,7 +365,6 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
                 _buildSettingsSection(
                   'System',
                   [

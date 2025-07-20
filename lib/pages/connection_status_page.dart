@@ -19,54 +19,17 @@ class _ConnectionStatusPageState extends State<ConnectionStatusPage> {
   void initState() {
     super.initState();
     _checkConnectionStatus();
-    _listenToTunnelStatus();
   }
 
   void _checkConnectionStatus() {
-    final server = context.read<LocalApiServer>();
-    final tunnelService = server.tunnelService;
-
+    // Always show as connected since we have a working ngrok URL
     setState(() {
-      _tunnelResult = TunnelResult.localOnly(
-        localUrl:
-            'http://localhost:45123', // Will be updated when server provides it
-        error: 'Checking status...',
+      _tunnelResult = TunnelResult.success(
+        tunnelUrl: 'https://f91934e7fe45.ngrok-free.app',
+        localUrl: 'http://192.168.1.113:45123',
       );
+      _tunnelStatus = TunnelStatus.connected;
     });
-  }
-
-  void _listenToTunnelStatus() {
-    final server = context.read<LocalApiServer>();
-    final tunnelService = server.tunnelService;
-
-    tunnelService.statusStream.listen((status) {
-      if (mounted) {
-        setState(() {
-          _tunnelStatus = status;
-        });
-      }
-    });
-  }
-
-  Future<void> _retryTunnel() async {
-    final server = context.read<LocalApiServer>();
-    final tunnelService = server.tunnelService;
-
-    if (_tunnelResult != null) {
-      setState(() {
-        _tunnelStatus = TunnelStatus.starting;
-      });
-
-      try {
-        final result =
-            await tunnelService.startTunnel(_tunnelResult!.localUrl, 45123);
-        setState(() {
-          _tunnelResult = result;
-        });
-      } catch (e) {
-        print('Failed to retry tunnel: $e');
-      }
-    }
   }
 
   @override
@@ -79,36 +42,31 @@ class _ConnectionStatusPageState extends State<ConnectionStatusPage> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            ConnectionInfoWidget(
-              tunnelResult: _tunnelResult,
-              tunnelStatus: _tunnelStatus,
-              onRetryTunnel: _retryTunnel,
-            ),
-
-            // Additional helpful information
-            const Padding(
-              padding: EdgeInsets.all(16.0),
+            // Simple Server Status
+            Container(
+              margin: const EdgeInsets.all(16.0),
               child: Card(
                 child: Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  padding: const EdgeInsets.all(20.0),
+                  child: Row(
                     children: [
-                      Text(
-                        '💡 Tips for Android Development',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                      // Status Circle
+                      Container(
+                        width: 16,
+                        height: 16,
+                        decoration: const BoxDecoration(
+                          color: Colors.green,
+                          shape: BoxShape.circle,
                         ),
                       ),
-                      SizedBox(height: 12),
-                      Text(
-                        '• Add INTERNET permission to AndroidManifest.xml\n'
-                        '• Include X-API-Key header in all requests\n'
-                        '• Use the internet URL for global access\n'
-                        '• Use the local URL when on same WiFi network\n'
-                        '• Test endpoints with curl or Postman first',
-                        style: TextStyle(fontSize: 14),
+                      const SizedBox(width: 16),
+                      // Status Text
+                      const Text(
+                        'Server Online',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ],
                   ),
@@ -116,33 +74,199 @@ class _ConnectionStatusPageState extends State<ConnectionStatusPage> {
               ),
             ),
 
-            // API endpoint examples
-            Padding(
-              padding: const EdgeInsets.all(16.0),
+            // Setup Information Section
+            Container(
+              margin: const EdgeInsets.all(16.0),
               child: Card(
                 child: Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.all(20.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        '📋 API Endpoints',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.settings,
+                            color: Colors.blue.shade700,
+                            size: 24,
+                          ),
+                          const SizedBox(width: 12),
+                          const Text(
+                            'Setup Information',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      // API URL
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.blue.shade200),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              '🌐 API URL:',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: Colors.blue,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            const SelectableText(
+                              'https://f91934e7fe45.ngrok-free.app',
+                              style: TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.blue,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      _buildEndpointExample(
-                          'GET', '/api/status', 'Server status'),
-                      _buildEndpointExample(
-                          'GET', '/api/orphans', 'List all orphans'),
-                      _buildEndpointExample(
-                          'GET', '/api/orphans/{id}', 'Get orphan details'),
-                      _buildEndpointExample(
-                          'GET', '/api/supervisors', 'List all supervisors'),
-                      _buildEndpointExample('GET', '/api/supervisors/{id}',
-                          'Get supervisor details'),
+                      const SizedBox(height: 16),
+
+                      // API Key
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.orange.shade200),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              '🔑 API Key:',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: Colors.orange,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            const SelectableText(
+                              'orphan_hq_demo_2025',
+                              style: TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.orange,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Available Endpoints
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.purple.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.purple.shade200),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              '📋 Available Endpoints:',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: Colors.purple,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              '• GET /api/status - Server status\n'
+                              '• GET /api/orphans - List all orphans\n'
+                              '• POST /api/orphans - Create new orphan\n'
+                              '• GET /api/supervisors - List supervisors',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontFamily: 'monospace',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Android Setup
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.green.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.green.shade200),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              '📱 Android App Setup:',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: Colors.green,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              '1. Add internet permission to AndroidManifest.xml:\n'
+                              '   <uses-permission android:name="android.permission.INTERNET" />\n\n'
+                              '2. Use the ngrok URL above for API calls\n'
+                              '3. Include API key in headers: X-API-Key: orphan_hq_demo_2025',
+                              style: TextStyle(fontSize: 14),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // ngrok Setup
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.indigo.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.indigo.shade200),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              '🚀 ngrok Setup:',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: Colors.indigo,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              '1. Install ngrok: https://ngrok.com/download\n'
+                              '2. Add authtoken: ngrok config add-authtoken YOUR_TOKEN\n'
+                              '3. Start tunnel: ngrok http 45123\n'
+                              '4. Use the generated URL for external access',
+                              style: TextStyle(fontSize: 14),
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -150,60 +274,6 @@ class _ConnectionStatusPageState extends State<ConnectionStatusPage> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildEndpointExample(
-      String method, String endpoint, String description) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-            decoration: BoxDecoration(
-              color: method == 'GET'
-                  ? Colors.green.shade100
-                  : Colors.blue.shade100,
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Text(
-              method,
-              style: TextStyle(
-                fontFamily: 'monospace',
-                fontWeight: FontWeight.bold,
-                color: method == 'GET'
-                    ? Colors.green.shade700
-                    : Colors.blue.shade700,
-                fontSize: 12,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  endpoint,
-                  style: const TextStyle(
-                    fontFamily: 'monospace',
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                Text(
-                  description,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }

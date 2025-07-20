@@ -606,7 +606,14 @@ class _OrphanListPageState extends State<OrphanListPage> {
         final parts = entry.split(':');
         if (parts.length == 2 && parts[0] == 'recent') {
           final file = File(parts[1]);
-          return file.existsSync() ? file : null;
+          // Only return if file exists and has a valid image extension
+          if (file.existsSync()) {
+            final extension = file.path.split('.').last.toLowerCase();
+            if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp']
+                .contains(extension)) {
+              return file;
+            }
+          }
         }
       }
     } catch (e) {

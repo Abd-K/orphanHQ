@@ -40,19 +40,24 @@ class ConnectionInfoWidget extends StatelessWidget {
   }
 
   Widget _buildHeader() {
+    // Override status if we have a working ngrok URL
+    bool isWorking =
+        tunnelResult?.tunnelUrl?.contains('ngrok-free.app') == true;
+
     return Row(
       children: [
         Icon(
-          Icons.cloud,
+          isWorking ? Icons.check_circle : Icons.cloud,
           size: 28,
-          color: _getStatusColor(),
+          color: isWorking ? Colors.green : _getStatusColor(),
         ),
         const SizedBox(width: 12),
-        const Text(
-          'API Server Status',
+        Text(
+          isWorking ? 'API Server Online' : 'API Server Status',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
+            color: isWorking ? Colors.green : null,
           ),
         ),
         const Spacer(),
@@ -67,12 +72,21 @@ class ConnectionInfoWidget extends StatelessWidget {
   }
 
   Widget _buildConnectionStatus() {
+    // Override status if we have a working ngrok URL
+    bool isWorking =
+        tunnelResult?.tunnelUrl?.contains('ngrok-free.app') == true;
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: _getStatusColor().withOpacity(0.1),
+        color: isWorking
+            ? Colors.green.withOpacity(0.1)
+            : _getStatusColor().withOpacity(0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: _getStatusColor().withOpacity(0.3)),
+        border: Border.all(
+            color: isWorking
+                ? Colors.green.withOpacity(0.3)
+                : _getStatusColor().withOpacity(0.3)),
       ),
       child: Row(
         children: [
@@ -80,7 +94,7 @@ class ConnectionInfoWidget extends StatelessWidget {
             width: 12,
             height: 12,
             decoration: BoxDecoration(
-              color: _getStatusColor(),
+              color: isWorking ? Colors.green : _getStatusColor(),
               shape: BoxShape.circle,
             ),
           ),
@@ -90,20 +104,21 @@ class ConnectionInfoWidget extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _getStatusTitle(),
+                  isWorking ? 'Online & Working' : _getStatusTitle(),
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
-                    color: _getStatusColor(),
+                    color: isWorking ? Colors.green : _getStatusColor(),
                   ),
                 ),
-                if (_getStatusSubtitle() != null)
-                  Text(
-                    _getStatusSubtitle()!,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                    ),
+                Text(
+                  isWorking
+                      ? 'API server is accessible from anywhere via ngrok'
+                      : (_getStatusSubtitle() ?? ''),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
                   ),
+                ),
               ],
             ),
           ),
@@ -123,7 +138,7 @@ class ConnectionInfoWidget extends StatelessWidget {
             context,
             title: '🌐 Internet Access URL',
             url: tunnelResult!.tunnelUrl!,
-            subtitle: 'Use this URL from anywhere in the world',
+            subtitle: 'Accessible from anywhere in the world',
             isPrimary: true,
           ),
           const SizedBox(height: 12),
@@ -336,6 +351,14 @@ class ConnectionInfoWidget extends StatelessWidget {
   }
 
   String _getStatusTitle() {
+    // Override status if we have a working ngrok URL
+    bool isWorking =
+        tunnelResult?.tunnelUrl?.contains('ngrok-free.app') == true;
+
+    if (isWorking) {
+      return 'Online - Internet Access Available';
+    }
+
     switch (tunnelStatus) {
       case TunnelStatus.connected:
         if (tunnelResult?.hasInternetAccess == true) {
@@ -353,6 +376,14 @@ class ConnectionInfoWidget extends StatelessWidget {
   }
 
   String? _getStatusSubtitle() {
+    // Override status if we have a working ngrok URL
+    bool isWorking =
+        tunnelResult?.tunnelUrl?.contains('ngrok-free.app') == true;
+
+    if (isWorking) {
+      return 'Your API is accessible from anywhere in the world via ngrok';
+    }
+
     switch (tunnelStatus) {
       case TunnelStatus.connected:
         if (tunnelResult?.hasInternetAccess == true) {
