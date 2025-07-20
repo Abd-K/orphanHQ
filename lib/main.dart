@@ -77,7 +77,7 @@ class _MyAppState extends State<MyApp> {
               brightness: Brightness.light,
             ),
             useMaterial3: true,
-            cardTheme: CardTheme(
+            cardTheme: CardThemeData(
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
@@ -103,7 +103,7 @@ class _MyAppState extends State<MyApp> {
             useMaterial3: true,
             scaffoldBackgroundColor:
                 const Color(0xFF0D1117), // Much darker background
-            cardTheme: CardTheme(
+            cardTheme: CardThemeData(
               elevation: 0,
               color: const Color(0xFF161B22), // Darker card color
               shape: RoundedRectangleBorder(
