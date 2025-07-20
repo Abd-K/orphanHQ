@@ -110,6 +110,7 @@ class LocalApiServer {
       print('  GET  /api/status          - Server status');
       print('  POST /api/orphans         - Create new orphan');
       print('  POST /api/orphans/:id/updateStatus - Update orphan status');
+      print('  GET  /qr/scan/:id - Get orphan info via QR scan');
       print('  GET  /api/supervisors/:id - Get supervisor details');
       print('');
       print('Internal endpoints (hidden from UI):');
@@ -142,6 +143,12 @@ class LocalApiServer {
             // Allow OPTIONS requests for CORS preflight
             if (request.method == 'OPTIONS') {
               print('🔓 CORS preflight request - allowing');
+              return innerHandler(request);
+            }
+
+            // Allow QR scan endpoints without authentication
+            if (request.url.path.startsWith('qr/scan/')) {
+              print('🔓 QR scan endpoint - allowing without authentication');
               return innerHandler(request);
             }
 
@@ -231,6 +238,13 @@ class LocalApiServer {
             }
           }
 
+          if (method == 'GET' && path.startsWith('qr/scan/')) {
+            // Extract orphan ID from path like "qr/scan/123"
+            final orphanId = path.substring('qr/scan/'.length);
+            print('✅ Routing to QR scan endpoint with ID: $orphanId');
+            return _handleQRScan(request, orphanId);
+          }
+
           // Supervisors endpoints
           if (method == 'GET' && path == 'api/supervisors') {
             print('✅ Routing to get supervisors endpoint');
@@ -281,6 +295,7 @@ class LocalApiServer {
             'GET /api/status',
             'POST /api/orphans',
             'POST /api/orphans/:id/updateStatus',
+            'GET /qr/scan/:id',
             'GET /api/supervisors/:id',
           ],
           'internal': [
@@ -781,6 +796,67 @@ class LocalApiServer {
         body: jsonEncode({
           'error': 'Internal Server Error',
           'message': 'Failed to update orphan status: $e'
+        }),
+        headers: {'content-type': 'application/json'},
+      );
+    }
+  }
+
+  // Handle QR code scan
+  Future<Response> _handleQRScan(Request request, String orphanId) async {
+    try {
+      print('🔵 GET /qr/scan/$orphanId - QR scan request received');
+
+      // Get orphan details
+      final orphan = await _orphanRepository.getOrphanById(orphanId);
+
+      if (orphan == null) {
+        return Response.notFound(
+          jsonEncode({
+            'error': 'Not Found',
+            'message': 'Orphan with ID $orphanId not found'
+          }),
+          headers: {'content-type': 'application/json'},
+        );
+      }
+
+      // Return orphan information in a user-friendly format
+      return Response.ok(
+        jsonEncode({
+          'success': true,
+          'message': 'Orphan information retrieved via QR scan',
+          'data': {
+            'id': orphan.orphanId,
+            'name': {
+              'first': orphan.firstName,
+              'father': orphan.fatherName,
+              'grandfather': orphan.grandfatherName,
+              'family': orphan.familyName,
+              'full':
+                  '${orphan.firstName} ${orphan.fatherName} ${orphan.grandfatherName} ${orphan.familyName}',
+            },
+            'status': orphan.status.toString().split('.').last,
+            'date_of_birth': orphan.dateOfBirth.toIso8601String(),
+            'age': DateTime.now().difference(orphan.dateOfBirth).inDays ~/ 365,
+            'last_updated': orphan.lastUpdated.toIso8601String(),
+            'last_status_update': orphan.lastStatusUpdate?.toIso8601String(),
+            'supervisor_id': orphan.supervisorId,
+            'emergency_contact': {
+              'phone': orphan.currentPhoneNumber,
+              'location': orphan.currentCity,
+            },
+            'qr_scan_timestamp': DateTime.now().toIso8601String(),
+          },
+        }),
+        headers: {'content-type': 'application/json'},
+      );
+    } catch (e, stackTrace) {
+      print('❌ Error handling QR scan: $e');
+      print('❌ Stack trace: $stackTrace');
+      return Response.internalServerError(
+        body: jsonEncode({
+          'error': 'Internal Server Error',
+          'message': 'Failed to retrieve orphan information: $e'
         }),
         headers: {'content-type': 'application/json'},
       );

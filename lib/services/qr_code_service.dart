@@ -26,32 +26,14 @@ class QRCodeService {
     }
   }
 
-  /// Creates QR code data as JSON string
+  /// Creates QR code data as URL string
   static String createQRData(Orphan orphan) {
-    final data = {
-      'orphan_id': orphan.orphanId,
-      'name': {
-        'first': orphan.firstName,
-        'father': orphan.fatherName,
-        'grandfather': orphan.grandfatherName,
-        'family': orphan.familyName,
-        'full':
-            '${orphan.firstName} ${orphan.fatherName} ${orphan.grandfatherName} ${orphan.familyName}'
-                .trim(),
-      },
-      'status': orphan.status.toString().split('.').last,
-      'date_of_birth': orphan.dateOfBirth.toIso8601String(),
-      'age': DateTime.now().difference(orphan.dateOfBirth).inDays ~/ 365,
-      'last_updated': orphan.lastUpdated.toIso8601String(),
-      'supervisor_id': orphan.supervisorId,
-      'emergency_contact': {
-        'supervisor_phone': orphan.currentPhoneNumber,
-        'location': orphan.currentCity,
-      },
-      'qr_generated': DateTime.now().toIso8601String(),
-    };
+    // Create a URL that points to the orphan's information
+    // This URL can be scanned and will redirect to the orphan's details
+    final url =
+        'https://2df91f728ff3.ngrok-free.app/qr/scan/${orphan.orphanId}';
 
-    return jsonEncode(data);
+    return url;
   }
 
   /// Saves QR code data to local storage
@@ -125,9 +107,27 @@ class QRCodeService {
     );
   }
 
-  /// Decodes QR code data from JSON string
+  /// Decodes QR code data from URL string
   static Map<String, dynamic>? decodeQRData(String qrData) {
     try {
+      // Check if it's a URL (starts with http/https)
+      if (qrData.startsWith('http://') || qrData.startsWith('https://')) {
+        // Extract orphan ID from URL
+        final uri = Uri.parse(qrData);
+        final pathSegments = uri.pathSegments;
+        if (pathSegments.length >= 3 &&
+            pathSegments[0] == 'qr' &&
+            pathSegments[1] == 'scan') {
+          final orphanId = pathSegments[2];
+          return {
+            'type': 'orphan_scan',
+            'orphanId': orphanId,
+            'url': qrData,
+          };
+        }
+      }
+
+      // Try to parse as JSON if it's not a URL
       return jsonDecode(qrData) as Map<String, dynamic>;
     } catch (e) {
       print('Error decoding QR data: $e');

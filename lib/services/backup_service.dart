@@ -99,6 +99,89 @@ class BackupService {
     }
   }
 
+  /// Creates a backup directly to the specified file path
+  /// Returns the path to the created backup file
+  static Future<String?> createBackupToPath(
+    String backupFilePath, {
+    Function(String)? onProgress,
+  }) async {
+    try {
+      onProgress?.call('Starting backup...');
+
+      // Get application documents directory
+      final appDir = await getApplicationDocumentsDirectory();
+
+      onProgress?.call('Preparing backup archive...');
+
+      // Create ZIP archive
+      final archive = Archive();
+
+      // 1. Add database file
+      onProgress?.call('Backing up database...');
+      final dbFile = File(p.join(appDir.path, 'db.sqlite'));
+      if (await dbFile.exists()) {
+        final dbBytes = await dbFile.readAsBytes();
+        final dbArchiveFile = ArchiveFile('db.sqlite', dbBytes.length, dbBytes);
+        archive.addFile(dbArchiveFile);
+      } else {
+        throw Exception('Database file not found');
+      }
+
+      // 2. Add orphan documents directory
+      onProgress?.call('Backing up orphan documents...');
+      final documentsDir = Directory(p.join(appDir.path, 'orphan_documents'));
+      if (await documentsDir.exists()) {
+        await _addDirectoryToArchive(archive, documentsDir, 'orphan_documents');
+      }
+
+      // 3. Add orphan photos directory
+      onProgress?.call('Backing up orphan photos...');
+      final photosDir = Directory(p.join(appDir.path, 'orphan_photos'));
+      if (await photosDir.exists()) {
+        await _addDirectoryToArchive(archive, photosDir, 'orphan_photos');
+      }
+
+      // 4. Add metadata file
+      onProgress?.call('Adding backup metadata...');
+      final metadata = {
+        'backup_version': '1.0',
+        'created_at': DateTime.now().toIso8601String(),
+        'app_version': '1.0.0', // You can get this from pubspec.yaml
+        'database_schema_version': '6',
+        'total_files': archive.length,
+      };
+
+      final metadataJson = _mapToJsonString(metadata);
+      final metadataFile = ArchiveFile(
+          'backup_metadata.json', metadataJson.length, metadataJson.codeUnits);
+      archive.addFile(metadataFile);
+
+      // 5. Create the backup file
+      onProgress?.call('Finalizing backup...');
+      final zipEncoder = ZipEncoder();
+      final zipBytes = zipEncoder.encode(archive);
+
+      if (zipBytes != null) {
+        // Ensure the directory exists
+        final backupDir = Directory(p.dirname(backupFilePath));
+        if (!await backupDir.exists()) {
+          await backupDir.create(recursive: true);
+        }
+
+        final backupFile = File(backupFilePath);
+        await backupFile.writeAsBytes(zipBytes);
+        onProgress?.call('Backup completed successfully!');
+        return backupFilePath;
+      } else {
+        throw Exception('Failed to create backup archive');
+      }
+    } catch (e) {
+      onProgress?.call('Backup failed: $e');
+      print('Backup error: $e');
+      return null;
+    }
+  }
+
   /// Restores a backup from the specified file
   /// Returns true if successful
   static Future<bool> restoreBackup(
@@ -177,10 +260,8 @@ class BackupService {
       );
 
       if (result != null) {
-        return await createBackup(
-          customPath: p.dirname(result),
-          onProgress: onProgress,
-        );
+        // Create backup directly to the selected path
+        return await createBackupToPath(result, onProgress: onProgress);
       }
       return null;
     } catch (e) {

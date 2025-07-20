@@ -16,18 +16,14 @@ class OrphanRepository {
       print('✅ Orphan inserted with database ID: $orphanId');
 
       // Get the created orphan to generate QR code
-      // Use the orphanId from the companion object since we explicitly set it
-      if (orphan.orphanId.value != null) {
-        final createdOrphan = await getOrphanById(orphan.orphanId.value);
-        if (createdOrphan != null) {
-          print(
-              '✅ Retrieved created orphan with ID: ${createdOrphan.orphanId}');
-          await _generateAndUpdateQRCode(createdOrphan);
-        } else {
-          print('⚠️ Could not retrieve created orphan for QR code generation');
-        }
+      // Since we're using OrphansCompanion.insert(), the orphanId is auto-generated
+      // We need to find the recently created orphan
+      final createdOrphan = await findRecentlyCreatedOrphan();
+      if (createdOrphan != null) {
+        print('✅ Retrieved created orphan with ID: ${createdOrphan.orphanId}');
+        await _generateAndUpdateQRCode(createdOrphan);
       } else {
-        print('⚠️ No orphanId in companion object for QR code generation');
+        print('⚠️ Could not retrieve created orphan for QR code generation');
       }
 
       return orphanId;
@@ -150,5 +146,22 @@ class OrphanRepository {
       ..where((tbl) => tbl.orphanId.equals(orphanId));
     final results = await query.get();
     return results.isNotEmpty ? results.first : null;
+  }
+
+  Future<Orphan?> findRecentlyCreatedOrphan() async {
+    try {
+      final orphansStream = getAllOrphans();
+      final orphans = await orphansStream.first;
+
+      // Find the most recent orphan (by lastUpdated)
+      if (orphans.isNotEmpty) {
+        orphans.sort((a, b) => b.lastUpdated.compareTo(a.lastUpdated));
+        return orphans.first;
+      }
+      return null;
+    } catch (e) {
+      print('Error finding recently created orphan: $e');
+      return null;
+    }
   }
 }

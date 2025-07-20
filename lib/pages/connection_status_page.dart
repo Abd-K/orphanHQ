@@ -226,6 +226,7 @@ class _ConnectionStatusPageState extends State<ConnectionStatusPage> {
                                 '• GET /api/orphans - List all orphans\n'
                                 '• POST /api/orphans - Create new orphan\n'
                                 '• POST /api/orphans/:id/updateStatus - Update orphan status\n'
+                                '• GET /qr/scan/:id - Get orphan info via QR scan\n'
                                 '• GET /api/supervisors - List supervisors',
                                 style: TextStyle(
                                   fontSize: 14,

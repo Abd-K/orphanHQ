@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:drift/drift.dart' as drift;
 import 'dart:io';
+import 'package:path/path.dart' as path;
 import '../database.dart';
 import '../repositories/orphan_repository.dart';
 import '../repositories/supervisor_repository.dart';
@@ -460,6 +461,18 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
                               width: 250,
                               height: 250,
                               fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                print('Error loading image: $error');
+                                return CircleAvatar(
+                                  radius: 125,
+                                  backgroundColor: Colors.grey.shade400,
+                                  child: const Icon(
+                                    Icons.error,
+                                    size: 60,
+                                    color: Colors.white,
+                                  ),
+                                );
+                              },
                             ),
                           )
                         : CircleAvatar(
@@ -1068,7 +1081,15 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
         );
 
         // Navigate to the orphan's profile
-        context.push('/orphan/$orphanId');
+        // orphanId is the database row ID, we need to find the actual orphan ID
+        final createdOrphan =
+            await orphanRepository.findRecentlyCreatedOrphan();
+        if (createdOrphan != null) {
+          context.push('/orphan/${createdOrphan.orphanId}');
+        } else {
+          // Fallback to orphan list if we can't find the created orphan
+          context.push('/orphans');
+        }
       }
     } catch (e) {
       if (context.mounted) {
@@ -2835,6 +2856,18 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
                           fit: BoxFit.cover,
                           width: double.infinity,
                           height: double.infinity,
+                          errorBuilder: (context, error, stackTrace) {
+                            print(
+                                'Error loading additional document image: $error');
+                            return Container(
+                              color: Colors.grey.shade300,
+                              child: const Icon(
+                                Icons.error,
+                                color: Colors.grey,
+                                size: 30,
+                              ),
+                            );
+                          },
                         ),
                       ),
                       Positioned(
@@ -3004,6 +3037,17 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
                         fit: BoxFit.cover,
                         width: double.infinity,
                         height: double.infinity,
+                        errorBuilder: (context, error, stackTrace) {
+                          print('Error loading document image: $error');
+                          return Container(
+                            color: Colors.grey.shade300,
+                            child: const Icon(
+                              Icons.error,
+                              color: Colors.grey,
+                              size: 20,
+                            ),
+                          );
+                        },
                       ),
                     ),
                     Positioned(
@@ -3085,6 +3129,22 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
 
           final file = File(docPath);
           if (await file.exists()) {
+            // Validate that the file is an image by checking its extension
+            final extension = path.extension(file.path).toLowerCase();
+            final validImageExtensions = [
+              '.jpg',
+              '.jpeg',
+              '.png',
+              '.gif',
+              '.bmp',
+              '.webp'
+            ];
+
+            if (!validImageExtensions.contains(extension)) {
+              print('Warning: Skipping non-image file: ${file.path}');
+              continue;
+            }
+
             setState(() {
               switch (docType) {
                 case 'birth_cert':
