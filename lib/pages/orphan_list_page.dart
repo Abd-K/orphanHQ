@@ -20,32 +20,17 @@ class _OrphanListPageState extends State<OrphanListPage> {
   OrphanFilter _currentFilter = OrphanFilter.all;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  Timer? _debounce; // --- Start of new code ---
 
   @override
   void initState() {
     super.initState();
-    _searchController.addListener(_onSearchChanged);
   }
 
   @override
   void dispose() {
-    _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
-    _debounce?.cancel();
     super.dispose();
   }
-
-  _onSearchChanged() {
-    if (_debounce?.isActive ?? false) _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 500), () {
-      if (mounted) {
-        setState(() {
-          _searchQuery = _searchController.text;
-        });
-      }
-    });
-  } // --- End of new code ---
 
   @override
   Widget build(BuildContext context) {
@@ -181,7 +166,6 @@ class _OrphanListPageState extends State<OrphanListPage> {
 
   Widget _buildOrphanGrid(BuildContext context, List<Orphan> orphans,
       SupervisorRepository supervisorRepository) {
-    // --- Start of modified code ---
     final filteredOrphans = orphans.where((orphan) {
       switch (_currentFilter) {
         case OrphanFilter.active:
@@ -202,7 +186,6 @@ class _OrphanListPageState extends State<OrphanListPage> {
           .toLowerCase();
       return fullName.contains(_searchQuery.toLowerCase());
     }).toList();
-    // --- End of modified code ---
 
     return Padding(
       padding: const EdgeInsets.all(24),
@@ -248,19 +231,40 @@ class _OrphanListPageState extends State<OrphanListPage> {
           ),
           const SizedBox(height: 24),
 
-          // Search Bar
+          // Search Bar with Button
           Padding(
             padding: const EdgeInsets.only(bottom: 16.0),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                labelText: 'Search Orphans',
-                hintText: 'Enter orphan name...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      labelText: 'Search Orphans',
+                      hintText: 'Enter orphan name...',
+                      prefixIcon: const Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _searchQuery = _searchController.text;
+                    });
+                  },
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Icon(Icons.search),
+                ),
+              ],
             ),
           ),
 
