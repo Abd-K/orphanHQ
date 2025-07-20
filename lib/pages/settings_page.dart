@@ -245,7 +245,7 @@ class _SettingsPageState extends State<SettingsPage> {
             children: [
               Expanded(
                 child: Text(
-                  AppLocalizations.of(context)!.translate('settings')!,
+                  AppLocalizations.of(context)!.translate('settings'),
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -330,7 +330,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       ListTile(
                         leading: const Icon(Icons.language),
                         title: Text(AppLocalizations.of(context)!
-                            .translate('language')!),
+                            .translate('language')),
                         trailing: DropdownButton<Locale>(
                           value: localeProvider.locale,
                           onChanged: (Locale? newLocale) {
@@ -350,39 +350,42 @@ class _SettingsPageState extends State<SettingsPage> {
                       ),
                       _buildSettingsTile(
                         icon: Icons.notifications,
-                        title: 'Notifications',
-                        subtitle: 'Enabled (Not implemented yet)',
+                        title: AppLocalizations.of(context)!
+                            .translate('notifications'),
+                        subtitle: AppLocalizations.of(context)!
+                            .translate('notifications_subtitle'),
                         onTap: null,
                         isDisabled: true,
                       ),
                       _buildSettingsTile(
                         icon: Icons.palette,
                         title:
-                        AppLocalizations.of(context)!.translate('theme')!,
+                        AppLocalizations.of(context)!.translate('theme'),
                         subtitle: themeProvider.isDarkMode
-                            ? AppLocalizations.of(context)!.translate('dark')!
-                            : AppLocalizations.of(context)!.translate('light')!,
+                            ? AppLocalizations.of(context)!.translate('dark')
+                            : AppLocalizations.of(context)!.translate('light'),
                         onTap: () => themeProvider.toggleTheme(),
                       ),
                     ],
                   ),
                   const SizedBox(height: 24),
                   _buildSettingsSection(
-                    AppLocalizations.of(context)!.translate('data_management')!,
+                    AppLocalizations.of(context)!.translate('data_management'),
                     [
                       _buildSettingsTile(
                         icon: Icons.backup,
                         title: AppLocalizations.of(context)!
-                            .translate('backup_restore')!,
-                        subtitle: 'Manage your data backups',
+                            .translate('backup_restore'),
+                        subtitle: AppLocalizations.of(context)!
+                            .translate('manage_backups'),
                         onTap: _isLoading ? null : _navigateToBackup,
                       ),
                       _buildSettingsTile(
                         icon: Icons.delete_forever,
                         title: AppLocalizations.of(context)!
-                            .translate('clear_all_data')!,
-                        subtitle:
-                        'Permanently delete all data (creates backup first)',
+                            .translate('clear_all_data'),
+                        subtitle: AppLocalizations.of(context)!
+                            .translate('delete_all_data'),
                         onTap: _isLoading ? null : _clearAllData,
                         isDestructive: true,
                       ),
@@ -390,33 +393,37 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                   const SizedBox(height: 24),
                   _buildSettingsSection(
-                    AppLocalizations.of(context)!.translate('system')!,
+                    AppLocalizations.of(context)!.translate('system'),
                     [
                       _buildSettingsTile(
                         icon: Icons.cloud,
                         title: AppLocalizations.of(context)!
-                            .translate('api_connection_status')!,
-                        subtitle: 'View server and tunnel status',
+                            .translate('api_connection_status'),
+                        subtitle: AppLocalizations.of(context)!
+                            .translate('view_server_status'),
                         onTap: () => context.go('/connection'),
                       ),
                       _buildSettingsTile(
                         icon: Icons.info,
-                        title: AppLocalizations.of(context)!.translate('about')!,
-                        subtitle: 'Orphan HQ v1.0.0',
+                        title: AppLocalizations.of(context)!.translate('about'),
+                        subtitle: AppLocalizations.of(context)!
+                            .translate('app_version'),
                         onTap: () {},
                       ),
                       _buildSettingsTile(
                         icon: Icons.help,
                         title: AppLocalizations.of(context)!
-                            .translate('help_support')!,
-                        subtitle: 'Get help and contact support',
+                            .translate('help_support'),
+                        subtitle:
+                        AppLocalizations.of(context)!.translate('get_help'),
                         onTap: () {},
                       ),
                       _buildSettingsTile(
                         icon: Icons.privacy_tip,
                         title: AppLocalizations.of(context)!
-                            .translate('privacy_policy')!,
-                        subtitle: 'Read our privacy policy',
+                            .translate('privacy_policy'),
+                        subtitle: AppLocalizations.of(context)!
+                            .translate('read_privacy_policy'),
                         onTap: () {},
                       ),
                     ],
