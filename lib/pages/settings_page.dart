@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:drift/drift.dart' as drift;
 import 'package:go_router/go_router.dart';
+import 'package:orphan_hq/services/app_localizations.dart';
+import 'package:orphan_hq/services/locale_provider.dart';
 import 'package:provider/provider.dart';
 import '../services/backup_service.dart';
 import '../database.dart';
@@ -124,12 +126,12 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<bool?> _showConfirmationDialog(
-    String title,
-    String content,
-    String confirmText,
-    Color confirmColor, {
-    bool requireTextConfirmation = false,
-  }) async {
+      String title,
+      String content,
+      String confirmText,
+      Color confirmColor, {
+        bool requireTextConfirmation = false,
+      }) async {
     if (requireTextConfirmation) {
       final controller = TextEditingController();
       return showDialog<bool>(
@@ -222,6 +224,7 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     final themeProvider = context.watch<ThemeProvider>();
+    final localeProvider = Provider.of<LocaleProvider>(context);
 
     return Column(
       children: [
@@ -242,7 +245,7 @@ class _SettingsPageState extends State<SettingsPage> {
             children: [
               Expanded(
                 child: Text(
-                  'Settings',
+                  AppLocalizations.of(context)!.translate('settings')!,
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -280,22 +283,22 @@ class _SettingsPageState extends State<SettingsPage> {
             width: double.infinity,
             padding: const EdgeInsets.all(12),
             color: _statusMessage.contains('Error') ||
-                    _statusMessage.contains('Failed')
+                _statusMessage.contains('Failed')
                 ? (Theme.of(context).brightness == Brightness.dark
-                    ? Colors.red.shade900.withOpacity(0.3)
-                    : Colors.red[50])
+                ? Colors.red.shade900.withOpacity(0.3)
+                : Colors.red[50])
                 : (Theme.of(context).brightness == Brightness.dark
-                    ? Colors.green.shade900.withOpacity(0.3)
-                    : Colors.green[50]),
+                ? Colors.green.shade900.withOpacity(0.3)
+                : Colors.green[50]),
             child: Row(
               children: [
                 Icon(
                   _statusMessage.contains('Error') ||
-                          _statusMessage.contains('Failed')
+                      _statusMessage.contains('Failed')
                       ? Icons.error
                       : Icons.info,
                   color: _statusMessage.contains('Error') ||
-                          _statusMessage.contains('Failed')
+                      _statusMessage.contains('Failed')
                       ? Colors.red
                       : Colors.green,
                 ),
@@ -324,12 +327,26 @@ class _SettingsPageState extends State<SettingsPage> {
                   _buildSettingsSection(
                     'General',
                     [
-                      _buildSettingsTile(
-                        icon: Icons.language,
-                        title: 'Language',
-                        subtitle: 'English (Not implemented yet)',
-                        onTap: null,
-                        isDisabled: true,
+                      ListTile(
+                        leading: const Icon(Icons.language),
+                        title: Text(AppLocalizations.of(context)!
+                            .translate('language')!),
+                        trailing: DropdownButton<Locale>(
+                          value: localeProvider.locale,
+                          onChanged: (Locale? newLocale) {
+                            if (newLocale != null) {
+                              localeProvider.setLocale(newLocale);
+                            }
+                          },
+                          items: L10n.all.map((locale) {
+                            return DropdownMenuItem(
+                              value: locale,
+                              child: Text(locale.languageCode == 'en'
+                                  ? 'English'
+                                  : 'العربية'),
+                            );
+                          }).toList(),
+                        ),
                       ),
                       _buildSettingsTile(
                         icon: Icons.notifications,
@@ -340,27 +357,32 @@ class _SettingsPageState extends State<SettingsPage> {
                       ),
                       _buildSettingsTile(
                         icon: Icons.palette,
-                        title: 'Theme',
-                        subtitle: themeProvider.isDarkMode ? 'Dark' : 'Light',
+                        title:
+                        AppLocalizations.of(context)!.translate('theme')!,
+                        subtitle: themeProvider.isDarkMode
+                            ? AppLocalizations.of(context)!.translate('dark')!
+                            : AppLocalizations.of(context)!.translate('light')!,
                         onTap: () => themeProvider.toggleTheme(),
                       ),
                     ],
                   ),
                   const SizedBox(height: 24),
                   _buildSettingsSection(
-                    'Data Management',
+                    AppLocalizations.of(context)!.translate('data_management')!,
                     [
                       _buildSettingsTile(
                         icon: Icons.backup,
-                        title: 'Backup & Restore',
+                        title: AppLocalizations.of(context)!
+                            .translate('backup_restore')!,
                         subtitle: 'Manage your data backups',
                         onTap: _isLoading ? null : _navigateToBackup,
                       ),
                       _buildSettingsTile(
                         icon: Icons.delete_forever,
-                        title: 'Clear All Data',
+                        title: AppLocalizations.of(context)!
+                            .translate('clear_all_data')!,
                         subtitle:
-                            'Permanently delete all data (creates backup first)',
+                        'Permanently delete all data (creates backup first)',
                         onTap: _isLoading ? null : _clearAllData,
                         isDestructive: true,
                       ),
@@ -368,29 +390,32 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                   const SizedBox(height: 24),
                   _buildSettingsSection(
-                    'System',
+                    AppLocalizations.of(context)!.translate('system')!,
                     [
                       _buildSettingsTile(
                         icon: Icons.cloud,
-                        title: 'API Connection Status',
+                        title: AppLocalizations.of(context)!
+                            .translate('api_connection_status')!,
                         subtitle: 'View server and tunnel status',
                         onTap: () => context.go('/connection'),
                       ),
                       _buildSettingsTile(
                         icon: Icons.info,
-                        title: 'About',
+                        title: AppLocalizations.of(context)!.translate('about')!,
                         subtitle: 'Orphan HQ v1.0.0',
                         onTap: () {},
                       ),
                       _buildSettingsTile(
                         icon: Icons.help,
-                        title: 'Help & Support',
+                        title: AppLocalizations.of(context)!
+                            .translate('help_support')!,
                         subtitle: 'Get help and contact support',
                         onTap: () {},
                       ),
                       _buildSettingsTile(
                         icon: Icons.privacy_tip,
-                        title: 'Privacy Policy',
+                        title: AppLocalizations.of(context)!
+                            .translate('privacy_policy')!,
                         subtitle: 'Read our privacy policy',
                         onTap: () {},
                       ),
@@ -453,8 +478,8 @@ class _SettingsPageState extends State<SettingsPage> {
           color: isDisabled
               ? disabledColor
               : (isDestructive
-                  ? Colors.red[600]
-                  : theme.textTheme.titleMedium?.color),
+              ? Colors.red[600]
+              : theme.textTheme.titleMedium?.color),
           fontWeight: FontWeight.w500,
         ),
       ),
@@ -464,21 +489,21 @@ class _SettingsPageState extends State<SettingsPage> {
           color: isDisabled
               ? disabledColor
               : (isDestructive
-                  ? Colors.red[400]
-                  : theme.textTheme.bodySmall?.color),
+              ? Colors.red[400]
+              : theme.textTheme.bodySmall?.color),
         ),
       ),
       trailing: onTap != null
           ? Icon(
-              Icons.arrow_forward_ios,
-              size: 16,
-              color: theme.iconTheme.color,
-            )
+        Icons.arrow_forward_ios,
+        size: 16,
+        color: theme.iconTheme.color,
+      )
           : Icon(
-              Icons.arrow_forward_ios,
-              size: 16,
-              color: disabledColor,
-            ),
+        Icons.arrow_forward_ios,
+        size: 16,
+        color: disabledColor,
+      ),
       onTap: onTap,
       enabled: onTap != null,
     );

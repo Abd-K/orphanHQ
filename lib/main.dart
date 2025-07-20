@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:orphan_hq/database.dart';
 import 'package:orphan_hq/repositories/orphan_repository.dart';
 import 'package:orphan_hq/repositories/supervisor_repository.dart';
+import 'package:orphan_hq/services/app_localizations.dart';
 import 'package:orphan_hq/services/local_api_server.dart';
 import 'package:orphan_hq/router.dart';
 import 'package:orphan_hq/pages/settings_page.dart';
+import 'package:orphan_hq/services/locale_provider.dart';
 import 'package:provider/provider.dart';
 
 void main() {
   runApp(
     MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => LocaleProvider()),
         Provider<AppDb>(
           create: (_) => AppDb(),
           dispose: (context, db) => db.close(),
@@ -24,9 +28,9 @@ void main() {
         ProxyProvider2<OrphanRepository, SupervisorRepository, LocalApiServer>(
           update: (context, orphanRepo, supervisorRepo, previous) =>
               LocalApiServer(
-            orphanRepository: orphanRepo,
-            supervisorRepository: supervisorRepo,
-          ),
+                orphanRepository: orphanRepo,
+                supervisorRepository: supervisorRepo,
+              ),
         ),
         ChangeNotifierProvider(
           create: (_) => ThemeProvider(),
@@ -66,11 +70,21 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+    final localeProvider = Provider.of<LocaleProvider>(context);
+
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         return MaterialApp.router(
           routerConfig: router,
           title: 'Orphan HQ',
+          locale: localeProvider.locale,
+          supportedLocales: L10n.all,
+          localizationsDelegates: [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
           theme: ThemeData(
             colorScheme: ColorScheme.fromSeed(
               seedColor: Colors.blue,
@@ -102,7 +116,7 @@ class _MyAppState extends State<MyApp> {
             ),
             useMaterial3: true,
             scaffoldBackgroundColor:
-                const Color(0xFF0D1117), // Much darker background
+            const Color(0xFF0D1117), // Much darker background
             cardTheme: CardThemeData(
               elevation: 0,
               color: const Color(0xFF161B22), // Darker card color
@@ -115,7 +129,7 @@ class _MyAppState extends State<MyApp> {
             appBarTheme: const AppBarTheme(
               backgroundColor: Color(0xFF161B22),
               foregroundColor:
-                  Color(0xFFFFFFFF), // Pure white for better contrast
+              Color(0xFFFFFFFF), // Pure white for better contrast
               elevation: 0,
             ),
             drawerTheme: const DrawerThemeData(
@@ -124,7 +138,7 @@ class _MyAppState extends State<MyApp> {
             listTileTheme: const ListTileThemeData(
               textColor: Color(0xFFFFFFFF), // Pure white for better contrast
               iconColor:
-                  Color(0xFFE6EDF3), // Lighter gray for better icon visibility
+              Color(0xFFE6EDF3), // Lighter gray for better icon visibility
             ),
             textTheme: const TextTheme(
               bodyLarge: TextStyle(
@@ -133,7 +147,7 @@ class _MyAppState extends State<MyApp> {
                   color: Color(0xFFFFFFFF)), // Pure white for better contrast
               bodySmall: TextStyle(
                   color:
-                      Color(0xFFE6EDF3)), // Lighter gray for better readability
+                  Color(0xFFE6EDF3)), // Lighter gray for better readability
               headlineLarge: TextStyle(
                   color: Color(0xFFFFFFFF)), // Pure white for headings
               headlineMedium: TextStyle(
@@ -141,13 +155,13 @@ class _MyAppState extends State<MyApp> {
               headlineSmall: TextStyle(
                   color: Color(0xFFFFFFFF)), // Pure white for headings
               titleLarge:
-                  TextStyle(color: Color(0xFFFFFFFF)), // Pure white for titles
+              TextStyle(color: Color(0xFFFFFFFF)), // Pure white for titles
               titleMedium:
-                  TextStyle(color: Color(0xFFFFFFFF)), // Pure white for titles
+              TextStyle(color: Color(0xFFFFFFFF)), // Pure white for titles
               titleSmall:
-                  TextStyle(color: Color(0xFFFFFFFF)), // Pure white for titles
+              TextStyle(color: Color(0xFFFFFFFF)), // Pure white for titles
               labelLarge:
-                  TextStyle(color: Color(0xFFFFFFFF)), // Pure white for labels
+              TextStyle(color: Color(0xFFFFFFFF)), // Pure white for labels
               labelMedium: TextStyle(
                   color: Color(0xFFE6EDF3)), // Lighter gray for better contrast
               labelSmall: TextStyle(
@@ -155,22 +169,22 @@ class _MyAppState extends State<MyApp> {
             ),
             iconTheme: const IconThemeData(
               color:
-                  Color(0xFFE6EDF3), // Lighter gray for better icon visibility
+              Color(0xFFE6EDF3), // Lighter gray for better icon visibility
             ),
             // Improved text button styling for better contrast
             textButtonTheme: TextButtonThemeData(
               style: TextButton.styleFrom(
                 foregroundColor:
-                    const Color(0xFF58A6FF), // Better blue for text buttons
+                const Color(0xFF58A6FF), // Better blue for text buttons
               ),
             ),
             dividerColor: const Color(0xFF21262D),
             elevatedButtonTheme: ElevatedButtonThemeData(
               style: ElevatedButton.styleFrom(
                 backgroundColor:
-                    const Color(0xFF238636), // Better green for primary actions
+                const Color(0xFF238636), // Better green for primary actions
                 foregroundColor:
-                    const Color(0xFFFFFFFF), // Pure white text on buttons
+                const Color(0xFFFFFFFF), // Pure white text on buttons
               ),
             ),
             outlinedButtonTheme: OutlinedButtonThemeData(
@@ -182,7 +196,7 @@ class _MyAppState extends State<MyApp> {
             ),
             inputDecorationTheme: const InputDecorationTheme(
               labelStyle:
-                  TextStyle(color: Color(0xFFE6EDF3)), // Better label contrast
+              TextStyle(color: Color(0xFFE6EDF3)), // Better label contrast
               hintStyle: TextStyle(
                   color: Color(0xFFE6EDF3)), // Better hint text contrast
               helperStyle: TextStyle(
@@ -206,7 +220,7 @@ class _MyAppState extends State<MyApp> {
               cursorColor: Color(0xFF58A6FF), // Better cursor color
               selectionColor: Color(0xFF58A6FF), // Better text selection color
               selectionHandleColor:
-                  Color(0xFF58A6FF), // Better selection handle color
+              Color(0xFF58A6FF), // Better selection handle color
             ),
             // Disable all page transitions globally
             pageTransitionsTheme: const PageTransitionsTheme(
@@ -220,7 +234,7 @@ class _MyAppState extends State<MyApp> {
             ),
           ),
           themeMode:
-              themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+          themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
         );
       },
     );
@@ -233,12 +247,12 @@ class InstantPageTransitionsBuilder extends PageTransitionsBuilder {
 
   @override
   Widget buildTransitions<T extends Object?>(
-    PageRoute<T> route,
-    BuildContext context,
-    Animation<double> animation,
-    Animation<double> secondaryAnimation,
-    Widget child,
-  ) {
+      PageRoute<T> route,
+      BuildContext context,
+      Animation<double> animation,
+      Animation<double> secondaryAnimation,
+      Widget child,
+      ) {
     // Return the child directly without any transition animation
     return child;
   }
