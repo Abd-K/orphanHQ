@@ -314,87 +314,90 @@ class _SettingsPageState extends State<SettingsPage> {
 
         // Page Content
         Expanded(
-          child: Container(
-            color: Theme.of(context).scaffoldBackgroundColor,
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildSettingsSection(
-                  'General',
-                  [
-                    _buildSettingsTile(
-                      icon: Icons.language,
-                      title: 'Language',
-                      subtitle: 'English (Not implemented yet)',
-                      onTap: null,
-                      isDisabled: true,
-                    ),
-                    _buildSettingsTile(
-                      icon: Icons.notifications,
-                      title: 'Notifications',
-                      subtitle: 'Enabled (Not implemented yet)',
-                      onTap: null,
-                      isDisabled: true,
-                    ),
-                    _buildSettingsTile(
-                      icon: Icons.palette,
-                      title: 'Theme',
-                      subtitle: themeProvider.isDarkMode ? 'Dark' : 'Light',
-                      onTap: () => themeProvider.toggleTheme(),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                _buildSettingsSection(
-                  'Data Management',
-                  [
-                    _buildSettingsTile(
-                      icon: Icons.backup,
-                      title: 'Backup & Restore',
-                      subtitle: 'Manage your data backups',
-                      onTap: _isLoading ? null : _navigateToBackup,
-                    ),
-                    _buildSettingsTile(
-                      icon: Icons.delete_forever,
-                      title: 'Clear All Data',
-                      subtitle:
-                          'Permanently delete all data (creates backup first)',
-                      onTap: _isLoading ? null : _clearAllData,
-                      isDestructive: true,
-                    ),
-                  ],
-                ),
-                _buildSettingsSection(
-                  'System',
-                  [
-                    _buildSettingsTile(
-                      icon: Icons.cloud,
-                      title: 'API Connection Status',
-                      subtitle: 'View server and tunnel status',
-                      onTap: () => context.go('/connection'),
-                    ),
-                    _buildSettingsTile(
-                      icon: Icons.info,
-                      title: 'About',
-                      subtitle: 'Orphan HQ v1.0.0',
-                      onTap: () {},
-                    ),
-                    _buildSettingsTile(
-                      icon: Icons.help,
-                      title: 'Help & Support',
-                      subtitle: 'Get help and contact support',
-                      onTap: () {},
-                    ),
-                    _buildSettingsTile(
-                      icon: Icons.privacy_tip,
-                      title: 'Privacy Policy',
-                      subtitle: 'Read our privacy policy',
-                      onTap: () {},
-                    ),
-                  ],
-                ),
-              ],
+          child: SingleChildScrollView(
+            child: Container(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildSettingsSection(
+                    'General',
+                    [
+                      _buildSettingsTile(
+                        icon: Icons.language,
+                        title: 'Language',
+                        subtitle: 'English (Not implemented yet)',
+                        onTap: null,
+                        isDisabled: true,
+                      ),
+                      _buildSettingsTile(
+                        icon: Icons.notifications,
+                        title: 'Notifications',
+                        subtitle: 'Enabled (Not implemented yet)',
+                        onTap: null,
+                        isDisabled: true,
+                      ),
+                      _buildSettingsTile(
+                        icon: Icons.palette,
+                        title: 'Theme',
+                        subtitle: themeProvider.isDarkMode ? 'Dark' : 'Light',
+                        onTap: () => themeProvider.toggleTheme(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  _buildSettingsSection(
+                    'Data Management',
+                    [
+                      _buildSettingsTile(
+                        icon: Icons.backup,
+                        title: 'Backup & Restore',
+                        subtitle: 'Manage your data backups',
+                        onTap: _isLoading ? null : _navigateToBackup,
+                      ),
+                      _buildSettingsTile(
+                        icon: Icons.delete_forever,
+                        title: 'Clear All Data',
+                        subtitle:
+                            'Permanently delete all data (creates backup first)',
+                        onTap: _isLoading ? null : _clearAllData,
+                        isDestructive: true,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  _buildSettingsSection(
+                    'System',
+                    [
+                      _buildSettingsTile(
+                        icon: Icons.cloud,
+                        title: 'API Connection Status',
+                        subtitle: 'View server and tunnel status',
+                        onTap: () => context.go('/connection'),
+                      ),
+                      _buildSettingsTile(
+                        icon: Icons.info,
+                        title: 'About',
+                        subtitle: 'Orphan HQ v1.0.0',
+                        onTap: () {},
+                      ),
+                      _buildSettingsTile(
+                        icon: Icons.help,
+                        title: 'Help & Support',
+                        subtitle: 'Get help and contact support',
+                        onTap: () {},
+                      ),
+                      _buildSettingsTile(
+                        icon: Icons.privacy_tip,
+                        title: 'Privacy Policy',
+                        subtitle: 'Read our privacy policy',
+                        onTap: () {},
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
