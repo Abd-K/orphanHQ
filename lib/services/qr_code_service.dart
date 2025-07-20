@@ -31,7 +31,7 @@ class QRCodeService {
     // Create a URL that points to the orphan's information
     // This URL can be scanned and will redirect to the orphan's details
     final url =
-        'https://2df91f728ff3.ngrok-free.app/qr/scan/${orphan.orphanId}';
+        'https://1a73bacddd20.ngrok-free.app/qr/scan/${orphan.orphanId}';
 
     return url;
   }

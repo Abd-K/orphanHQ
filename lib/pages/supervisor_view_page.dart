@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:orphan_hq/database.dart';
 import 'package:orphan_hq/repositories/supervisor_repository.dart';
 import 'package:provider/provider.dart';
+import 'dart:math';
 
 enum SupervisorFilter { all, active, inactive }
 
@@ -241,10 +242,10 @@ class _SupervisorViewPageState extends State<SupervisorViewPage> {
                 : GridView.builder(
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                      childAspectRatio: 1.2,
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      childAspectRatio: 3.0,
                     ),
                     itemCount: filteredSupervisors.length,
                     itemBuilder: (context, index) {
@@ -435,13 +436,28 @@ class _SupervisorViewPageState extends State<SupervisorViewPage> {
   Widget _buildSupervisorCard(BuildContext context, Supervisor supervisor) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    Color statusColor = _getStatusColor(supervisor.active);
+    // --- STUB: Random last seen assignment ---
+    final random = Random(supervisor.supervisorId.hashCode);
+    final now = DateTime.now();
+    final lastSeen =
+        now.subtract(Duration(hours: random.nextInt(120))); // up to 5 days ago
+    final hoursAgo = now.difference(lastSeen).inHours;
+    final isRecentlySeen = now.difference(lastSeen).inDays < 2;
+    final statusColor = isRecentlySeen ? Colors.green : Colors.orange;
+    String lastSeenText;
+    if (hoursAgo < 1) {
+      lastSeenText = 'Just now';
+    } else if (hoursAgo < 24) {
+      lastSeenText = '$hoursAgo hour${hoursAgo == 1 ? '' : 's'} ago';
+    } else {
+      final daysAgo = now.difference(lastSeen).inDays;
+      lastSeenText = '$daysAgo day${daysAgo == 1 ? '' : 's'} ago';
+    }
+    // --- END STUB ---
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark
-            ? const Color(0xFF21262D) // Slightly different from card color
-            : Colors.white,
+        color: isDark ? const Color(0xFF21262D) : Colors.white,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: isDark ? const Color(0xFF30363D) : Colors.grey[200]!,
@@ -494,23 +510,38 @@ class _SupervisorViewPageState extends State<SupervisorViewPage> {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: statusColor.withOpacity(isDark ? 0.2 : 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  supervisor.active ? 'ACTIVE' : 'INACTIVE',
-                  style: TextStyle(
-                    color: statusColor,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
+              const Spacer(),
+              // Status indicator at the bottom
+              Row(
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: statusColor,
+                      shape: BoxShape.circle,
+                    ),
                   ),
+                  const SizedBox(width: 6),
+                  Text(
+                    isRecentlySeen ? 'ACTIVE' : 'INACTIVE',
+                    style: TextStyle(
+                      color: statusColor,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Last seen: $lastSeenText',
+                style: TextStyle(
+                  color: theme.textTheme.bodySmall?.color?.withOpacity(0.7),
+                  fontSize: 11,
+                  fontStyle: FontStyle.italic,
                 ),
               ),
-              const Spacer(),
             ],
           ),
         ),

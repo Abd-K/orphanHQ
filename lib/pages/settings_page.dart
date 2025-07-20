@@ -343,6 +343,9 @@ class _SettingsPageState extends State<SettingsPage> {
                         title: 'Theme',
                         subtitle: themeProvider.isDarkMode ? 'Dark' : 'Light',
                         onTap: () => themeProvider.toggleTheme(),
+                        isToggle: true,
+                        toggleValue: themeProvider.isDarkMode,
+                        onToggleChanged: (value) => themeProvider.toggleTheme(),
                       ),
                     ],
                   ),
@@ -434,6 +437,9 @@ class _SettingsPageState extends State<SettingsPage> {
     required VoidCallback? onTap,
     bool isDestructive = false,
     bool isDisabled = false,
+    bool isToggle = false,
+    bool? toggleValue,
+    ValueChanged<bool>? onToggleChanged,
   }) {
     final theme = Theme.of(context);
     final disabledColor = theme.brightness == Brightness.dark
@@ -468,19 +474,25 @@ class _SettingsPageState extends State<SettingsPage> {
                   : theme.textTheme.bodySmall?.color),
         ),
       ),
-      trailing: onTap != null
-          ? Icon(
-              Icons.arrow_forward_ios,
-              size: 16,
-              color: theme.iconTheme.color,
+      trailing: isToggle
+          ? Switch(
+              value: toggleValue ?? false,
+              onChanged: isDisabled ? null : onToggleChanged,
+              activeColor: theme.colorScheme.primary,
             )
-          : Icon(
-              Icons.arrow_forward_ios,
-              size: 16,
-              color: disabledColor,
-            ),
-      onTap: onTap,
-      enabled: onTap != null,
+          : (onTap != null
+              ? Icon(
+                  Icons.arrow_forward_ios,
+                  size: 16,
+                  color: theme.iconTheme.color,
+                )
+              : Icon(
+                  Icons.arrow_forward_ios,
+                  size: 16,
+                  color: disabledColor,
+                )),
+      onTap: isToggle ? null : onTap,
+      enabled: isToggle ? true : (onTap != null),
     );
   }
 }
