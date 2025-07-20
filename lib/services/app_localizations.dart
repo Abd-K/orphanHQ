@@ -35,7 +35,7 @@ class AppLocalizations {
       'light': 'ضوء',
       'dark': 'داكن',
       'data_management': 'إدارة البيانات',
-      'backup_restore': 'גיבוי ושחזור',
+      'backup_restore': 'استعادة النسخة الاحتياطية',
       'clear_all_data': 'امسح كل البيانات',
       'system': 'نظام',
       'api_connection_status': 'حالة اتصال API',
