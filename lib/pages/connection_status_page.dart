@@ -104,6 +104,7 @@ class _ConnectionStatusPageState extends State<ConnectionStatusPage> {
 
                       // API URL
                       Container(
+                        width: double.infinity,
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           color: Colors.blue.shade50,
@@ -122,13 +123,22 @@ class _ConnectionStatusPageState extends State<ConnectionStatusPage> {
                               ),
                             ),
                             const SizedBox(height: 8),
-                            const SelectableText(
-                              'https://f91934e7fe45.ngrok-free.app',
-                              style: TextStyle(
-                                fontFamily: 'monospace',
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.blue,
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: Colors.blue.shade200),
+                              ),
+                              child: const SelectableText(
+                                'https://f91934e7fe45.ngrok-free.app',
+                                style: TextStyle(
+                                  fontFamily: 'monospace',
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.blue,
+                                ),
                               ),
                             ),
                           ],
@@ -138,6 +148,7 @@ class _ConnectionStatusPageState extends State<ConnectionStatusPage> {
 
                       // API Key
                       Container(
+                        width: double.infinity,
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           color: Colors.orange.shade50,
@@ -156,13 +167,23 @@ class _ConnectionStatusPageState extends State<ConnectionStatusPage> {
                               ),
                             ),
                             const SizedBox(height: 8),
-                            const SelectableText(
-                              'orphan_hq_demo_2025',
-                              style: TextStyle(
-                                fontFamily: 'monospace',
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.orange,
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(6),
+                                border:
+                                    Border.all(color: Colors.orange.shade200),
+                              ),
+                              child: const SelectableText(
+                                'orphan_hq_demo_2025',
+                                style: TextStyle(
+                                  fontFamily: 'monospace',
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.orange,
+                                ),
                               ),
                             ),
                           ],
@@ -172,6 +193,7 @@ class _ConnectionStatusPageState extends State<ConnectionStatusPage> {
 
                       // Available Endpoints
                       Container(
+                        width: double.infinity,
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           color: Colors.purple.shade50,
@@ -190,14 +212,25 @@ class _ConnectionStatusPageState extends State<ConnectionStatusPage> {
                               ),
                             ),
                             const SizedBox(height: 8),
-                            const Text(
-                              '• GET /api/status - Server status\n'
-                              '• GET /api/orphans - List all orphans\n'
-                              '• POST /api/orphans - Create new orphan\n'
-                              '• GET /api/supervisors - List supervisors',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontFamily: 'monospace',
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(6),
+                                border:
+                                    Border.all(color: Colors.purple.shade200),
+                              ),
+                              child: const Text(
+                                '• GET /api/status - Server status\n'
+                                '• GET /api/orphans - List all orphans\n'
+                                '• POST /api/orphans - Create new orphan\n'
+                                '• GET /api/supervisors - List supervisors',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontFamily: 'monospace',
+                                  color: Colors.purple,
+                                ),
                               ),
                             ),
                           ],
@@ -207,6 +240,7 @@ class _ConnectionStatusPageState extends State<ConnectionStatusPage> {
 
                       // Android Setup
                       Container(
+                        width: double.infinity,
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           color: Colors.green.shade50,
@@ -225,12 +259,26 @@ class _ConnectionStatusPageState extends State<ConnectionStatusPage> {
                               ),
                             ),
                             const SizedBox(height: 8),
-                            const Text(
-                              '1. Add internet permission to AndroidManifest.xml:\n'
-                              '   <uses-permission android:name="android.permission.INTERNET" />\n\n'
-                              '2. Use the ngrok URL above for API calls\n'
-                              '3. Include API key in headers: X-API-Key: orphan_hq_demo_2025',
-                              style: TextStyle(fontSize: 14),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(6),
+                                border:
+                                    Border.all(color: Colors.green.shade200),
+                              ),
+                              child: const Text(
+                                '1. Add internet permission to AndroidManifest.xml:\n'
+                                '   <uses-permission android:name="android.permission.INTERNET" />\n\n'
+                                '2. Use the ngrok URL above for API calls\n'
+                                '3. Include API key in headers: X-API-Key: orphan_hq_demo_2025',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontFamily: 'monospace',
+                                  color: Colors.green,
+                                ),
+                              ),
                             ),
                           ],
                         ),
@@ -239,6 +287,7 @@ class _ConnectionStatusPageState extends State<ConnectionStatusPage> {
 
                       // ngrok Setup
                       Container(
+                        width: double.infinity,
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           color: Colors.indigo.shade50,
@@ -257,12 +306,26 @@ class _ConnectionStatusPageState extends State<ConnectionStatusPage> {
                               ),
                             ),
                             const SizedBox(height: 8),
-                            const Text(
-                              '1. Install ngrok: https://ngrok.com/download\n'
-                              '2. Add authtoken: ngrok config add-authtoken YOUR_TOKEN\n'
-                              '3. Start tunnel: ngrok http 45123\n'
-                              '4. Use the generated URL for external access',
-                              style: TextStyle(fontSize: 14),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(6),
+                                border:
+                                    Border.all(color: Colors.indigo.shade200),
+                              ),
+                              child: const Text(
+                                '1. Install ngrok: https://ngrok.com/download\n'
+                                '2. Add authtoken: ngrok config add-authtoken YOUR_TOKEN\n'
+                                '3. Start tunnel: ngrok http 45123\n'
+                                '4. Use the generated URL for external access',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontFamily: 'monospace',
+                                  color: Colors.indigo,
+                                ),
+                              ),
                             ),
                           ],
                         ),
