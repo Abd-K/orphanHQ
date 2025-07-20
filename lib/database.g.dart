@@ -864,6 +864,12 @@ class $OrphansTable extends Orphans with TableInfo<$OrphansTable, Orphan> {
   late final GeneratedColumn<DateTime> lastUpdated = GeneratedColumn<DateTime>(
       'last_updated', aliasedName, false,
       type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _lastStatusUpdateMeta =
+      const VerificationMeta('lastStatusUpdate');
+  @override
+  late final GeneratedColumn<DateTime> lastStatusUpdate =
+      GeneratedColumn<DateTime>('last_status_update', aliasedName, true,
+          type: DriftSqlType.dateTime, requiredDuringInsert: false);
   static const VerificationMeta _supervisorIdMeta =
       const VerificationMeta('supervisorId');
   @override
@@ -1361,6 +1367,12 @@ class $OrphansTable extends Orphans with TableInfo<$OrphansTable, Orphan> {
   late final GeneratedColumn<String> documentsPath = GeneratedColumn<String>(
       'documents_path', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _qrCodePathMeta =
+      const VerificationMeta('qrCodePath');
+  @override
+  late final GeneratedColumn<String> qrCodePath = GeneratedColumn<String>(
+      'qr_code_path', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns => [
         orphanId,
@@ -1377,6 +1389,7 @@ class $OrphansTable extends Orphans with TableInfo<$OrphansTable, Orphan> {
         status,
         lastSeenLocation,
         lastUpdated,
+        lastStatusUpdate,
         supervisorId,
         currentCountry,
         currentGovernorate,
@@ -1454,7 +1467,8 @@ class $OrphansTable extends Orphans with TableInfo<$OrphansTable, Orphan> {
         additionalNotes,
         urgentNeeds,
         specialCircumstances,
-        documentsPath
+        documentsPath,
+        qrCodePath
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1541,6 +1555,12 @@ class $OrphansTable extends Orphans with TableInfo<$OrphansTable, Orphan> {
               data['last_updated']!, _lastUpdatedMeta));
     } else if (isInserting) {
       context.missing(_lastUpdatedMeta);
+    }
+    if (data.containsKey('last_status_update')) {
+      context.handle(
+          _lastStatusUpdateMeta,
+          lastStatusUpdate.isAcceptableOrUnknown(
+              data['last_status_update']!, _lastStatusUpdateMeta));
     }
     if (data.containsKey('supervisor_id')) {
       context.handle(
@@ -1966,6 +1986,12 @@ class $OrphansTable extends Orphans with TableInfo<$OrphansTable, Orphan> {
           documentsPath.isAcceptableOrUnknown(
               data['documents_path']!, _documentsPathMeta));
     }
+    if (data.containsKey('qr_code_path')) {
+      context.handle(
+          _qrCodePathMeta,
+          qrCodePath.isAcceptableOrUnknown(
+              data['qr_code_path']!, _qrCodePathMeta));
+    }
     return context;
   }
 
@@ -2005,6 +2031,8 @@ class $OrphansTable extends Orphans with TableInfo<$OrphansTable, Orphan> {
           DriftSqlType.string, data['${effectivePrefix}last_seen_location']),
       lastUpdated: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}last_updated'])!,
+      lastStatusUpdate: attachedDatabase.typeMapping.read(
+          DriftSqlType.dateTime, data['${effectivePrefix}last_status_update']),
       supervisorId: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}supervisor_id']),
       currentCountry: attachedDatabase.typeMapping
@@ -2183,6 +2211,8 @@ class $OrphansTable extends Orphans with TableInfo<$OrphansTable, Orphan> {
           DriftSqlType.string, data['${effectivePrefix}special_circumstances']),
       documentsPath: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}documents_path']),
+      qrCodePath: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}qr_code_path']),
     );
   }
 
@@ -2245,6 +2275,7 @@ class Orphan extends DataClass implements Insertable<Orphan> {
   final OrphanStatus status;
   final String? lastSeenLocation;
   final DateTime lastUpdated;
+  final DateTime? lastStatusUpdate;
   final String? supervisorId;
   final String? currentCountry;
   final String? currentGovernorate;
@@ -2323,6 +2354,7 @@ class Orphan extends DataClass implements Insertable<Orphan> {
   final String? urgentNeeds;
   final String? specialCircumstances;
   final String? documentsPath;
+  final String? qrCodePath;
   const Orphan(
       {required this.orphanId,
       required this.firstName,
@@ -2338,6 +2370,7 @@ class Orphan extends DataClass implements Insertable<Orphan> {
       required this.status,
       this.lastSeenLocation,
       required this.lastUpdated,
+      this.lastStatusUpdate,
       this.supervisorId,
       this.currentCountry,
       this.currentGovernorate,
@@ -2415,7 +2448,8 @@ class Orphan extends DataClass implements Insertable<Orphan> {
       this.additionalNotes,
       this.urgentNeeds,
       this.specialCircumstances,
-      this.documentsPath});
+      this.documentsPath,
+      this.qrCodePath});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -2449,6 +2483,9 @@ class Orphan extends DataClass implements Insertable<Orphan> {
       map['last_seen_location'] = Variable<String>(lastSeenLocation);
     }
     map['last_updated'] = Variable<DateTime>(lastUpdated);
+    if (!nullToAbsent || lastStatusUpdate != null) {
+      map['last_status_update'] = Variable<DateTime>(lastStatusUpdate);
+    }
     if (!nullToAbsent || supervisorId != null) {
       map['supervisor_id'] = Variable<String>(supervisorId);
     }
@@ -2694,6 +2731,9 @@ class Orphan extends DataClass implements Insertable<Orphan> {
     if (!nullToAbsent || documentsPath != null) {
       map['documents_path'] = Variable<String>(documentsPath);
     }
+    if (!nullToAbsent || qrCodePath != null) {
+      map['qr_code_path'] = Variable<String>(qrCodePath);
+    }
     return map;
   }
 
@@ -2723,6 +2763,9 @@ class Orphan extends DataClass implements Insertable<Orphan> {
           ? const Value.absent()
           : Value(lastSeenLocation),
       lastUpdated: Value(lastUpdated),
+      lastStatusUpdate: lastStatusUpdate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastStatusUpdate),
       supervisorId: supervisorId == null && nullToAbsent
           ? const Value.absent()
           : Value(supervisorId),
@@ -2956,6 +2999,9 @@ class Orphan extends DataClass implements Insertable<Orphan> {
       documentsPath: documentsPath == null && nullToAbsent
           ? const Value.absent()
           : Value(documentsPath),
+      qrCodePath: qrCodePath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(qrCodePath),
     );
   }
 
@@ -2979,6 +3025,8 @@ class Orphan extends DataClass implements Insertable<Orphan> {
           .fromJson(serializer.fromJson<int>(json['status'])),
       lastSeenLocation: serializer.fromJson<String?>(json['lastSeenLocation']),
       lastUpdated: serializer.fromJson<DateTime>(json['lastUpdated']),
+      lastStatusUpdate:
+          serializer.fromJson<DateTime?>(json['lastStatusUpdate']),
       supervisorId: serializer.fromJson<String?>(json['supervisorId']),
       currentCountry: serializer.fromJson<String?>(json['currentCountry']),
       currentGovernorate:
@@ -3098,6 +3146,7 @@ class Orphan extends DataClass implements Insertable<Orphan> {
       specialCircumstances:
           serializer.fromJson<String?>(json['specialCircumstances']),
       documentsPath: serializer.fromJson<String?>(json['documentsPath']),
+      qrCodePath: serializer.fromJson<String?>(json['qrCodePath']),
     );
   }
   @override
@@ -3120,6 +3169,7 @@ class Orphan extends DataClass implements Insertable<Orphan> {
           serializer.toJson<int>($OrphansTable.$converterstatus.toJson(status)),
       'lastSeenLocation': serializer.toJson<String?>(lastSeenLocation),
       'lastUpdated': serializer.toJson<DateTime>(lastUpdated),
+      'lastStatusUpdate': serializer.toJson<DateTime?>(lastStatusUpdate),
       'supervisorId': serializer.toJson<String?>(supervisorId),
       'currentCountry': serializer.toJson<String?>(currentCountry),
       'currentGovernorate': serializer.toJson<String?>(currentGovernorate),
@@ -3213,6 +3263,7 @@ class Orphan extends DataClass implements Insertable<Orphan> {
       'urgentNeeds': serializer.toJson<String?>(urgentNeeds),
       'specialCircumstances': serializer.toJson<String?>(specialCircumstances),
       'documentsPath': serializer.toJson<String?>(documentsPath),
+      'qrCodePath': serializer.toJson<String?>(qrCodePath),
     };
   }
 
@@ -3231,6 +3282,7 @@ class Orphan extends DataClass implements Insertable<Orphan> {
           OrphanStatus? status,
           Value<String?> lastSeenLocation = const Value.absent(),
           DateTime? lastUpdated,
+          Value<DateTime?> lastStatusUpdate = const Value.absent(),
           Value<String?> supervisorId = const Value.absent(),
           Value<String?> currentCountry = const Value.absent(),
           Value<String?> currentGovernorate = const Value.absent(),
@@ -3309,7 +3361,8 @@ class Orphan extends DataClass implements Insertable<Orphan> {
           Value<String?> additionalNotes = const Value.absent(),
           Value<String?> urgentNeeds = const Value.absent(),
           Value<String?> specialCircumstances = const Value.absent(),
-          Value<String?> documentsPath = const Value.absent()}) =>
+          Value<String?> documentsPath = const Value.absent(),
+          Value<String?> qrCodePath = const Value.absent()}) =>
       Orphan(
         orphanId: orphanId ?? this.orphanId,
         firstName: firstName ?? this.firstName,
@@ -3328,6 +3381,9 @@ class Orphan extends DataClass implements Insertable<Orphan> {
             ? lastSeenLocation.value
             : this.lastSeenLocation,
         lastUpdated: lastUpdated ?? this.lastUpdated,
+        lastStatusUpdate: lastStatusUpdate.present
+            ? lastStatusUpdate.value
+            : this.lastStatusUpdate,
         supervisorId:
             supervisorId.present ? supervisorId.value : this.supervisorId,
         currentCountry:
@@ -3517,6 +3573,7 @@ class Orphan extends DataClass implements Insertable<Orphan> {
             : this.specialCircumstances,
         documentsPath:
             documentsPath.present ? documentsPath.value : this.documentsPath,
+        qrCodePath: qrCodePath.present ? qrCodePath.value : this.qrCodePath,
       );
   Orphan copyWithCompanion(OrphansCompanion data) {
     return Orphan(
@@ -3545,6 +3602,9 @@ class Orphan extends DataClass implements Insertable<Orphan> {
           : this.lastSeenLocation,
       lastUpdated:
           data.lastUpdated.present ? data.lastUpdated.value : this.lastUpdated,
+      lastStatusUpdate: data.lastStatusUpdate.present
+          ? data.lastStatusUpdate.value
+          : this.lastStatusUpdate,
       supervisorId: data.supervisorId.present
           ? data.supervisorId.value
           : this.supervisorId,
@@ -3759,6 +3819,8 @@ class Orphan extends DataClass implements Insertable<Orphan> {
       documentsPath: data.documentsPath.present
           ? data.documentsPath.value
           : this.documentsPath,
+      qrCodePath:
+          data.qrCodePath.present ? data.qrCodePath.value : this.qrCodePath,
     );
   }
 
@@ -3779,6 +3841,7 @@ class Orphan extends DataClass implements Insertable<Orphan> {
           ..write('status: $status, ')
           ..write('lastSeenLocation: $lastSeenLocation, ')
           ..write('lastUpdated: $lastUpdated, ')
+          ..write('lastStatusUpdate: $lastStatusUpdate, ')
           ..write('supervisorId: $supervisorId, ')
           ..write('currentCountry: $currentCountry, ')
           ..write('currentGovernorate: $currentGovernorate, ')
@@ -3856,7 +3919,8 @@ class Orphan extends DataClass implements Insertable<Orphan> {
           ..write('additionalNotes: $additionalNotes, ')
           ..write('urgentNeeds: $urgentNeeds, ')
           ..write('specialCircumstances: $specialCircumstances, ')
-          ..write('documentsPath: $documentsPath')
+          ..write('documentsPath: $documentsPath, ')
+          ..write('qrCodePath: $qrCodePath')
           ..write(')'))
         .toString();
   }
@@ -3877,6 +3941,7 @@ class Orphan extends DataClass implements Insertable<Orphan> {
         status,
         lastSeenLocation,
         lastUpdated,
+        lastStatusUpdate,
         supervisorId,
         currentCountry,
         currentGovernorate,
@@ -3954,7 +4019,8 @@ class Orphan extends DataClass implements Insertable<Orphan> {
         additionalNotes,
         urgentNeeds,
         specialCircumstances,
-        documentsPath
+        documentsPath,
+        qrCodePath
       ]);
   @override
   bool operator ==(Object other) =>
@@ -3974,6 +4040,7 @@ class Orphan extends DataClass implements Insertable<Orphan> {
           other.status == this.status &&
           other.lastSeenLocation == this.lastSeenLocation &&
           other.lastUpdated == this.lastUpdated &&
+          other.lastStatusUpdate == this.lastStatusUpdate &&
           other.supervisorId == this.supervisorId &&
           other.currentCountry == this.currentCountry &&
           other.currentGovernorate == this.currentGovernorate &&
@@ -4051,7 +4118,8 @@ class Orphan extends DataClass implements Insertable<Orphan> {
           other.additionalNotes == this.additionalNotes &&
           other.urgentNeeds == this.urgentNeeds &&
           other.specialCircumstances == this.specialCircumstances &&
-          other.documentsPath == this.documentsPath);
+          other.documentsPath == this.documentsPath &&
+          other.qrCodePath == this.qrCodePath);
 }
 
 class OrphansCompanion extends UpdateCompanion<Orphan> {
@@ -4069,6 +4137,7 @@ class OrphansCompanion extends UpdateCompanion<Orphan> {
   final Value<OrphanStatus> status;
   final Value<String?> lastSeenLocation;
   final Value<DateTime> lastUpdated;
+  final Value<DateTime?> lastStatusUpdate;
   final Value<String?> supervisorId;
   final Value<String?> currentCountry;
   final Value<String?> currentGovernorate;
@@ -4147,6 +4216,7 @@ class OrphansCompanion extends UpdateCompanion<Orphan> {
   final Value<String?> urgentNeeds;
   final Value<String?> specialCircumstances;
   final Value<String?> documentsPath;
+  final Value<String?> qrCodePath;
   final Value<int> rowid;
   const OrphansCompanion({
     this.orphanId = const Value.absent(),
@@ -4163,6 +4233,7 @@ class OrphansCompanion extends UpdateCompanion<Orphan> {
     this.status = const Value.absent(),
     this.lastSeenLocation = const Value.absent(),
     this.lastUpdated = const Value.absent(),
+    this.lastStatusUpdate = const Value.absent(),
     this.supervisorId = const Value.absent(),
     this.currentCountry = const Value.absent(),
     this.currentGovernorate = const Value.absent(),
@@ -4241,6 +4312,7 @@ class OrphansCompanion extends UpdateCompanion<Orphan> {
     this.urgentNeeds = const Value.absent(),
     this.specialCircumstances = const Value.absent(),
     this.documentsPath = const Value.absent(),
+    this.qrCodePath = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   OrphansCompanion.insert({
@@ -4258,6 +4330,7 @@ class OrphansCompanion extends UpdateCompanion<Orphan> {
     required OrphanStatus status,
     this.lastSeenLocation = const Value.absent(),
     required DateTime lastUpdated,
+    this.lastStatusUpdate = const Value.absent(),
     this.supervisorId = const Value.absent(),
     this.currentCountry = const Value.absent(),
     this.currentGovernorate = const Value.absent(),
@@ -4336,6 +4409,7 @@ class OrphansCompanion extends UpdateCompanion<Orphan> {
     this.urgentNeeds = const Value.absent(),
     this.specialCircumstances = const Value.absent(),
     this.documentsPath = const Value.absent(),
+    this.qrCodePath = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : firstName = Value(firstName),
         fatherName = Value(fatherName),
@@ -4360,6 +4434,7 @@ class OrphansCompanion extends UpdateCompanion<Orphan> {
     Expression<int>? status,
     Expression<String>? lastSeenLocation,
     Expression<DateTime>? lastUpdated,
+    Expression<DateTime>? lastStatusUpdate,
     Expression<String>? supervisorId,
     Expression<String>? currentCountry,
     Expression<String>? currentGovernorate,
@@ -4438,6 +4513,7 @@ class OrphansCompanion extends UpdateCompanion<Orphan> {
     Expression<String>? urgentNeeds,
     Expression<String>? specialCircumstances,
     Expression<String>? documentsPath,
+    Expression<String>? qrCodePath,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -4455,6 +4531,7 @@ class OrphansCompanion extends UpdateCompanion<Orphan> {
       if (status != null) 'status': status,
       if (lastSeenLocation != null) 'last_seen_location': lastSeenLocation,
       if (lastUpdated != null) 'last_updated': lastUpdated,
+      if (lastStatusUpdate != null) 'last_status_update': lastStatusUpdate,
       if (supervisorId != null) 'supervisor_id': supervisorId,
       if (currentCountry != null) 'current_country': currentCountry,
       if (currentGovernorate != null) 'current_governorate': currentGovernorate,
@@ -4561,6 +4638,7 @@ class OrphansCompanion extends UpdateCompanion<Orphan> {
       if (specialCircumstances != null)
         'special_circumstances': specialCircumstances,
       if (documentsPath != null) 'documents_path': documentsPath,
+      if (qrCodePath != null) 'qr_code_path': qrCodePath,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -4580,6 +4658,7 @@ class OrphansCompanion extends UpdateCompanion<Orphan> {
       Value<OrphanStatus>? status,
       Value<String?>? lastSeenLocation,
       Value<DateTime>? lastUpdated,
+      Value<DateTime?>? lastStatusUpdate,
       Value<String?>? supervisorId,
       Value<String?>? currentCountry,
       Value<String?>? currentGovernorate,
@@ -4658,6 +4737,7 @@ class OrphansCompanion extends UpdateCompanion<Orphan> {
       Value<String?>? urgentNeeds,
       Value<String?>? specialCircumstances,
       Value<String?>? documentsPath,
+      Value<String?>? qrCodePath,
       Value<int>? rowid}) {
     return OrphansCompanion(
       orphanId: orphanId ?? this.orphanId,
@@ -4674,6 +4754,7 @@ class OrphansCompanion extends UpdateCompanion<Orphan> {
       status: status ?? this.status,
       lastSeenLocation: lastSeenLocation ?? this.lastSeenLocation,
       lastUpdated: lastUpdated ?? this.lastUpdated,
+      lastStatusUpdate: lastStatusUpdate ?? this.lastStatusUpdate,
       supervisorId: supervisorId ?? this.supervisorId,
       currentCountry: currentCountry ?? this.currentCountry,
       currentGovernorate: currentGovernorate ?? this.currentGovernorate,
@@ -4761,6 +4842,7 @@ class OrphansCompanion extends UpdateCompanion<Orphan> {
       urgentNeeds: urgentNeeds ?? this.urgentNeeds,
       specialCircumstances: specialCircumstances ?? this.specialCircumstances,
       documentsPath: documentsPath ?? this.documentsPath,
+      qrCodePath: qrCodePath ?? this.qrCodePath,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -4811,6 +4893,9 @@ class OrphansCompanion extends UpdateCompanion<Orphan> {
     }
     if (lastUpdated.present) {
       map['last_updated'] = Variable<DateTime>(lastUpdated.value);
+    }
+    if (lastStatusUpdate.present) {
+      map['last_status_update'] = Variable<DateTime>(lastStatusUpdate.value);
     }
     if (supervisorId.present) {
       map['supervisor_id'] = Variable<String>(supervisorId.value);
@@ -5075,6 +5160,9 @@ class OrphansCompanion extends UpdateCompanion<Orphan> {
     if (documentsPath.present) {
       map['documents_path'] = Variable<String>(documentsPath.value);
     }
+    if (qrCodePath.present) {
+      map['qr_code_path'] = Variable<String>(qrCodePath.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -5098,6 +5186,7 @@ class OrphansCompanion extends UpdateCompanion<Orphan> {
           ..write('status: $status, ')
           ..write('lastSeenLocation: $lastSeenLocation, ')
           ..write('lastUpdated: $lastUpdated, ')
+          ..write('lastStatusUpdate: $lastStatusUpdate, ')
           ..write('supervisorId: $supervisorId, ')
           ..write('currentCountry: $currentCountry, ')
           ..write('currentGovernorate: $currentGovernorate, ')
@@ -5176,6 +5265,7 @@ class OrphansCompanion extends UpdateCompanion<Orphan> {
           ..write('urgentNeeds: $urgentNeeds, ')
           ..write('specialCircumstances: $specialCircumstances, ')
           ..write('documentsPath: $documentsPath, ')
+          ..write('qrCodePath: $qrCodePath, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -5634,6 +5724,7 @@ typedef $$OrphansTableCreateCompanionBuilder = OrphansCompanion Function({
   required OrphanStatus status,
   Value<String?> lastSeenLocation,
   required DateTime lastUpdated,
+  Value<DateTime?> lastStatusUpdate,
   Value<String?> supervisorId,
   Value<String?> currentCountry,
   Value<String?> currentGovernorate,
@@ -5712,6 +5803,7 @@ typedef $$OrphansTableCreateCompanionBuilder = OrphansCompanion Function({
   Value<String?> urgentNeeds,
   Value<String?> specialCircumstances,
   Value<String?> documentsPath,
+  Value<String?> qrCodePath,
   Value<int> rowid,
 });
 typedef $$OrphansTableUpdateCompanionBuilder = OrphansCompanion Function({
@@ -5729,6 +5821,7 @@ typedef $$OrphansTableUpdateCompanionBuilder = OrphansCompanion Function({
   Value<OrphanStatus> status,
   Value<String?> lastSeenLocation,
   Value<DateTime> lastUpdated,
+  Value<DateTime?> lastStatusUpdate,
   Value<String?> supervisorId,
   Value<String?> currentCountry,
   Value<String?> currentGovernorate,
@@ -5807,6 +5900,7 @@ typedef $$OrphansTableUpdateCompanionBuilder = OrphansCompanion Function({
   Value<String?> urgentNeeds,
   Value<String?> specialCircumstances,
   Value<String?> documentsPath,
+  Value<String?> qrCodePath,
   Value<int> rowid,
 });
 
@@ -5885,6 +5979,10 @@ class $$OrphansTableFilterComposer extends Composer<_$AppDb, $OrphansTable> {
 
   ColumnFilters<DateTime> get lastUpdated => $composableBuilder(
       column: $table.lastUpdated, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get lastStatusUpdate => $composableBuilder(
+      column: $table.lastStatusUpdate,
+      builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get currentCountry => $composableBuilder(
       column: $table.currentCountry,
@@ -6180,6 +6278,9 @@ class $$OrphansTableFilterComposer extends Composer<_$AppDb, $OrphansTable> {
   ColumnFilters<String> get documentsPath => $composableBuilder(
       column: $table.documentsPath, builder: (column) => ColumnFilters(column));
 
+  ColumnFilters<String> get qrCodePath => $composableBuilder(
+      column: $table.qrCodePath, builder: (column) => ColumnFilters(column));
+
   $$SupervisorsTableFilterComposer get supervisorId {
     final $$SupervisorsTableFilterComposer composer = $composerBuilder(
         composer: this,
@@ -6253,6 +6354,10 @@ class $$OrphansTableOrderingComposer extends Composer<_$AppDb, $OrphansTable> {
 
   ColumnOrderings<DateTime> get lastUpdated => $composableBuilder(
       column: $table.lastUpdated, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get lastStatusUpdate => $composableBuilder(
+      column: $table.lastStatusUpdate,
+      builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get currentCountry => $composableBuilder(
       column: $table.currentCountry,
@@ -6547,6 +6652,9 @@ class $$OrphansTableOrderingComposer extends Composer<_$AppDb, $OrphansTable> {
       column: $table.documentsPath,
       builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get qrCodePath => $composableBuilder(
+      column: $table.qrCodePath, builder: (column) => ColumnOrderings(column));
+
   $$SupervisorsTableOrderingComposer get supervisorId {
     final $$SupervisorsTableOrderingComposer composer = $composerBuilder(
         composer: this,
@@ -6618,6 +6726,9 @@ class $$OrphansTableAnnotationComposer
 
   GeneratedColumn<DateTime> get lastUpdated => $composableBuilder(
       column: $table.lastUpdated, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get lastStatusUpdate => $composableBuilder(
+      column: $table.lastStatusUpdate, builder: (column) => column);
 
   GeneratedColumn<String> get currentCountry => $composableBuilder(
       column: $table.currentCountry, builder: (column) => column);
@@ -6856,6 +6967,9 @@ class $$OrphansTableAnnotationComposer
   GeneratedColumn<String> get documentsPath => $composableBuilder(
       column: $table.documentsPath, builder: (column) => column);
 
+  GeneratedColumn<String> get qrCodePath => $composableBuilder(
+      column: $table.qrCodePath, builder: (column) => column);
+
   $$SupervisorsTableAnnotationComposer get supervisorId {
     final $$SupervisorsTableAnnotationComposer composer = $composerBuilder(
         composer: this,
@@ -6914,6 +7028,7 @@ class $$OrphansTableTableManager extends RootTableManager<
             Value<OrphanStatus> status = const Value.absent(),
             Value<String?> lastSeenLocation = const Value.absent(),
             Value<DateTime> lastUpdated = const Value.absent(),
+            Value<DateTime?> lastStatusUpdate = const Value.absent(),
             Value<String?> supervisorId = const Value.absent(),
             Value<String?> currentCountry = const Value.absent(),
             Value<String?> currentGovernorate = const Value.absent(),
@@ -6993,6 +7108,7 @@ class $$OrphansTableTableManager extends RootTableManager<
             Value<String?> urgentNeeds = const Value.absent(),
             Value<String?> specialCircumstances = const Value.absent(),
             Value<String?> documentsPath = const Value.absent(),
+            Value<String?> qrCodePath = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               OrphansCompanion(
@@ -7010,6 +7126,7 @@ class $$OrphansTableTableManager extends RootTableManager<
             status: status,
             lastSeenLocation: lastSeenLocation,
             lastUpdated: lastUpdated,
+            lastStatusUpdate: lastStatusUpdate,
             supervisorId: supervisorId,
             currentCountry: currentCountry,
             currentGovernorate: currentGovernorate,
@@ -7088,6 +7205,7 @@ class $$OrphansTableTableManager extends RootTableManager<
             urgentNeeds: urgentNeeds,
             specialCircumstances: specialCircumstances,
             documentsPath: documentsPath,
+            qrCodePath: qrCodePath,
             rowid: rowid,
           ),
           createCompanionCallback: ({
@@ -7105,6 +7223,7 @@ class $$OrphansTableTableManager extends RootTableManager<
             required OrphanStatus status,
             Value<String?> lastSeenLocation = const Value.absent(),
             required DateTime lastUpdated,
+            Value<DateTime?> lastStatusUpdate = const Value.absent(),
             Value<String?> supervisorId = const Value.absent(),
             Value<String?> currentCountry = const Value.absent(),
             Value<String?> currentGovernorate = const Value.absent(),
@@ -7184,6 +7303,7 @@ class $$OrphansTableTableManager extends RootTableManager<
             Value<String?> urgentNeeds = const Value.absent(),
             Value<String?> specialCircumstances = const Value.absent(),
             Value<String?> documentsPath = const Value.absent(),
+            Value<String?> qrCodePath = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               OrphansCompanion.insert(
@@ -7201,6 +7321,7 @@ class $$OrphansTableTableManager extends RootTableManager<
             status: status,
             lastSeenLocation: lastSeenLocation,
             lastUpdated: lastUpdated,
+            lastStatusUpdate: lastStatusUpdate,
             supervisorId: supervisorId,
             currentCountry: currentCountry,
             currentGovernorate: currentGovernorate,
@@ -7279,6 +7400,7 @@ class $$OrphansTableTableManager extends RootTableManager<
             urgentNeeds: urgentNeeds,
             specialCircumstances: specialCircumstances,
             documentsPath: documentsPath,
+            qrCodePath: qrCodePath,
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0

@@ -45,6 +45,8 @@ dependencies:
   shelf: ^1.4.1
   shelf_cors_headers: ^0.1.5
   archive: ^3.4.10
+  qr_flutter: ^4.1.0
+  image: ^4.1.7
 
 
 dev_dependencies:
