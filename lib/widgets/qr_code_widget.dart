@@ -1,6 +1,10 @@
 import 'dart:io';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:file_picker/file_picker.dart';
 import '../services/qr_code_service.dart';
 import '../database.dart';
 
@@ -16,7 +20,7 @@ class QRCodeWidget extends StatelessWidget {
     super.key,
     required this.orphanId,
     required this.qrData,
-    this.size = 150.0, // Increased from 120.0 to 150.0 for better default size
+    this.size = 150.0,
     this.showBorder = true,
     this.onTap,
     this.showDownloadButton = false,
@@ -34,25 +38,24 @@ class QRCodeWidget extends StatelessWidget {
         height: size,
         decoration: showBorder
             ? BoxDecoration(
-                border: Border.all(
-                  color: isDark ? Colors.grey[600]! : Colors.grey[300]!,
-                  width: 1,
-                ),
-                borderRadius: BorderRadius.circular(8),
-                color: Colors.white,
-              )
+          border: Border.all(
+            color: isDark ? Colors.grey[600]! : Colors.grey[300]!,
+            width: 1,
+          ),
+          borderRadius: BorderRadius.circular(8),
+          color: Colors.white,
+        )
             : null,
         child: ClipRRect(
           borderRadius:
-              showBorder ? BorderRadius.circular(7) : BorderRadius.zero,
+          showBorder ? BorderRadius.circular(7) : BorderRadius.zero,
           child: QrImageView(
             data: qrData,
             version: QrVersions.auto,
             size: size,
             backgroundColor: Colors.white,
             foregroundColor: Colors.black,
-            errorCorrectionLevel: QrErrorCorrectLevel
-                .H, // Changed from M to H for better error correction
+            errorCorrectionLevel: QrErrorCorrectLevel.H,
           ),
         ),
       ),
@@ -75,8 +78,9 @@ class QRCodeDialog extends StatelessWidget {
   final String orphanId;
   final String qrData;
   final bool showDownloadButton;
+  final GlobalKey _qrKey = GlobalKey();
 
-  const QRCodeDialog({
+  QRCodeDialog({
     super.key,
     required this.orphanId,
     required this.qrData,
@@ -108,21 +112,23 @@ class QRCodeDialog extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey[300]!),
-                borderRadius: BorderRadius.circular(8),
-                color: Colors.white,
-              ),
-              child: QrImageView(
-                data: qrData,
-                version: QrVersions.auto,
-                size: 350, // Increased from 250 to 350 for better clarity
-                backgroundColor: Colors.white,
-                foregroundColor: Colors.black,
-                errorCorrectionLevel: QrErrorCorrectLevel
-                    .H, // Changed from M to H for better error correction
+            RepaintBoundary(
+              key: _qrKey,
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey[300]!),
+                  borderRadius: BorderRadius.circular(8),
+                  color: Colors.white,
+                ),
+                child: QrImageView(
+                  data: qrData,
+                  version: QrVersions.auto,
+                  size: 350,
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.black,
+                  errorCorrectionLevel: QrErrorCorrectLevel.H,
+                ),
               ),
             ),
             if (qrDataMap != null) ...[
@@ -218,15 +224,41 @@ class QRCodeDialog extends StatelessWidget {
     }
   }
 
-  void _downloadQRCode(BuildContext context) {
-    // TODO: Implement download functionality
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Download functionality coming soon')),
-    );
+  void _downloadQRCode(BuildContext context) async {
+    try {
+      RenderRepaintBoundary boundary =
+      _qrKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+      ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+      ByteData? byteData =
+      await image.toByteData(format: ui.ImageByteFormat.png);
+      Uint8List pngBytes = byteData!.buffer.asUint8List();
+
+      final String? outputFile = await FilePicker.platform.saveFile(
+        dialogTitle: 'Save QR Code',
+        fileName: 'orphan_qr_${orphanId}.png',
+        type: FileType.custom,
+        allowedExtensions: ['png'],
+      );
+
+      if (outputFile != null) {
+        final file = File(outputFile);
+        await file.writeAsBytes(pngBytes);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('QR Code saved to $outputFile')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Save cancelled')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error saving QR Code: $e')),
+      );
+    }
   }
 
   void _shareQRCode(BuildContext context) {
-    // TODO: Implement share functionality
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Share functionality coming soon')),
     );
