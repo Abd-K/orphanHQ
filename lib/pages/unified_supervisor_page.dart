@@ -937,7 +937,7 @@ class _UnifiedSupervisorPageState extends State<UnifiedSupervisorPage> {
           Icon(
             icon,
             size: 20,
-            color: isDark ? Colors.blue.shade300 : Colors.grey.shade600,
+            color: isDark ? const Color(0xFF8B949E) : Colors.grey.shade600,
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -946,7 +946,7 @@ class _UnifiedSupervisorPageState extends State<UnifiedSupervisorPage> {
               label,
               style: TextStyle(
                 fontWeight: FontWeight.w500,
-                color: isDark ? Colors.white : Colors.grey.shade700,
+                color: isDark ? const Color(0xFF8B949E) : Colors.grey.shade700,
               ),
             ),
           ),
@@ -956,8 +956,9 @@ class _UnifiedSupervisorPageState extends State<UnifiedSupervisorPage> {
               value.isEmpty ? 'Not specified' : value,
               style: TextStyle(
                 color: value.isEmpty
-                    ? (isDark ? Colors.white60 : Colors.grey.shade400)
-                    : (valueColor ?? (isDark ? Colors.white : Colors.black87)),
+                    ? (isDark ? const Color(0xFF6E7681) : Colors.grey.shade400)
+                    : (valueColor ??
+                        (isDark ? const Color(0xFFF0F6FC) : Colors.black87)),
                 fontWeight:
                     valueColor != null ? FontWeight.w500 : FontWeight.normal,
                 fontStyle: value.isEmpty ? FontStyle.italic : FontStyle.normal,
@@ -1002,9 +1003,7 @@ class _UnifiedSupervisorPageState extends State<UnifiedSupervisorPage> {
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? Colors.white
-                    : Colors.black87,
+                color: Theme.of(context).textTheme.headlineMedium?.color,
               ),
               textAlign: TextAlign.center,
             ),
@@ -1015,9 +1014,7 @@ class _UnifiedSupervisorPageState extends State<UnifiedSupervisorPage> {
                   : 'Position not specified',
               style: TextStyle(
                 fontSize: 16,
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? Colors.white70
-                    : Colors.grey.shade600,
+                color: Theme.of(context).textTheme.bodyMedium?.color,
                 fontWeight: FontWeight.w500,
                 fontStyle: _positionController.text.isEmpty
                     ? FontStyle.italic
@@ -1031,9 +1028,7 @@ class _UnifiedSupervisorPageState extends State<UnifiedSupervisorPage> {
                 _organizationController.text,
                 style: TextStyle(
                   fontSize: 14,
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? Colors.white60
-                      : Colors.grey.shade500,
+                  color: Theme.of(context).textTheme.bodySmall?.color,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -1042,16 +1037,25 @@ class _UnifiedSupervisorPageState extends State<UnifiedSupervisorPage> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color:
-                    _isActive ? Colors.green.shade100 : Colors.orange.shade100,
+                color: _isActive
+                    ? (Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF0D4429)
+                        : Colors.green.shade100)
+                    : (Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF3D1B1B)
+                        : Colors.orange.shade100),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Text(
                 _isActive ? 'ACTIVE' : 'INACTIVE',
                 style: TextStyle(
                   color: _isActive
-                      ? Colors.green.shade700
-                      : Colors.orange.shade700,
+                      ? (Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF3FB950)
+                          : Colors.green.shade700)
+                      : (Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFFF78166)
+                          : Colors.orange.shade700),
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
