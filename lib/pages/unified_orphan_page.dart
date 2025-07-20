@@ -350,12 +350,19 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
   // Helper method for compact view display
   Widget _buildInfoRow(IconData icon, String label, String value,
       {Color? valueColor}) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: Colors.grey.shade600),
+          Icon(
+            icon,
+            size: 20,
+            color: isDark ? const Color(0xFF8B949E) : Colors.grey.shade600,
+          ),
           const SizedBox(width: 12),
           Expanded(
             flex: 2,
@@ -363,7 +370,7 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
               label,
               style: TextStyle(
                 fontWeight: FontWeight.w500,
-                color: Colors.grey.shade700,
+                color: isDark ? const Color(0xFF8B949E) : Colors.grey.shade700,
               ),
             ),
           ),
@@ -373,8 +380,9 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
               value.isEmpty ? 'Not specified' : value,
               style: TextStyle(
                 color: value.isEmpty
-                    ? Colors.grey.shade400
-                    : (valueColor ?? Colors.black87),
+                    ? (isDark ? const Color(0xFF6E7681) : Colors.grey.shade400)
+                    : (valueColor ??
+                        (isDark ? const Color(0xFFF0F6FC) : Colors.black87)),
                 fontWeight:
                     valueColor != null ? FontWeight.w500 : FontWeight.normal,
                 fontStyle: value.isEmpty ? FontStyle.italic : FontStyle.normal,
@@ -442,9 +450,10 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
             const SizedBox(height: 16),
             Text(
               fullName,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
+                color: Theme.of(context).textTheme.headlineMedium?.color,
               ),
               textAlign: TextAlign.center,
             ),
@@ -468,7 +477,7 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
                     '$actualAge years old',
                     style: TextStyle(
                       fontSize: 16,
-                      color: Colors.grey.shade600,
+                      color: Theme.of(context).textTheme.bodyMedium?.color,
                       fontWeight: FontWeight.w500,
                     ),
                     textAlign: TextAlign.center,
@@ -485,7 +494,7 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
                 'Born ${_dayController.text}/${_monthController.text}/${_yearController.text}',
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.grey.shade500,
+                  color: Theme.of(context).textTheme.bodySmall?.color,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -496,16 +505,24 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 color: _selectedStatus == OrphanStatus.active
-                    ? Colors.green.shade100
-                    : Colors.orange.shade100,
+                    ? (Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF0D4429)
+                        : Colors.green.shade100)
+                    : (Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF3D1B1B)
+                        : Colors.orange.shade100),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Text(
                 _selectedStatus.toString().split('.').last.toUpperCase(),
                 style: TextStyle(
                   color: _selectedStatus == OrphanStatus.active
-                      ? Colors.green.shade700
-                      : Colors.orange.shade700,
+                      ? (Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF3FB950)
+                          : Colors.green.shade700)
+                      : (Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFFF78166)
+                          : Colors.orange.shade700),
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
@@ -527,21 +544,36 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.blue.shade50,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFF0D1117)
+                            : Colors.blue.shade50,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.blue.shade200),
+                        border: Border.all(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFF58A6FF)
+                              : Colors.blue.shade200,
+                        ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.supervisor_account,
-                              size: 16, color: Colors.blue.shade600),
+                          Icon(
+                            Icons.supervisor_account,
+                            size: 16,
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                    ? const Color(0xFF58A6FF)
+                                    : Colors.blue.shade600,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             'Supervised by ${supervisor.firstName} ${supervisor.familyName}',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.blue.shade700,
+                              color: Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? const Color(0xFF58A6FF)
+                                  : Colors.blue.shade700,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -1175,6 +1207,29 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
 
   Widget _buildOrphanDetailsContent() {
     final isEditing = isCreateMode || (_sectionEditing['orphan'] ?? false);
+    final theme = Theme.of(context);
+
+    // Helper function to create styled TextFormField
+    Widget _buildStyledTextField({
+      required TextEditingController controller,
+      required String labelText,
+      TextInputType? keyboardType,
+      List<TextInputFormatter>? inputFormatters,
+      String? Function(String?)? validator,
+      int? maxLines,
+    }) {
+      return TextFormField(
+        controller: controller,
+        style: TextStyle(
+          color: theme.textTheme.bodyLarge?.color,
+        ),
+        decoration: InputDecoration(labelText: labelText),
+        keyboardType: keyboardType,
+        inputFormatters: inputFormatters,
+        validator: validator,
+        maxLines: maxLines,
+      );
+    }
 
     if (isEditing) {
       return Column(
@@ -1184,9 +1239,9 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
             onEnter: (event) =>
                 _showTooltip(context, event.position, 'الاسم الأول'),
             onExit: (event) => _hideTooltip(),
-            child: TextFormField(
+            child: _buildStyledTextField(
               controller: _firstNameController,
-              decoration: const InputDecoration(labelText: 'First Name *'),
+              labelText: 'First Name *',
               validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
             ),
           ),
@@ -1195,9 +1250,9 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
             onEnter: (event) =>
                 _showTooltip(context, event.position, 'اسم الوالد'),
             onExit: (event) => _hideTooltip(),
-            child: TextFormField(
+            child: _buildStyledTextField(
               controller: _fatherNameController,
-              decoration: const InputDecoration(labelText: "Father's Name *"),
+              labelText: "Father's Name *",
               validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
             ),
           ),
@@ -1206,10 +1261,9 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
             onEnter: (event) =>
                 _showTooltip(context, event.position, 'اسم الجد'),
             onExit: (event) => _hideTooltip(),
-            child: TextFormField(
+            child: _buildStyledTextField(
               controller: _grandfatherNameController,
-              decoration:
-                  const InputDecoration(labelText: "Grandfather's Name *"),
+              labelText: "Grandfather's Name *",
               validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
             ),
           ),
@@ -1218,9 +1272,9 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
             onEnter: (event) =>
                 _showTooltip(context, event.position, 'اسم العائلة'),
             onExit: (event) => _hideTooltip(),
-            child: TextFormField(
+            child: _buildStyledTextField(
               controller: _familyNameController,
-              decoration: const InputDecoration(labelText: 'Family Name *'),
+              labelText: 'Family Name *',
               validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
             ),
           ),
@@ -1235,9 +1289,9 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
                   onEnter: (event) =>
                       _showTooltip(context, event.position, 'اليوم'),
                   onExit: (event) => _hideTooltip(),
-                  child: TextFormField(
+                  child: _buildStyledTextField(
                     controller: _dayController,
-                    decoration: const InputDecoration(labelText: 'Day'),
+                    labelText: 'Day',
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     validator: (value) =>
@@ -1251,9 +1305,9 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
                   onEnter: (event) =>
                       _showTooltip(context, event.position, 'الشهر'),
                   onExit: (event) => _hideTooltip(),
-                  child: TextFormField(
+                  child: _buildStyledTextField(
                     controller: _monthController,
-                    decoration: const InputDecoration(labelText: 'Month'),
+                    labelText: 'Month',
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     validator: (value) =>
@@ -1267,9 +1321,9 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
                   onEnter: (event) =>
                       _showTooltip(context, event.position, 'السنة'),
                   onExit: (event) => _hideTooltip(),
-                  child: TextFormField(
+                  child: _buildStyledTextField(
                     controller: _yearController,
-                    decoration: const InputDecoration(labelText: 'Year'),
+                    labelText: 'Year',
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     validator: (value) =>
@@ -1302,10 +1356,9 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
           const SizedBox(height: 16),
           Tooltip(
             message: 'تعليقات إضافية',
-            child: TextFormField(
+            child: _buildStyledTextField(
               controller: _orphanDetailsCommentsController,
-              decoration:
-                  const InputDecoration(labelText: 'Additional Comments'),
+              labelText: 'Additional Comments',
               maxLines: 3,
             ),
           ),
@@ -1358,6 +1411,7 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
 
   Widget _buildFatherDetailsContent() {
     final isEditing = isCreateMode || (_sectionEditing['father'] ?? false);
+    final theme = Theme.of(context);
 
     if (isEditing) {
       return Column(
@@ -1366,6 +1420,9 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
             message: 'اسم الوالد',
             child: TextFormField(
               controller: _fatherNameController,
+              style: TextStyle(
+                color: theme.textTheme.bodyLarge?.color,
+              ),
               decoration: const InputDecoration(labelText: "Father's Name *"),
               validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
             ),
@@ -1379,6 +1436,9 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
               Expanded(
                 child: TextFormField(
                   controller: _fatherDeathDayController,
+                  style: TextStyle(
+                    color: theme.textTheme.bodyLarge?.color,
+                  ),
                   decoration: const InputDecoration(labelText: 'Day'),
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -1388,6 +1448,9 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
               Expanded(
                 child: TextFormField(
                   controller: _fatherDeathMonthController,
+                  style: TextStyle(
+                    color: theme.textTheme.bodyLarge?.color,
+                  ),
                   decoration: const InputDecoration(labelText: 'Month'),
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -1397,6 +1460,9 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
               Expanded(
                 child: TextFormField(
                   controller: _fatherDeathYearController,
+                  style: TextStyle(
+                    color: theme.textTheme.bodyLarge?.color,
+                  ),
                   decoration: const InputDecoration(labelText: 'Year'),
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -1407,17 +1473,26 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
           const SizedBox(height: 16),
           TextFormField(
             controller: _fatherCauseOfDeathController,
+            style: TextStyle(
+              color: theme.textTheme.bodyLarge?.color,
+            ),
             decoration: const InputDecoration(labelText: 'Cause of Death'),
             maxLines: 2,
           ),
           const SizedBox(height: 16),
           TextFormField(
             controller: _fatherOccupationController,
+            style: TextStyle(
+              color: theme.textTheme.bodyLarge?.color,
+            ),
             decoration: const InputDecoration(labelText: 'Occupation'),
           ),
           const SizedBox(height: 16),
           TextFormField(
             controller: _fatherDetailsCommentsController,
+            style: TextStyle(
+              color: theme.textTheme.bodyLarge?.color,
+            ),
             decoration: const InputDecoration(labelText: 'Additional Comments'),
             maxLines: 3,
           ),
@@ -1462,12 +1537,16 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
 
   Widget _buildMotherDetailsContent() {
     final isEditing = isCreateMode || (_sectionEditing['mother'] ?? false);
+    final theme = Theme.of(context);
 
     if (isEditing) {
       return Column(
         children: [
           TextFormField(
             controller: _motherNameController,
+            style: TextStyle(
+              color: theme.textTheme.bodyLarge?.color,
+            ),
             decoration: const InputDecoration(labelText: "Mother's Name"),
           ),
           const SizedBox(height: 16),
@@ -1490,6 +1569,9 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
                 Expanded(
                   child: TextFormField(
                     controller: _motherDeathDayController,
+                    style: TextStyle(
+                      color: theme.textTheme.bodyLarge?.color,
+                    ),
                     decoration: const InputDecoration(labelText: 'Day'),
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -1499,6 +1581,9 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
                 Expanded(
                   child: TextFormField(
                     controller: _motherDeathMonthController,
+                    style: TextStyle(
+                      color: theme.textTheme.bodyLarge?.color,
+                    ),
                     decoration: const InputDecoration(labelText: 'Month'),
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -1508,6 +1593,9 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
                 Expanded(
                   child: TextFormField(
                     controller: _motherDeathYearController,
+                    style: TextStyle(
+                      color: theme.textTheme.bodyLarge?.color,
+                    ),
                     decoration: const InputDecoration(labelText: 'Year'),
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -1518,6 +1606,9 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
             const SizedBox(height: 16),
             TextFormField(
               controller: _motherCauseOfDeathController,
+              style: TextStyle(
+                color: theme.textTheme.bodyLarge?.color,
+              ),
               decoration: const InputDecoration(labelText: 'Cause of Death'),
               maxLines: 2,
             ),
@@ -1525,11 +1616,17 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
           ],
           TextFormField(
             controller: _motherOccupationController,
+            style: TextStyle(
+              color: theme.textTheme.bodyLarge?.color,
+            ),
             decoration: const InputDecoration(labelText: 'Occupation'),
           ),
           const SizedBox(height: 16),
           TextFormField(
             controller: _motherDetailsCommentsController,
+            style: TextStyle(
+              color: theme.textTheme.bodyLarge?.color,
+            ),
             decoration: const InputDecoration(labelText: 'Additional Comments'),
             maxLines: 3,
           ),
@@ -1584,34 +1681,50 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
 
   Widget _buildCarerDetailsContent() {
     final isEditing = isCreateMode || (_sectionEditing['carer'] ?? false);
+    final theme = Theme.of(context);
 
     if (isEditing) {
       return Column(
         children: [
           TextFormField(
             controller: _carerNameController,
+            style: TextStyle(
+              color: theme.textTheme.bodyLarge?.color,
+            ),
             decoration: const InputDecoration(labelText: 'Carer Name'),
           ),
           const SizedBox(height: 16),
           TextFormField(
             controller: _carerRelationshipController,
+            style: TextStyle(
+              color: theme.textTheme.bodyLarge?.color,
+            ),
             decoration:
                 const InputDecoration(labelText: 'Relationship to Orphan'),
           ),
           const SizedBox(height: 16),
           TextFormField(
             controller: _carerContactController,
+            style: TextStyle(
+              color: theme.textTheme.bodyLarge?.color,
+            ),
             decoration: const InputDecoration(labelText: 'Contact Information'),
           ),
           const SizedBox(height: 16),
           TextFormField(
             controller: _carerAddressController,
+            style: TextStyle(
+              color: theme.textTheme.bodyLarge?.color,
+            ),
             decoration: const InputDecoration(labelText: 'Address'),
             maxLines: 2,
           ),
           const SizedBox(height: 16),
           TextFormField(
             controller: _carerDetailsCommentsController,
+            style: TextStyle(
+              color: theme.textTheme.bodyLarge?.color,
+            ),
             decoration: const InputDecoration(labelText: 'Additional Comments'),
             maxLines: 3,
           ),
@@ -1648,6 +1761,7 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
 
   Widget _buildEducationContent() {
     final isEditing = isCreateMode || (_sectionEditing['education'] ?? false);
+    final theme = Theme.of(context);
 
     if (isEditing) {
       return Column(
@@ -1671,11 +1785,17 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
           const SizedBox(height: 16),
           TextFormField(
             controller: _schoolNameController,
+            style: TextStyle(
+              color: theme.textTheme.bodyLarge?.color,
+            ),
             decoration: const InputDecoration(labelText: 'School Name'),
           ),
           const SizedBox(height: 16),
           TextFormField(
             controller: _gradeController,
+            style: TextStyle(
+              color: theme.textTheme.bodyLarge?.color,
+            ),
             decoration: const InputDecoration(labelText: 'Grade'),
           ),
           const SizedBox(height: 16),
@@ -1693,6 +1813,9 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
           const SizedBox(height: 16),
           TextFormField(
             controller: _educationCommentsController,
+            style: TextStyle(
+              color: theme.textTheme.bodyLarge?.color,
+            ),
             decoration: const InputDecoration(labelText: 'Additional Comments'),
             maxLines: 3,
           ),
@@ -1741,6 +1864,7 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
 
   Widget _buildHealthContent() {
     final isEditing = isCreateMode || (_sectionEditing['health'] ?? false);
+    final theme = Theme.of(context);
 
     if (isEditing) {
       return Column(
@@ -1764,12 +1888,18 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
           const SizedBox(height: 16),
           TextFormField(
             controller: _medicalConditionsController,
+            style: TextStyle(
+              color: theme.textTheme.bodyLarge?.color,
+            ),
             decoration: const InputDecoration(labelText: 'Medical Conditions'),
             maxLines: 3,
           ),
           const SizedBox(height: 16),
           TextFormField(
             controller: _medicationsController,
+            style: TextStyle(
+              color: theme.textTheme.bodyLarge?.color,
+            ),
             decoration: const InputDecoration(labelText: 'Current Medications'),
             maxLines: 2,
           ),
@@ -1787,6 +1917,9 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
           const SizedBox(height: 16),
           TextFormField(
             controller: _healthCommentsController,
+            style: TextStyle(
+              color: theme.textTheme.bodyLarge?.color,
+            ),
             decoration: const InputDecoration(labelText: 'Additional Comments'),
             maxLines: 3,
           ),
@@ -1846,6 +1979,7 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
   Widget _buildAccommodationContent() {
     final isEditing =
         isCreateMode || (_sectionEditing['accommodation'] ?? false);
+    final theme = Theme.of(context);
 
     if (isEditing) {
       return Column(
@@ -1869,6 +2003,9 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
           const SizedBox(height: 16),
           TextFormField(
             controller: _accommodationAddressController,
+            style: TextStyle(
+              color: theme.textTheme.bodyLarge?.color,
+            ),
             decoration: const InputDecoration(labelText: 'Address'),
             maxLines: 2,
           ),
@@ -1886,6 +2023,9 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
           const SizedBox(height: 16),
           TextFormField(
             controller: _accommodationCommentsController,
+            style: TextStyle(
+              color: theme.textTheme.bodyLarge?.color,
+            ),
             decoration: const InputDecoration(labelText: 'Additional Comments'),
             maxLines: 3,
           ),
@@ -1934,12 +2074,16 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
 
   Widget _buildIslamicEducationContent() {
     final isEditing = isCreateMode || (_sectionEditing['islamic'] ?? false);
+    final theme = Theme.of(context);
 
     if (isEditing) {
       return Column(
         children: [
           TextFormField(
             controller: _quranMemorizationController,
+            style: TextStyle(
+              color: theme.textTheme.bodyLarge?.color,
+            ),
             decoration: const InputDecoration(labelText: 'Quran Memorization'),
             maxLines: 2,
           ),
@@ -1957,12 +2101,18 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
           const SizedBox(height: 16),
           TextFormField(
             controller: _islamicEducationLevelController,
+            style: TextStyle(
+              color: theme.textTheme.bodyLarge?.color,
+            ),
             decoration:
                 const InputDecoration(labelText: 'Islamic Education Level'),
           ),
           const SizedBox(height: 16),
           TextFormField(
             controller: _islamicEducationCommentsController,
+            style: TextStyle(
+              color: theme.textTheme.bodyLarge?.color,
+            ),
             decoration: const InputDecoration(labelText: 'Additional Comments'),
             maxLines: 3,
           ),
@@ -2003,24 +2153,34 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
 
   Widget _buildHobbiesContent() {
     final isEditing = isCreateMode || (_sectionEditing['hobbies'] ?? false);
+    final theme = Theme.of(context);
 
     if (isEditing) {
       return Column(
         children: [
           TextFormField(
             controller: _hobbiesController,
+            style: TextStyle(
+              color: theme.textTheme.bodyLarge?.color,
+            ),
             decoration: const InputDecoration(labelText: 'Hobbies & Interests'),
             maxLines: 2,
           ),
           const SizedBox(height: 16),
           TextFormField(
             controller: _skillsController,
+            style: TextStyle(
+              color: theme.textTheme.bodyLarge?.color,
+            ),
             decoration: const InputDecoration(labelText: 'Skills & Talents'),
             maxLines: 2,
           ),
           const SizedBox(height: 16),
           TextFormField(
             controller: _aspirationsController,
+            style: TextStyle(
+              color: theme.textTheme.bodyLarge?.color,
+            ),
             decoration:
                 const InputDecoration(labelText: 'Aspirations & Dreams'),
             maxLines: 2,
@@ -2028,6 +2188,9 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
           const SizedBox(height: 16),
           TextFormField(
             controller: _hobbiesCommentsController,
+            style: TextStyle(
+              color: theme.textTheme.bodyLarge?.color,
+            ),
             decoration: const InputDecoration(labelText: 'Additional Comments'),
             maxLines: 3,
           ),
@@ -2062,12 +2225,16 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
 
   Widget _buildSiblingsContent() {
     final isEditing = isCreateMode || (_sectionEditing['siblings'] ?? false);
+    final theme = Theme.of(context);
 
     if (isEditing) {
       return Column(
         children: [
           TextFormField(
             controller: _numberOfSiblingsController,
+            style: TextStyle(
+              color: theme.textTheme.bodyLarge?.color,
+            ),
             decoration: const InputDecoration(labelText: 'Number of Siblings'),
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -2075,6 +2242,9 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
           const SizedBox(height: 16),
           TextFormField(
             controller: _siblingsDetailsController,
+            style: TextStyle(
+              color: theme.textTheme.bodyLarge?.color,
+            ),
             decoration: const InputDecoration(
                 labelText: 'Siblings Details (names, ages, status)'),
             maxLines: 3,
@@ -2082,6 +2252,9 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
           const SizedBox(height: 16),
           TextFormField(
             controller: _siblingsCommentsController,
+            style: TextStyle(
+              color: theme.textTheme.bodyLarge?.color,
+            ),
             decoration: const InputDecoration(labelText: 'Additional Comments'),
             maxLines: 3,
           ),
@@ -2115,18 +2288,25 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
 
   Widget _buildAdditionalInfoContent() {
     final isEditing = isCreateMode || (_sectionEditing['additional'] ?? false);
+    final theme = Theme.of(context);
 
     if (isEditing) {
       return Column(
         children: [
           TextFormField(
             controller: _additionalNotesController,
+            style: TextStyle(
+              color: theme.textTheme.bodyLarge?.color,
+            ),
             decoration: const InputDecoration(labelText: 'Additional Notes'),
             maxLines: 3,
           ),
           const SizedBox(height: 16),
           TextFormField(
             controller: _urgentNeedsController,
+            style: TextStyle(
+              color: theme.textTheme.bodyLarge?.color,
+            ),
             decoration: const InputDecoration(labelText: 'Urgent Needs'),
             maxLines: 2,
           ),
@@ -2314,17 +2494,28 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
                   if (snapshot.hasData && snapshot.data != null) {
                     final supervisor = snapshot.data!;
                     final isActive = supervisor.active ?? true;
+                    final theme = Theme.of(context);
+                    final isDark = theme.brightness == Brightness.dark;
+
                     return Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: isActive
-                            ? Colors.blue.shade50
-                            : Colors.orange.shade50,
+                            ? (isDark
+                                ? const Color(0xFF0D1117)
+                                : Colors.blue.shade50)
+                            : (isDark
+                                ? const Color(0xFF1C1F23)
+                                : Colors.orange.shade50),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
                           color: isActive
-                              ? Colors.blue.shade200
-                              : Colors.orange.shade300,
+                              ? (isDark
+                                  ? const Color(0xFF58A6FF)
+                                  : Colors.blue.shade200)
+                              : (isDark
+                                  ? const Color(0xFFF78166)
+                                  : Colors.orange.shade300),
                           width: isActive ? 1 : 2,
                         ),
                       ),
@@ -2337,21 +2528,31 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
                               padding: const EdgeInsets.all(8),
                               margin: const EdgeInsets.only(bottom: 8),
                               decoration: BoxDecoration(
-                                color: Colors.orange.shade100,
+                                color: isDark
+                                    ? const Color(0xFF2D1B1B)
+                                    : Colors.orange.shade100,
                                 borderRadius: BorderRadius.circular(4),
-                                border:
-                                    Border.all(color: Colors.orange.shade400),
+                                border: Border.all(
+                                  color: isDark
+                                      ? const Color(0xFFF78166)
+                                      : Colors.orange.shade400,
+                                ),
                               ),
                               child: Row(
                                 children: [
                                   Icon(Icons.warning_amber,
-                                      color: Colors.orange.shade700, size: 18),
+                                      color: isDark
+                                          ? const Color(0xFFF78166)
+                                          : Colors.orange.shade700,
+                                      size: 18),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
                                       'EMERGENCY: This orphan is assigned to an inactive supervisor',
                                       style: TextStyle(
-                                        color: Colors.orange.shade800,
+                                        color: isDark
+                                            ? const Color(0xFFF78166)
+                                            : Colors.orange.shade800,
                                         fontWeight: FontWeight.w600,
                                         fontSize: 12,
                                       ),
@@ -2366,8 +2567,12 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
                               Icon(
                                 Icons.supervisor_account,
                                 color: isActive
-                                    ? Colors.blue.shade600
-                                    : Colors.orange.shade600,
+                                    ? (isDark
+                                        ? const Color(0xFF58A6FF)
+                                        : Colors.blue.shade600)
+                                    : (isDark
+                                        ? const Color(0xFFF78166)
+                                        : Colors.orange.shade600),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
@@ -2376,14 +2581,29 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
                                   children: [
                                     Text(
                                       '${supervisor.firstName} ${supervisor.familyName}',
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.bold),
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color:
+                                            theme.textTheme.titleMedium?.color,
+                                      ),
                                     ),
                                     if (supervisor.phoneNumber?.isNotEmpty ==
                                         true)
-                                      Text('Phone: ${supervisor.phoneNumber}'),
+                                      Text(
+                                        'Phone: ${supervisor.phoneNumber}',
+                                        style: TextStyle(
+                                          color:
+                                              theme.textTheme.bodyMedium?.color,
+                                        ),
+                                      ),
                                     if (supervisor.email?.isNotEmpty == true)
-                                      Text('Email: ${supervisor.email}'),
+                                      Text(
+                                        'Email: ${supervisor.email}',
+                                        style: TextStyle(
+                                          color:
+                                              theme.textTheme.bodyMedium?.color,
+                                        ),
+                                      ),
                                   ],
                                 ),
                               ),

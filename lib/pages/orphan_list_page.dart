@@ -4,7 +4,7 @@ import 'package:orphan_hq/database.dart';
 import 'package:orphan_hq/repositories/orphan_repository.dart';
 import 'package:orphan_hq/repositories/supervisor_repository.dart';
 import 'package:orphan_hq/services/data_seeder.dart';
-import 'package:orphan_hq/services/image_service.dart';
+
 import 'package:provider/provider.dart';
 import 'dart:io';
 
@@ -567,11 +567,6 @@ class _OrphanListPageState extends State<OrphanListPage> {
               ],
             ),
           ],
-        ),
-        trailing: Icon(
-          Icons.arrow_forward_ios,
-          size: 16,
-          color: theme.iconTheme.color,
         ),
         onTap: () => context.push('/orphan/${orphan.orphanId}'),
       ),

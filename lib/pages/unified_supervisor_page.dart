@@ -154,8 +154,12 @@ class _UnifiedSupervisorPageState extends State<UnifiedSupervisorPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(isCreateMode ? 'Add New Supervisor' : 'Supervisor Details'),
-        backgroundColor: Colors.blue.shade50,
-        foregroundColor: Colors.blue.shade700,
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF30363D)
+            : Colors.blue.shade50,
+        foregroundColor: Theme.of(context).brightness == Brightness.dark
+            ? Colors.blue.shade300
+            : Colors.blue.shade700,
         actions: isCreateMode
             ? [
                 ElevatedButton(
@@ -258,6 +262,8 @@ class _UnifiedSupervisorPageState extends State<UnifiedSupervisorPage> {
   Widget _buildCollapsibleSection(String key, String title, IconData icon,
       Widget content, String? tooltip) {
     final isExpanded = _sectionExpanded[key] ?? false;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Card(
       elevation: 2,
@@ -275,7 +281,9 @@ class _UnifiedSupervisorPageState extends State<UnifiedSupervisorPage> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
+                  color: isDark
+                      ? const Color(0xFF30363D) // Darker header in dark mode
+                      : Colors.blue.shade50,
                   borderRadius: isExpanded
                       ? const BorderRadius.only(
                           topLeft: Radius.circular(12),
@@ -285,7 +293,11 @@ class _UnifiedSupervisorPageState extends State<UnifiedSupervisorPage> {
                 ),
                 child: Row(
                   children: [
-                    Icon(icon, color: Colors.blue.shade700),
+                    Icon(
+                      icon,
+                      color:
+                          isDark ? Colors.blue.shade300 : Colors.blue.shade700,
+                    ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
@@ -293,13 +305,16 @@ class _UnifiedSupervisorPageState extends State<UnifiedSupervisorPage> {
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Colors.blue.shade700,
+                          color: isDark
+                              ? Colors.blue.shade300
+                              : Colors.blue.shade700,
                         ),
                       ),
                     ),
                     Icon(
                       isExpanded ? Icons.expand_less : Icons.expand_more,
-                      color: Colors.blue.shade700,
+                      color:
+                          isDark ? Colors.blue.shade300 : Colors.blue.shade700,
                     ),
                   ],
                 ),
@@ -319,6 +334,8 @@ class _UnifiedSupervisorPageState extends State<UnifiedSupervisorPage> {
   Widget _buildViewSection(String key, String title, IconData icon,
       Widget content, bool hasEdit, String? tooltip) {
     final isEditing = _sectionEditing[key] ?? false;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Card(
       elevation: 2,
@@ -330,7 +347,9 @@ class _UnifiedSupervisorPageState extends State<UnifiedSupervisorPage> {
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.blue.shade50,
+                color: isDark
+                    ? const Color(0xFF30363D) // Darker header in dark mode
+                    : Colors.blue.shade50,
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(12),
                   topRight: Radius.circular(12),
@@ -338,7 +357,10 @@ class _UnifiedSupervisorPageState extends State<UnifiedSupervisorPage> {
               ),
               child: Row(
                 children: [
-                  Icon(icon, color: Colors.blue.shade700),
+                  Icon(
+                    icon,
+                    color: isDark ? Colors.blue.shade300 : Colors.blue.shade700,
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
@@ -346,7 +368,9 @@ class _UnifiedSupervisorPageState extends State<UnifiedSupervisorPage> {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.blue.shade700,
+                        color: isDark
+                            ? Colors.blue.shade300
+                            : Colors.blue.shade700,
                       ),
                     ),
                   ),
@@ -772,6 +796,9 @@ class _UnifiedSupervisorPageState extends State<UnifiedSupervisorPage> {
   }
 
   Widget _buildAssignedOrphansSection() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Card(
       elevation: 2,
       child: Column(
@@ -780,7 +807,9 @@ class _UnifiedSupervisorPageState extends State<UnifiedSupervisorPage> {
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.blue.shade50,
+              color: isDark
+                  ? const Color(0xFF30363D) // Darker header in dark mode
+                  : Colors.blue.shade50,
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(12),
                 topRight: Radius.circular(12),
@@ -788,7 +817,10 @@ class _UnifiedSupervisorPageState extends State<UnifiedSupervisorPage> {
             ),
             child: Row(
               children: [
-                Icon(Icons.family_restroom, color: Colors.blue.shade700),
+                Icon(
+                  Icons.family_restroom,
+                  color: isDark ? Colors.blue.shade300 : Colors.blue.shade700,
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -796,7 +828,8 @@ class _UnifiedSupervisorPageState extends State<UnifiedSupervisorPage> {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Colors.blue.shade700,
+                      color:
+                          isDark ? Colors.blue.shade300 : Colors.blue.shade700,
                     ),
                   ),
                 ),
@@ -826,7 +859,9 @@ class _UnifiedSupervisorPageState extends State<UnifiedSupervisorPage> {
           return Text(
             'No orphans assigned to this supervisor',
             style: TextStyle(
-              color: Colors.grey.shade600,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white
+                  : Colors.grey.shade600,
               fontStyle: FontStyle.italic,
             ),
           );
@@ -837,9 +872,12 @@ class _UnifiedSupervisorPageState extends State<UnifiedSupervisorPage> {
           children: [
             Text(
               '${orphans.length} orphan${orphans.length != 1 ? 's' : ''} assigned',
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.w500,
                 fontSize: 16,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white
+                    : Colors.black87,
               ),
             ),
             const SizedBox(height: 8),
@@ -858,12 +896,22 @@ class _UnifiedSupervisorPageState extends State<UnifiedSupervisorPage> {
                       ),
                     ),
                     title: Text(
-                        '${orphan.firstName.isNotEmpty ? orphan.firstName : 'Unknown'} ${orphan.fatherName.isNotEmpty ? orphan.fatherName : ''} ${orphan.grandfatherName.isNotEmpty ? orphan.grandfatherName : ''} ${orphan.familyName.isNotEmpty ? orphan.familyName : ''}'
-                            .trim()),
+                      '${orphan.firstName.isNotEmpty ? orphan.firstName : 'Unknown'} ${orphan.fatherName.isNotEmpty ? orphan.fatherName : ''} ${orphan.grandfatherName.isNotEmpty ? orphan.grandfatherName : ''} ${orphan.familyName.isNotEmpty ? orphan.familyName : ''}'
+                          .trim(),
+                      style: TextStyle(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white
+                            : Colors.black87,
+                      ),
+                    ),
                     subtitle: Text(
                       'Status: ${orphan.status.toString().split('.').last}',
+                      style: TextStyle(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white
+                            : Colors.grey[600],
+                      ),
                     ),
-                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                     onTap: () {
                       context.push('/orphan/${orphan.orphanId}');
                     },
@@ -878,12 +926,19 @@ class _UnifiedSupervisorPageState extends State<UnifiedSupervisorPage> {
   // Helper method for compact view display
   Widget _buildInfoRow(IconData icon, String label, String value,
       {Color? valueColor}) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: Colors.grey.shade600),
+          Icon(
+            icon,
+            size: 20,
+            color: isDark ? Colors.blue.shade300 : Colors.grey.shade600,
+          ),
           const SizedBox(width: 12),
           Expanded(
             flex: 2,
@@ -891,7 +946,7 @@ class _UnifiedSupervisorPageState extends State<UnifiedSupervisorPage> {
               label,
               style: TextStyle(
                 fontWeight: FontWeight.w500,
-                color: Colors.grey.shade700,
+                color: isDark ? Colors.white : Colors.grey.shade700,
               ),
             ),
           ),
@@ -901,8 +956,8 @@ class _UnifiedSupervisorPageState extends State<UnifiedSupervisorPage> {
               value.isEmpty ? 'Not specified' : value,
               style: TextStyle(
                 color: value.isEmpty
-                    ? Colors.grey.shade400
-                    : (valueColor ?? Colors.black87),
+                    ? (isDark ? Colors.white60 : Colors.grey.shade400)
+                    : (valueColor ?? (isDark ? Colors.white : Colors.black87)),
                 fontWeight:
                     valueColor != null ? FontWeight.w500 : FontWeight.normal,
                 fontStyle: value.isEmpty ? FontStyle.italic : FontStyle.normal,
@@ -944,9 +999,12 @@ class _UnifiedSupervisorPageState extends State<UnifiedSupervisorPage> {
             const SizedBox(height: 16),
             Text(
               SupervisorRepository.getFullName(_supervisor!),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white
+                    : Colors.black87,
               ),
               textAlign: TextAlign.center,
             ),
@@ -957,7 +1015,9 @@ class _UnifiedSupervisorPageState extends State<UnifiedSupervisorPage> {
                   : 'Position not specified',
               style: TextStyle(
                 fontSize: 16,
-                color: Colors.grey.shade600,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white70
+                    : Colors.grey.shade600,
                 fontWeight: FontWeight.w500,
                 fontStyle: _positionController.text.isEmpty
                     ? FontStyle.italic
@@ -971,7 +1031,9 @@ class _UnifiedSupervisorPageState extends State<UnifiedSupervisorPage> {
                 _organizationController.text,
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.grey.shade500,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white60
+                      : Colors.grey.shade500,
                 ),
                 textAlign: TextAlign.center,
               ),
