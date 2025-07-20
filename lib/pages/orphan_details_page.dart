@@ -438,16 +438,7 @@ class _OrphanDetailsPageState extends State<OrphanDetailsPage> {
                     const SizedBox(height: 16),
 
                     // Documents & Attachments Section
-                    _buildEditableSection(
-                      'attachments',
-                      'Required Documents',
-                      Icons.attach_file,
-                      () => _buildAttachmentsView(orphan),
-                      () => _buildAttachmentsView(
-                          orphan), // Same for view and edit
-                      orphan,
-                      orphanRepository,
-                    ),
+                    _buildAttachmentsSection(orphan),
                   ],
                 ),
               );
@@ -481,6 +472,49 @@ class _OrphanDetailsPageState extends State<OrphanDetailsPage> {
       _buildAdditionalEdit(orphan);
   Widget _buildAdditionalInfoView(Orphan orphan) =>
       _buildAdditionalView(orphan);
+  Widget _buildAttachmentsSection(Orphan orphan) {
+    return Card(
+      elevation: 2,
+      child: Column(
+        children: [
+          // Section Header (without edit button)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade50,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(12),
+                topRight: Radius.circular(12),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.attach_file, color: Colors.blue.shade700),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Required Documents',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blue.shade700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Section Content (always interactive)
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: _buildAttachmentsView(orphan),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildAttachmentsView(Orphan orphan) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

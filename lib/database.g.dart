@@ -794,6 +794,12 @@ class $OrphansTable extends Orphans with TableInfo<$OrphansTable, Orphan> {
   late final GeneratedColumn<String> firstName = GeneratedColumn<String>(
       'first_name', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _lastNameMeta =
+      const VerificationMeta('lastName');
+  @override
+  late final GeneratedColumn<String> lastName = GeneratedColumn<String>(
+      'last_name', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _fatherNameMeta =
       const VerificationMeta('fatherName');
   @override
@@ -1359,6 +1365,7 @@ class $OrphansTable extends Orphans with TableInfo<$OrphansTable, Orphan> {
   List<GeneratedColumn> get $columns => [
         orphanId,
         firstName,
+        lastName,
         fatherName,
         grandfatherName,
         familyName,
@@ -1468,6 +1475,10 @@ class $OrphansTable extends Orphans with TableInfo<$OrphansTable, Orphan> {
           firstName.isAcceptableOrUnknown(data['first_name']!, _firstNameMeta));
     } else if (isInserting) {
       context.missing(_firstNameMeta);
+    }
+    if (data.containsKey('last_name')) {
+      context.handle(_lastNameMeta,
+          lastName.isAcceptableOrUnknown(data['last_name']!, _lastNameMeta));
     }
     if (data.containsKey('father_name')) {
       context.handle(
@@ -1970,6 +1981,8 @@ class $OrphansTable extends Orphans with TableInfo<$OrphansTable, Orphan> {
           .read(DriftSqlType.string, data['${effectivePrefix}orphan_id'])!,
       firstName: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}first_name'])!,
+      lastName: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}last_name']),
       fatherName: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}father_name'])!,
       grandfatherName: attachedDatabase.typeMapping.read(
@@ -2222,6 +2235,7 @@ class $OrphansTable extends Orphans with TableInfo<$OrphansTable, Orphan> {
 class Orphan extends DataClass implements Insertable<Orphan> {
   final String orphanId;
   final String firstName;
+  final String? lastName;
   final String fatherName;
   final String grandfatherName;
   final String familyName;
@@ -2314,6 +2328,7 @@ class Orphan extends DataClass implements Insertable<Orphan> {
   const Orphan(
       {required this.orphanId,
       required this.firstName,
+      this.lastName,
       required this.fatherName,
       required this.grandfatherName,
       required this.familyName,
@@ -2408,6 +2423,9 @@ class Orphan extends DataClass implements Insertable<Orphan> {
     final map = <String, Expression>{};
     map['orphan_id'] = Variable<String>(orphanId);
     map['first_name'] = Variable<String>(firstName);
+    if (!nullToAbsent || lastName != null) {
+      map['last_name'] = Variable<String>(lastName);
+    }
     map['father_name'] = Variable<String>(fatherName);
     map['grandfather_name'] = Variable<String>(grandfatherName);
     map['family_name'] = Variable<String>(familyName);
@@ -2683,6 +2701,9 @@ class Orphan extends DataClass implements Insertable<Orphan> {
     return OrphansCompanion(
       orphanId: Value(orphanId),
       firstName: Value(firstName),
+      lastName: lastName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastName),
       fatherName: Value(fatherName),
       grandfatherName: Value(grandfatherName),
       familyName: Value(familyName),
@@ -2942,6 +2963,7 @@ class Orphan extends DataClass implements Insertable<Orphan> {
     return Orphan(
       orphanId: serializer.fromJson<String>(json['orphanId']),
       firstName: serializer.fromJson<String>(json['firstName']),
+      lastName: serializer.fromJson<String?>(json['lastName']),
       fatherName: serializer.fromJson<String>(json['fatherName']),
       grandfatherName: serializer.fromJson<String>(json['grandfatherName']),
       familyName: serializer.fromJson<String>(json['familyName']),
@@ -3082,6 +3104,7 @@ class Orphan extends DataClass implements Insertable<Orphan> {
     return <String, dynamic>{
       'orphanId': serializer.toJson<String>(orphanId),
       'firstName': serializer.toJson<String>(firstName),
+      'lastName': serializer.toJson<String?>(lastName),
       'fatherName': serializer.toJson<String>(fatherName),
       'grandfatherName': serializer.toJson<String>(grandfatherName),
       'familyName': serializer.toJson<String>(familyName),
@@ -3194,6 +3217,7 @@ class Orphan extends DataClass implements Insertable<Orphan> {
   Orphan copyWith(
           {String? orphanId,
           String? firstName,
+          Value<String?> lastName = const Value.absent(),
           String? fatherName,
           String? grandfatherName,
           String? familyName,
@@ -3287,6 +3311,7 @@ class Orphan extends DataClass implements Insertable<Orphan> {
       Orphan(
         orphanId: orphanId ?? this.orphanId,
         firstName: firstName ?? this.firstName,
+        lastName: lastName.present ? lastName.value : this.lastName,
         fatherName: fatherName ?? this.fatherName,
         grandfatherName: grandfatherName ?? this.grandfatherName,
         familyName: familyName ?? this.familyName,
@@ -3494,6 +3519,7 @@ class Orphan extends DataClass implements Insertable<Orphan> {
     return Orphan(
       orphanId: data.orphanId.present ? data.orphanId.value : this.orphanId,
       firstName: data.firstName.present ? data.firstName.value : this.firstName,
+      lastName: data.lastName.present ? data.lastName.value : this.lastName,
       fatherName:
           data.fatherName.present ? data.fatherName.value : this.fatherName,
       grandfatherName: data.grandfatherName.present
@@ -3738,6 +3764,7 @@ class Orphan extends DataClass implements Insertable<Orphan> {
     return (StringBuffer('Orphan(')
           ..write('orphanId: $orphanId, ')
           ..write('firstName: $firstName, ')
+          ..write('lastName: $lastName, ')
           ..write('fatherName: $fatherName, ')
           ..write('grandfatherName: $grandfatherName, ')
           ..write('familyName: $familyName, ')
@@ -3835,6 +3862,7 @@ class Orphan extends DataClass implements Insertable<Orphan> {
   int get hashCode => Object.hashAll([
         orphanId,
         firstName,
+        lastName,
         fatherName,
         grandfatherName,
         familyName,
@@ -3931,6 +3959,7 @@ class Orphan extends DataClass implements Insertable<Orphan> {
       (other is Orphan &&
           other.orphanId == this.orphanId &&
           other.firstName == this.firstName &&
+          other.lastName == this.lastName &&
           other.fatherName == this.fatherName &&
           other.grandfatherName == this.grandfatherName &&
           other.familyName == this.familyName &&
@@ -4025,6 +4054,7 @@ class Orphan extends DataClass implements Insertable<Orphan> {
 class OrphansCompanion extends UpdateCompanion<Orphan> {
   final Value<String> orphanId;
   final Value<String> firstName;
+  final Value<String?> lastName;
   final Value<String> fatherName;
   final Value<String> grandfatherName;
   final Value<String> familyName;
@@ -4118,6 +4148,7 @@ class OrphansCompanion extends UpdateCompanion<Orphan> {
   const OrphansCompanion({
     this.orphanId = const Value.absent(),
     this.firstName = const Value.absent(),
+    this.lastName = const Value.absent(),
     this.fatherName = const Value.absent(),
     this.grandfatherName = const Value.absent(),
     this.familyName = const Value.absent(),
@@ -4212,6 +4243,7 @@ class OrphansCompanion extends UpdateCompanion<Orphan> {
   OrphansCompanion.insert({
     this.orphanId = const Value.absent(),
     required String firstName,
+    this.lastName = const Value.absent(),
     required String fatherName,
     required String grandfatherName,
     required String familyName,
@@ -4314,6 +4346,7 @@ class OrphansCompanion extends UpdateCompanion<Orphan> {
   static Insertable<Orphan> custom({
     Expression<String>? orphanId,
     Expression<String>? firstName,
+    Expression<String>? lastName,
     Expression<String>? fatherName,
     Expression<String>? grandfatherName,
     Expression<String>? familyName,
@@ -4408,6 +4441,7 @@ class OrphansCompanion extends UpdateCompanion<Orphan> {
     return RawValuesInsertable({
       if (orphanId != null) 'orphan_id': orphanId,
       if (firstName != null) 'first_name': firstName,
+      if (lastName != null) 'last_name': lastName,
       if (fatherName != null) 'father_name': fatherName,
       if (grandfatherName != null) 'grandfather_name': grandfatherName,
       if (familyName != null) 'family_name': familyName,
@@ -4532,6 +4566,7 @@ class OrphansCompanion extends UpdateCompanion<Orphan> {
   OrphansCompanion copyWith(
       {Value<String>? orphanId,
       Value<String>? firstName,
+      Value<String?>? lastName,
       Value<String>? fatherName,
       Value<String>? grandfatherName,
       Value<String>? familyName,
@@ -4625,6 +4660,7 @@ class OrphansCompanion extends UpdateCompanion<Orphan> {
     return OrphansCompanion(
       orphanId: orphanId ?? this.orphanId,
       firstName: firstName ?? this.firstName,
+      lastName: lastName ?? this.lastName,
       fatherName: fatherName ?? this.fatherName,
       grandfatherName: grandfatherName ?? this.grandfatherName,
       familyName: familyName ?? this.familyName,
@@ -4735,6 +4771,9 @@ class OrphansCompanion extends UpdateCompanion<Orphan> {
     }
     if (firstName.present) {
       map['first_name'] = Variable<String>(firstName.value);
+    }
+    if (lastName.present) {
+      map['last_name'] = Variable<String>(lastName.value);
     }
     if (fatherName.present) {
       map['father_name'] = Variable<String>(fatherName.value);
@@ -5045,6 +5084,7 @@ class OrphansCompanion extends UpdateCompanion<Orphan> {
     return (StringBuffer('OrphansCompanion(')
           ..write('orphanId: $orphanId, ')
           ..write('firstName: $firstName, ')
+          ..write('lastName: $lastName, ')
           ..write('fatherName: $fatherName, ')
           ..write('grandfatherName: $grandfatherName, ')
           ..write('familyName: $familyName, ')
@@ -5580,6 +5620,7 @@ typedef $$SupervisorsTableProcessedTableManager = ProcessedTableManager<
 typedef $$OrphansTableCreateCompanionBuilder = OrphansCompanion Function({
   Value<String> orphanId,
   required String firstName,
+  Value<String?> lastName,
   required String fatherName,
   required String grandfatherName,
   required String familyName,
@@ -5674,6 +5715,7 @@ typedef $$OrphansTableCreateCompanionBuilder = OrphansCompanion Function({
 typedef $$OrphansTableUpdateCompanionBuilder = OrphansCompanion Function({
   Value<String> orphanId,
   Value<String> firstName,
+  Value<String?> lastName,
   Value<String> fatherName,
   Value<String> grandfatherName,
   Value<String> familyName,
@@ -5799,6 +5841,9 @@ class $$OrphansTableFilterComposer extends Composer<_$AppDb, $OrphansTable> {
 
   ColumnFilters<String> get firstName => $composableBuilder(
       column: $table.firstName, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get lastName => $composableBuilder(
+      column: $table.lastName, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get fatherName => $composableBuilder(
       column: $table.fatherName, builder: (column) => ColumnFilters(column));
@@ -6168,6 +6213,9 @@ class $$OrphansTableOrderingComposer extends Composer<_$AppDb, $OrphansTable> {
   ColumnOrderings<String> get firstName => $composableBuilder(
       column: $table.firstName, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get lastName => $composableBuilder(
+      column: $table.lastName, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get fatherName => $composableBuilder(
       column: $table.fatherName, builder: (column) => ColumnOrderings(column));
 
@@ -6533,6 +6581,9 @@ class $$OrphansTableAnnotationComposer
   GeneratedColumn<String> get firstName =>
       $composableBuilder(column: $table.firstName, builder: (column) => column);
 
+  GeneratedColumn<String> get lastName =>
+      $composableBuilder(column: $table.lastName, builder: (column) => column);
+
   GeneratedColumn<String> get fatherName => $composableBuilder(
       column: $table.fatherName, builder: (column) => column);
 
@@ -6849,6 +6900,7 @@ class $$OrphansTableTableManager extends RootTableManager<
           updateCompanionCallback: ({
             Value<String> orphanId = const Value.absent(),
             Value<String> firstName = const Value.absent(),
+            Value<String?> lastName = const Value.absent(),
             Value<String> fatherName = const Value.absent(),
             Value<String> grandfatherName = const Value.absent(),
             Value<String> familyName = const Value.absent(),
@@ -6944,6 +6996,7 @@ class $$OrphansTableTableManager extends RootTableManager<
               OrphansCompanion(
             orphanId: orphanId,
             firstName: firstName,
+            lastName: lastName,
             fatherName: fatherName,
             grandfatherName: grandfatherName,
             familyName: familyName,
@@ -7038,6 +7091,7 @@ class $$OrphansTableTableManager extends RootTableManager<
           createCompanionCallback: ({
             Value<String> orphanId = const Value.absent(),
             required String firstName,
+            Value<String?> lastName = const Value.absent(),
             required String fatherName,
             required String grandfatherName,
             required String familyName,
@@ -7133,6 +7187,7 @@ class $$OrphansTableTableManager extends RootTableManager<
               OrphansCompanion.insert(
             orphanId: orphanId,
             firstName: firstName,
+            lastName: lastName,
             fatherName: fatherName,
             grandfatherName: grandfatherName,
             familyName: familyName,

@@ -4,13 +4,13 @@ import 'package:orphan_hq/layouts/app_layout.dart';
 import 'package:orphan_hq/pages/add_supervisor_page.dart';
 import 'package:orphan_hq/pages/edit_supervisor_page.dart';
 import 'package:orphan_hq/pages/emergency_dashboard_page.dart';
-import 'package:orphan_hq/pages/onboard_orphan_page.dart';
-import 'package:orphan_hq/pages/orphan_details_page.dart';
+import 'package:orphan_hq/pages/unified_orphan_page.dart';
 import 'package:orphan_hq/pages/orphan_list_page.dart';
 import 'package:orphan_hq/pages/settings_page.dart';
 import 'package:orphan_hq/pages/supervisor_details_page.dart';
 import 'package:orphan_hq/pages/supervisor_orphans_page.dart';
 import 'package:orphan_hq/pages/supervisor_view_page.dart';
+import 'package:orphan_hq/pages/connection_status_page.dart';
 
 final router = GoRouter(
   initialLocation: '/',
@@ -23,10 +23,17 @@ final router = GoRouter(
       ),
     ),
     GoRoute(
+      path: '/orphans',
+      builder: (context, state) => AppLayout(
+        currentRoute: '/orphans',
+        child: const OrphanListPage(),
+      ),
+    ),
+    GoRoute(
       path: '/onboard',
       builder: (context, state) => AppLayout(
         currentRoute: '/onboard',
-        child: const OnboardOrphanPage(),
+        child: const UnifiedOrphanPage(), // null orphanId = create mode
       ),
     ),
     GoRoute(
@@ -83,7 +90,8 @@ final router = GoRouter(
         final orphanId = state.pathParameters['id']!;
         return AppLayout(
           currentRoute: '/orphan/$orphanId',
-          child: OrphanDetailsPage(orphanId: orphanId),
+          child: UnifiedOrphanPage(
+              orphanId: orphanId), // with orphanId = view mode
         );
       },
     ),
@@ -96,6 +104,13 @@ final router = GoRouter(
           child: SupervisorOrphansPage(supervisorId: supervisorId),
         );
       },
+    ),
+    GoRoute(
+      path: '/connection',
+      builder: (context, state) => AppLayout(
+        currentRoute: '/connection',
+        child: const ConnectionStatusPage(),
+      ),
     ),
   ],
 );

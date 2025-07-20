@@ -7,12 +7,20 @@ class SupervisorRepository {
   SupervisorRepository(this._db);
 
   Future<List<Supervisor>> getAllSupervisors() {
+    return _db.select(_db.supervisors).get();
+  }
+
+  Stream<List<Supervisor>> watchAllSupervisors() {
+    return _db.select(_db.supervisors).watch();
+  }
+
+  Future<List<Supervisor>> getActiveSupervisors() {
     return (_db.select(_db.supervisors)
           ..where((tbl) => tbl.active.equals(true)))
         .get();
   }
 
-  Stream<List<Supervisor>> watchAllSupervisors() {
+  Stream<List<Supervisor>> watchActiveSupervisors() {
     return (_db.select(_db.supervisors)
           ..where((tbl) => tbl.active.equals(true)))
         .watch();
@@ -60,5 +68,12 @@ class SupervisorRepository {
   // Helper method to get location from supervisor
   static String getLocation(Supervisor supervisor) {
     return '${supervisor.city}${supervisor.district != null ? ', ${supervisor.district}' : ''}';
+  }
+
+  Future<Supervisor?> getSupervisorById(String supervisorId) async {
+    final query = _db.select(_db.supervisors)
+      ..where((tbl) => tbl.supervisorId.equals(supervisorId));
+    final results = await query.get();
+    return results.isNotEmpty ? results.first : null;
   }
 }

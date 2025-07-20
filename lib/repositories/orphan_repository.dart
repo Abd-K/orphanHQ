@@ -73,4 +73,11 @@ class OrphanRepository {
           ..where((tbl) => tbl.orphanId.equals(orphanId)))
         .go();
   }
+
+  Future<Orphan?> getOrphanById(String orphanId) async {
+    final query = _db.select(_db.orphans)
+      ..where((tbl) => tbl.orphanId.equals(orphanId));
+    final results = await query.get();
+    return results.isNotEmpty ? results.first : null;
+  }
 }

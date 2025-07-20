@@ -73,6 +73,8 @@ class Orphans extends Table {
 
   // Basic Details (بيانات عن الطفل)
   TextColumn get firstName => text()(); // الاسم الأول
+  TextColumn get lastName =>
+      text().nullable()(); // Legacy field - use familyName instead
   TextColumn get fatherName => text()(); // اسم الأب
   TextColumn get grandfatherName => text()(); // اسم الجد
   TextColumn get familyName => text()(); // اسم العائلة
@@ -248,7 +250,7 @@ class AppDb extends _$AppDb {
   AppDb() : super(_openConnection());
 
   @override
-  int get schemaVersion => 5; // Updated for name field changes
+  int get schemaVersion => 6; // Updated for lastName to 4-part name migration
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -298,6 +300,24 @@ class AppDb extends _$AppDb {
               // but this shows how to properly handle schema changes
             } catch (e) {
               print('Could not add name columns (might already exist): $e');
+            }
+          }
+
+          if (from < 6) {
+            // Migration to handle lastName column removal (version 6)
+            try {
+              // Make last_name column nullable if it exists
+              await customStatement(
+                  'ALTER TABLE orphans ADD COLUMN last_name_temp TEXT;');
+              await customStatement(
+                  'UPDATE orphans SET last_name_temp = last_name WHERE last_name IS NOT NULL;');
+              print('Migrated lastName data to temporary column');
+
+              // Drop the NOT NULL constraint by recreating without it
+              // Note: SQLite doesn't support dropping columns directly,
+              // so we'll just make sure new inserts don't require it
+            } catch (e) {
+              print('lastName column migration handled: $e');
             }
           }
 

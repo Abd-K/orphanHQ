@@ -99,6 +99,13 @@ class _AppLayoutState extends State<AppLayout> {
                   isActive: widget.currentRoute == '/emergency',
                   iconColor: Colors.red[600],
                 ),
+                _buildNavigationItem(
+                  icon: Icons.cloud,
+                  title: 'API Status',
+                  route: '/connection',
+                  isActive: widget.currentRoute == '/connection',
+                  iconColor: Colors.green[600],
+                ),
                 const Divider(height: 32),
                 _buildNavigationItem(
                   icon: Icons.settings,
@@ -145,6 +152,7 @@ class _AppLayoutState extends State<AppLayout> {
           // Instant navigation - no visual transition
           final currentLocation = GoRouterState.of(context).uri.path;
           if (currentLocation != route) {
+            // Use go() for instant navigation without any animation
             context.go(route);
           }
         },

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:orphan_hq/database.dart';
 import 'package:orphan_hq/repositories/orphan_repository.dart';
 import 'package:orphan_hq/repositories/supervisor_repository.dart';
+import 'package:orphan_hq/services/data_seeder.dart';
 import 'package:provider/provider.dart';
 
 class OrphanListPage extends StatelessWidget {
@@ -40,6 +41,17 @@ class OrphanListPage extends StatelessWidget {
               ),
 
               // Page Actions
+              OutlinedButton.icon(
+                onPressed: () => _seedTestData(context),
+                icon: const Icon(Icons.scatter_plot),
+                label: const Text('Seed Test Data'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.grey[600],
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+              ),
+              const SizedBox(width: 12),
               ElevatedButton.icon(
                 onPressed: () => context.push('/onboard'),
                 icon: const Icon(Icons.person_add),
@@ -274,10 +286,7 @@ class OrphanListPage extends StatelessWidget {
             ),
           ],
         ),
-        trailing: IconButton(
-          icon: const Icon(Icons.arrow_forward_ios, size: 16),
-          onPressed: () => context.push('/orphan/${orphan.orphanId}'),
-        ),
+        trailing: null,
         onTap: () => context.push('/orphan/${orphan.orphanId}'),
       ),
     );
@@ -302,5 +311,51 @@ class OrphanListPage extends StatelessWidget {
       age--;
     }
     return age;
+  }
+
+  Future<void> _seedTestData(BuildContext context) async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    try {
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+
+      final database = context.read<AppDb>();
+      final seeder = DataSeeder(database);
+      await seeder.seedData();
+
+      // Close loading dialog
+      if (context.mounted) {
+        Navigator.of(context).pop();
+      }
+
+      scaffoldMessenger.showSnackBar(
+        const SnackBar(
+          content: Text(
+              '✅ Test data created successfully! (4 supervisors, 8 orphans)'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    } catch (e) {
+      // Close loading dialog
+      if (context.mounted) {
+        Navigator.of(context).pop();
+      }
+
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text('❌ Error creating test data: $e'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    }
   }
 }

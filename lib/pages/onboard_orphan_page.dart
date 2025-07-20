@@ -210,14 +210,16 @@ class _OnboardOrphanPageState extends State<OnboardOrphanPage> {
         const Text('Date of Birth *',
             style: TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(child: _buildDateField('Day (DD)', _dayController)),
-            const SizedBox(width: 8),
-            Expanded(child: _buildDateField('Month (MM)', _monthController)),
-            const SizedBox(width: 8),
-            Expanded(child: _buildYearField('Year (YYYY)', _yearController)),
-          ],
+        IntrinsicHeight(
+          child: Row(
+            children: [
+              Expanded(child: _buildDateField('Day (DD)', _dayController)),
+              const SizedBox(width: 8),
+              Expanded(child: _buildDateField('Month (MM)', _monthController)),
+              const SizedBox(width: 8),
+              Expanded(child: _buildYearField('Year (YYYY)', _yearController)),
+            ],
+          ),
         ),
         const SizedBox(height: 16),
         DropdownButtonFormField<OrphanStatus>(
@@ -253,20 +255,22 @@ class _OnboardOrphanPageState extends State<OnboardOrphanPage> {
         const Text('Date of Death',
             style: TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-                child: _buildDateField('Day', _fatherDeathDayController,
-                    required: false)),
-            const SizedBox(width: 8),
-            Expanded(
-                child: _buildDateField('Month', _fatherDeathMonthController,
-                    required: false)),
-            const SizedBox(width: 8),
-            Expanded(
-                child: _buildYearField('Year', _fatherDeathYearController,
-                    required: false)),
-          ],
+        IntrinsicHeight(
+          child: Row(
+            children: [
+              Expanded(
+                  child: _buildDateField('Day', _fatherDeathDayController,
+                      required: false)),
+              const SizedBox(width: 8),
+              Expanded(
+                  child: _buildDateField('Month', _fatherDeathMonthController,
+                      required: false)),
+              const SizedBox(width: 8),
+              Expanded(
+                  child: _buildYearField('Year', _fatherDeathYearController,
+                      required: false)),
+            ],
+          ),
         ),
         const SizedBox(height: 16),
         TextFormField(
@@ -311,20 +315,22 @@ class _OnboardOrphanPageState extends State<OnboardOrphanPage> {
           const Text('Date of Death',
               style: TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                  child: _buildDateField('Day', _motherDeathDayController,
-                      required: false)),
-              const SizedBox(width: 8),
-              Expanded(
-                  child: _buildDateField('Month', _motherDeathMonthController,
-                      required: false)),
-              const SizedBox(width: 8),
-              Expanded(
-                  child: _buildYearField('Year', _motherDeathYearController,
-                      required: false)),
-            ],
+          IntrinsicHeight(
+            child: Row(
+              children: [
+                Expanded(
+                    child: _buildDateField('Day', _motherDeathDayController,
+                        required: false)),
+                const SizedBox(width: 8),
+                Expanded(
+                    child: _buildDateField('Month', _motherDeathMonthController,
+                        required: false)),
+                const SizedBox(width: 8),
+                Expanded(
+                    child: _buildYearField('Year', _motherDeathYearController,
+                        required: false)),
+              ],
+            ),
           ),
           const SizedBox(height: 16),
           TextFormField(
