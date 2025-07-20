@@ -420,27 +420,27 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
           children: [
             // Profile Picture or Avatar
             Container(
-              width: 100,
-              height: 100,
+              width: 250,
+              height: 250,
               child: _recentPhoto != null
                   ? ClipRRect(
-                      borderRadius: BorderRadius.circular(50),
+                      borderRadius: BorderRadius.circular(125),
                       child: Image.file(
                         _recentPhoto!,
-                        width: 100,
-                        height: 100,
+                        width: 250,
+                        height: 250,
                         fit: BoxFit.cover,
                       ),
                     )
                   : CircleAvatar(
-                      radius: 50,
+                      radius: 125,
                       backgroundColor: _selectedStatus == OrphanStatus.active
                           ? Colors.blue.shade600
                           : Colors.grey.shade600,
                       child: Text(
                         initials.toUpperCase(),
                         style: const TextStyle(
-                          fontSize: 24,
+                          fontSize: 60,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                         ),

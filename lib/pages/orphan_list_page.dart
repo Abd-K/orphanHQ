@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:orphan_hq/database.dart';
 import 'package:orphan_hq/repositories/orphan_repository.dart';
 import 'package:orphan_hq/repositories/supervisor_repository.dart';
-import 'package:orphan_hq/services/data_seeder.dart';
 
 import 'package:provider/provider.dart';
 import 'dart:io';
@@ -55,29 +54,6 @@ class _OrphanListPageState extends State<OrphanListPage> {
               ),
 
               // Page Actions
-              OutlinedButton.icon(
-                onPressed: () => _seedTestData(context),
-                icon: const Icon(Icons.scatter_plot),
-                label: const Text('Seed Test Data'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Theme.of(context).brightness ==
-                          Brightness.dark
-                      ? const Color(0xFFFF9800) // Orange for dark mode
-                      : const Color(0xFFE65100), // Darker orange for light mode
-                  side: BorderSide(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? const Color(0xFFFF9800)
-                        : const Color(0xFFE65100),
-                    width: 1.5,
-                  ),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
               ElevatedButton.icon(
                 onPressed: () => context.push('/onboard'),
                 icon: const Icon(Icons.person_add),
@@ -620,54 +596,5 @@ class _OrphanListPageState extends State<OrphanListPage> {
       print('Error extracting recent photo: $e');
     }
     return null;
-  }
-
-  Future<void> _seedTestData(BuildContext context) async {
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
-
-    try {
-      // Show loading indicator
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
-
-      final database = context.read<AppDb>();
-      final seeder = DataSeeder(database);
-      await seeder.seedData();
-
-      // Close loading dialog
-      if (context.mounted) {
-        Navigator.of(context).pop();
-      }
-
-      scaffoldMessenger.showSnackBar(
-        const SnackBar(
-          content: Text(
-              '✅ Test data created successfully! (4 supervisors, 8 orphans)'),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 3),
-        ),
-      );
-    } catch (e) {
-      // Close loading dialog
-      if (context.mounted) {
-        Navigator.of(context).pop();
-      }
-
-      // Log error to console for debugging
-      print('❌ ERROR creating test data: $e');
-
-      scaffoldMessenger.showSnackBar(
-        SnackBar(
-          content: Text('❌ Error creating test data: $e'),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 5),
-        ),
-      );
-    }
   }
 }

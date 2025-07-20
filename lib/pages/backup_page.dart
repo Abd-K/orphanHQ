@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import '../services/backup_service.dart';
+import '../services/data_seeder.dart';
+import '../database.dart';
 
 class BackupPage extends StatefulWidget {
   const BackupPage({Key? key}) : super(key: key);
@@ -468,6 +471,16 @@ class _BackupPageState extends State<BackupPage> {
                                 foregroundColor: Colors.white,
                               ),
                             ),
+                            ElevatedButton.icon(
+                              onPressed: _isLoading ? null : _seedTestData,
+                              icon: const Icon(Icons.scatter_plot),
+                              label: const Text('Seed Test Data'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                    const Color(0xFFFF9800), // Orange
+                                foregroundColor: Colors.white,
+                              ),
+                            ),
                           ],
                         ),
                       ],
@@ -624,5 +637,51 @@ class _BackupPageState extends State<BackupPage> {
         ),
       ],
     );
+  }
+
+  Future<void> _seedTestData() async {
+    final confirmed = await _showConfirmationDialog(
+      'Seed Test Data',
+      'This will create sample data including 4 supervisors and 8 orphans for testing purposes. '
+          'This action cannot be undone. Are you sure you want to continue?',
+      'Seed Data',
+      const Color(0xFFFF9800),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() {
+      _isLoading = true;
+      _statusMessage = 'Creating test data...';
+    });
+
+    try {
+      final database = context.read<AppDb>();
+      final seeder = DataSeeder(database);
+      await seeder.seedData();
+
+      setState(() {
+        _statusMessage =
+            '✅ Test data created successfully! (4 supervisors, 8 orphans)';
+      });
+
+      _showSuccessDialog(
+        'Test Data Created',
+        'Sample data has been created successfully! You now have 4 supervisors and 8 orphans for testing.',
+      );
+    } catch (e) {
+      setState(() {
+        _statusMessage = '❌ Error creating test data: $e';
+      });
+
+      // Log error to console for debugging
+      print('❌ ERROR creating test data: $e');
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+
+      _clearStatusAfterDelay();
+    }
   }
 }
