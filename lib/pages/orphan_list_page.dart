@@ -1,9 +1,9 @@
+import 'dart:async'; // Added for the debounce timer
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:orphan_hq/database.dart';
 import 'package:orphan_hq/repositories/orphan_repository.dart';
 import 'package:orphan_hq/repositories/supervisor_repository.dart';
-
 import 'package:provider/provider.dart';
 import 'dart:io';
 
@@ -18,6 +18,34 @@ class OrphanListPage extends StatefulWidget {
 
 class _OrphanListPageState extends State<OrphanListPage> {
   OrphanFilter _currentFilter = OrphanFilter.all;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  Timer? _debounce; // --- Start of new code ---
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  _onSearchChanged() {
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        setState(() {
+          _searchQuery = _searchController.text;
+        });
+      }
+    });
+  } // --- End of new code ---
 
   @override
   Widget build(BuildContext context) {
@@ -60,14 +88,14 @@ class _OrphanListPageState extends State<OrphanListPage> {
                 label: const Text('Add Orphan'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Theme.of(context).brightness ==
-                          Brightness.dark
+                      Brightness.dark
                       ? const Color(0xFF4CAF50) // Green for dark mode
                       : const Color(0xFF2E7D32), // Darker green for light mode
                   foregroundColor: Colors.white,
                   elevation: 2,
                   shadowColor: Colors.black26,
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                  const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -153,22 +181,28 @@ class _OrphanListPageState extends State<OrphanListPage> {
 
   Widget _buildOrphanGrid(BuildContext context, List<Orphan> orphans,
       SupervisorRepository supervisorRepository) {
-    // Filter orphans based on current filter
-    List<Orphan> filteredOrphans;
-    switch (_currentFilter) {
-      case OrphanFilter.active:
-        filteredOrphans =
-            orphans.where((o) => o.status == OrphanStatus.active).toList();
-        break;
-      case OrphanFilter.missing:
-        filteredOrphans =
-            orphans.where((o) => o.status == OrphanStatus.missing).toList();
-        break;
-      case OrphanFilter.all:
-      default:
-        filteredOrphans = orphans;
-        break;
-    }
+    // --- Start of modified code ---
+    final filteredOrphans = orphans.where((orphan) {
+      switch (_currentFilter) {
+        case OrphanFilter.active:
+          return orphan.status == OrphanStatus.active;
+        case OrphanFilter.missing:
+          return orphan.status == OrphanStatus.missing;
+        case OrphanFilter.all:
+        default:
+          return true;
+      }
+    }).toList();
+
+    final searchedOrphans = _searchQuery.isEmpty
+        ? filteredOrphans
+        : filteredOrphans.where((orphan) {
+      final fullName =
+      '${orphan.firstName} ${orphan.fatherName} ${orphan.grandfatherName} ${orphan.familyName}'
+          .toLowerCase();
+      return fullName.contains(_searchQuery.toLowerCase());
+    }).toList();
+    // --- End of modified code ---
 
     return Padding(
       padding: const EdgeInsets.all(24),
@@ -213,6 +247,22 @@ class _OrphanListPageState extends State<OrphanListPage> {
             ],
           ),
           const SizedBox(height: 24),
+
+          // Search Bar
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16.0),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                labelText: 'Search Orphans',
+                hintText: 'Enter orphan name...',
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ),
 
           // Filter indicator
           if (_currentFilter != OrphanFilter.all)
@@ -259,16 +309,16 @@ class _OrphanListPageState extends State<OrphanListPage> {
           // Orphans List
           Expanded(
             child: Card(
-              child: filteredOrphans.isEmpty
+              child: searchedOrphans.isEmpty
                   ? _buildNoResultsState()
                   : ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: filteredOrphans.length,
-                      itemBuilder: (context, index) {
-                        final orphan = filteredOrphans[index];
-                        return _buildOrphanCard(context, orphan);
-                      },
-                    ),
+                padding: const EdgeInsets.all(16),
+                itemCount: searchedOrphans.length,
+                itemBuilder: (context, index) {
+                  final orphan = searchedOrphans[index];
+                  return _buildOrphanCard(context, orphan);
+                },
+              ),
             ),
           ),
         ],
@@ -278,19 +328,22 @@ class _OrphanListPageState extends State<OrphanListPage> {
 
   Widget _buildNoResultsState() {
     final theme = Theme.of(context);
+    final isSearching = _searchQuery.isNotEmpty;
 
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            _getFilterIcon(_currentFilter),
+            isSearching ? Icons.search_off : _getFilterIcon(_currentFilter),
             size: 64,
             color: theme.iconTheme.color?.withOpacity(0.5),
           ),
           const SizedBox(height: 16),
           Text(
-            'No ${_getFilterName(_currentFilter).toLowerCase()} orphans found',
+            isSearching
+                ? 'No Orphans Found'
+                : 'No ${_getFilterName(_currentFilter).toLowerCase()} orphans found',
             style: TextStyle(
               fontSize: 18,
               color: theme.textTheme.titleMedium?.color,
@@ -299,30 +352,34 @@ class _OrphanListPageState extends State<OrphanListPage> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Try selecting a different filter',
+            isSearching
+                ? 'Try a different search term.'
+                : 'Try selecting a different filter',
             style: TextStyle(
               fontSize: 14,
               color: theme.textTheme.bodySmall?.color,
             ),
           ),
-          const SizedBox(height: 16),
-          TextButton(
-            onPressed: () => setState(() => _currentFilter = OrphanFilter.all),
-            child: const Text('Show All Orphans'),
-          ),
+          if (!isSearching) ...[
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: () => setState(() => _currentFilter = OrphanFilter.all),
+              child: const Text('Show All Orphans'),
+            ),
+          ]
         ],
       ),
     );
   }
 
   Widget _buildStatCard(
-    String title,
-    String value,
-    IconData icon,
-    Color color,
-    OrphanFilter filter,
-    bool isActive,
-  ) {
+      String title,
+      String value,
+      IconData icon,
+      Color color,
+      OrphanFilter filter,
+      bool isActive,
+      ) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -333,13 +390,10 @@ class _OrphanListPageState extends State<OrphanListPage> {
           onTap: () {
             setState(() {
               if (filter == OrphanFilter.all) {
-                // Always set to "all" when clicking the "all" button
                 _currentFilter = OrphanFilter.all;
               } else if (_currentFilter == filter) {
-                // If same filter is clicked, turn it off (go to all)
                 _currentFilter = OrphanFilter.all;
               } else {
-                // Otherwise, set the clicked filter
                 _currentFilter = filter;
               }
             });
@@ -392,7 +446,7 @@ class _OrphanListPageState extends State<OrphanListPage> {
                                 ? color.withOpacity(0.8)
                                 : theme.textTheme.bodySmall?.color,
                             fontWeight:
-                                isActive ? FontWeight.w500 : FontWeight.normal,
+                            isActive ? FontWeight.w500 : FontWeight.normal,
                           ),
                         ),
                       ],
@@ -455,7 +509,6 @@ class _OrphanListPageState extends State<OrphanListPage> {
     Color statusColor = _getStatusColor(orphan.status);
     File? recentPhoto = _getOrphanRecentPhoto(orphan);
 
-    // Generate initials for fallback
     String initials = '';
     if (orphan.firstName.isNotEmpty) {
       initials += orphan.firstName[0];
@@ -469,7 +522,7 @@ class _OrphanListPageState extends State<OrphanListPage> {
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: isDark
-            ? const Color(0xFF21262D) // Slightly different from card color
+            ? const Color(0xFF21262D)
             : Colors.white,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
@@ -478,29 +531,29 @@ class _OrphanListPageState extends State<OrphanListPage> {
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.all(16),
-        leading: Container(
+        leading: SizedBox(
           width: 40,
           height: 40,
           child: recentPhoto != null
               ? ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: Image.file(
-                    recentPhoto,
-                    width: 40,
-                    height: 40,
-                    fit: BoxFit.cover,
-                  ),
-                )
+            borderRadius: BorderRadius.circular(20),
+            child: Image.file(
+              recentPhoto,
+              width: 40,
+              height: 40,
+              fit: BoxFit.cover,
+            ),
+          )
               : CircleAvatar(
-                  backgroundColor: statusColor.withOpacity(isDark ? 0.2 : 0.1),
-                  child: Text(
-                    initials.toUpperCase(),
-                    style: TextStyle(
-                      color: statusColor,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
+            backgroundColor: statusColor.withOpacity(isDark ? 0.2 : 0.1),
+            child: Text(
+              initials.toUpperCase(),
+              style: TextStyle(
+                color: statusColor,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
         ),
         title: Text(
           '${orphan.firstName.isNotEmpty ? orphan.firstName : 'Unknown'} ${orphan.fatherName.isNotEmpty ? orphan.fatherName : ''} ${orphan.grandfatherName.isNotEmpty ? orphan.grandfatherName : ''} ${orphan.familyName.isNotEmpty ? orphan.familyName : ''}'
@@ -518,7 +571,7 @@ class _OrphanListPageState extends State<OrphanListPage> {
               children: [
                 Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: statusColor.withOpacity(isDark ? 0.2 : 0.1),
                     borderRadius: BorderRadius.circular(12),
@@ -570,7 +623,6 @@ class _OrphanListPageState extends State<OrphanListPage> {
     return age;
   }
 
-  // Helper method to extract recent photo from documentsPath
   File? _getOrphanRecentPhoto(Orphan orphan) {
     if (orphan.documentsPath == null || orphan.documentsPath!.isEmpty) {
       return null;
@@ -582,7 +634,6 @@ class _OrphanListPageState extends State<OrphanListPage> {
         final parts = entry.split(':');
         if (parts.length == 2 && parts[0] == 'recent') {
           final file = File(parts[1]);
-          // Only return if file exists and has a valid image extension
           if (file.existsSync()) {
             final extension = file.path.split('.').last.toLowerCase();
             if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp']
