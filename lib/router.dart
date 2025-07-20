@@ -5,11 +5,13 @@ import 'package:orphan_hq/pages/add_supervisor_page.dart';
 import 'package:orphan_hq/pages/edit_supervisor_page.dart';
 import 'package:orphan_hq/pages/emergency_dashboard_page.dart';
 import 'package:orphan_hq/pages/unified_orphan_page.dart';
+import 'package:orphan_hq/pages/unified_supervisor_page.dart';
 import 'package:orphan_hq/pages/orphan_list_page.dart';
 import 'package:orphan_hq/pages/settings_page.dart';
 import 'package:orphan_hq/pages/supervisor_details_page.dart';
 import 'package:orphan_hq/pages/supervisor_orphans_page.dart';
 import 'package:orphan_hq/pages/supervisor_view_page.dart';
+import 'package:orphan_hq/pages/backup_page.dart';
 import 'package:orphan_hq/pages/connection_status_page.dart';
 
 final router = GoRouter(
@@ -58,21 +60,32 @@ final router = GoRouter(
       ),
     ),
     GoRoute(
-      path: '/add-supervisor',
+      path: '/connection',
       builder: (context, state) => AppLayout(
-        currentRoute: '/add-supervisor',
-        child: const AddSupervisorPage(),
+        currentRoute: '/connection',
+        child: const ConnectionStatusPage(),
       ),
     ),
     GoRoute(
-      path: '/edit-supervisor/:id',
-      builder: (context, state) {
-        final supervisorId = state.pathParameters['id']!;
-        return AppLayout(
-          currentRoute: '/edit-supervisor/$supervisorId',
-          child: EditSupervisorPage(supervisorId: supervisorId),
-        );
-      },
+      path: '/backup',
+      builder: (context, state) => AppLayout(
+        currentRoute: '/backup',
+        child: const BackupPage(),
+      ),
+    ),
+    GoRoute(
+      path: '/add-supervisor',
+      builder: (context, state) => AppLayout(
+        currentRoute: '/add-supervisor',
+        child: const UnifiedSupervisorPage(), // null supervisorId = create mode
+      ),
+    ),
+    GoRoute(
+      path: '/old-add-supervisor',
+      builder: (context, state) => AppLayout(
+        currentRoute: '/old-add-supervisor',
+        child: const AddSupervisorPage(),
+      ),
     ),
     GoRoute(
       path: '/supervisor/:id',
@@ -80,6 +93,27 @@ final router = GoRouter(
         final supervisorId = state.pathParameters['id']!;
         return AppLayout(
           currentRoute: '/supervisor/$supervisorId',
+          child: UnifiedSupervisorPage(
+              supervisorId: supervisorId), // with supervisorId = view mode
+        );
+      },
+    ),
+    GoRoute(
+      path: '/old-edit-supervisor/:id',
+      builder: (context, state) {
+        final supervisorId = state.pathParameters['id']!;
+        return AppLayout(
+          currentRoute: '/old-edit-supervisor/$supervisorId',
+          child: EditSupervisorPage(supervisorId: supervisorId),
+        );
+      },
+    ),
+    GoRoute(
+      path: '/old-supervisor/:id',
+      builder: (context, state) {
+        final supervisorId = state.pathParameters['id']!;
+        return AppLayout(
+          currentRoute: '/old-supervisor/$supervisorId',
           child: SupervisorDetailsPage(supervisorId: supervisorId),
         );
       },
@@ -104,13 +138,6 @@ final router = GoRouter(
           child: SupervisorOrphansPage(supervisorId: supervisorId),
         );
       },
-    ),
-    GoRoute(
-      path: '/connection',
-      builder: (context, state) => AppLayout(
-        currentRoute: '/connection',
-        child: const ConnectionStatusPage(),
-      ),
     ),
   ],
 );

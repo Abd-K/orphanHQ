@@ -27,7 +27,7 @@ class _AppLayoutState extends State<AppLayout> {
           // DYNAMIC CONTENT AREA - Only this updates
           Expanded(
             child: Container(
-              color: Colors.grey[50],
+              color: Theme.of(context).scaffoldBackgroundColor,
               child: widget.child,
             ),
           ),
@@ -37,12 +37,19 @@ class _AppLayoutState extends State<AppLayout> {
   }
 
   Widget _buildPermanentSidebar() {
+    final theme = Theme.of(context);
+
     return Container(
       width: 280,
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: theme.brightness == Brightness.dark
+            ? const Color(0xFF161B22) // Match card color
+            : Colors.grey[50],
         border: Border(
-          right: BorderSide(color: Colors.grey[300]!, width: 1),
+          right: BorderSide(
+            color: theme.dividerColor,
+            width: 1,
+          ),
         ),
       ),
       child: Column(
@@ -52,9 +59,16 @@ class _AppLayoutState extends State<AppLayout> {
             height: 80,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.blue[700],
+              color: theme.brightness == Brightness.dark
+                  ? const Color(0xFF0D1117) // Match scaffold background
+                  : Colors.blue[700],
               border: Border(
-                bottom: BorderSide(color: Colors.blue[800]!, width: 1),
+                bottom: BorderSide(
+                  color: theme.brightness == Brightness.dark
+                      ? const Color(0xFF21262D)
+                      : Colors.blue[800]!,
+                  width: 1,
+                ),
               ),
             ),
             child: const Row(
@@ -99,13 +113,6 @@ class _AppLayoutState extends State<AppLayout> {
                   isActive: widget.currentRoute == '/emergency',
                   iconColor: Colors.red[600],
                 ),
-                _buildNavigationItem(
-                  icon: Icons.cloud,
-                  title: 'API Status',
-                  route: '/connection',
-                  isActive: widget.currentRoute == '/connection',
-                  iconColor: Colors.green[600],
-                ),
                 const Divider(height: 32),
                 _buildNavigationItem(
                   icon: Icons.settings,
@@ -128,22 +135,31 @@ class _AppLayoutState extends State<AppLayout> {
     required bool isActive,
     Color? iconColor,
   }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
       decoration: BoxDecoration(
-        color: isActive ? Colors.blue[100] : Colors.transparent,
+        color: isActive
+            ? (isDark ? Colors.blue[900]!.withOpacity(0.3) : Colors.blue[100])
+            : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
       ),
       child: ListTile(
         leading: Icon(
           icon,
-          color: isActive ? Colors.blue[700] : (iconColor ?? Colors.grey[600]),
+          color: isActive
+              ? (isDark ? Colors.blue[300] : Colors.blue[700])
+              : (iconColor ?? (isDark ? Colors.grey[400] : Colors.grey[600])),
           size: 22,
         ),
         title: Text(
           title,
           style: TextStyle(
-            color: isActive ? Colors.blue[700] : Colors.grey[700],
+            color: isActive
+                ? (isDark ? Colors.blue[300] : Colors.blue[700])
+                : (isDark ? Colors.grey[300] : Colors.grey[700]),
             fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
             fontSize: 14,
           ),

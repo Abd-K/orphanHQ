@@ -868,9 +868,9 @@ class $OrphansTable extends Orphans with TableInfo<$OrphansTable, Orphan> {
       const VerificationMeta('supervisorId');
   @override
   late final GeneratedColumn<String> supervisorId = GeneratedColumn<String>(
-      'supervisor_id', aliasedName, false,
+      'supervisor_id', aliasedName, true,
       type: DriftSqlType.string,
-      requiredDuringInsert: true,
+      requiredDuringInsert: false,
       defaultConstraints: GeneratedColumn.constraintIsAlways(
           'REFERENCES supervisors (supervisor_id)'));
   static const VerificationMeta _currentCountryMeta =
@@ -1547,8 +1547,6 @@ class $OrphansTable extends Orphans with TableInfo<$OrphansTable, Orphan> {
           _supervisorIdMeta,
           supervisorId.isAcceptableOrUnknown(
               data['supervisor_id']!, _supervisorIdMeta));
-    } else if (isInserting) {
-      context.missing(_supervisorIdMeta);
     }
     if (data.containsKey('current_country')) {
       context.handle(
@@ -2008,7 +2006,7 @@ class $OrphansTable extends Orphans with TableInfo<$OrphansTable, Orphan> {
       lastUpdated: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}last_updated'])!,
       supervisorId: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}supervisor_id'])!,
+          .read(DriftSqlType.string, data['${effectivePrefix}supervisor_id']),
       currentCountry: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}current_country']),
       currentGovernorate: attachedDatabase.typeMapping.read(
@@ -2247,7 +2245,7 @@ class Orphan extends DataClass implements Insertable<Orphan> {
   final OrphanStatus status;
   final String? lastSeenLocation;
   final DateTime lastUpdated;
-  final String supervisorId;
+  final String? supervisorId;
   final String? currentCountry;
   final String? currentGovernorate;
   final String? currentCity;
@@ -2340,7 +2338,7 @@ class Orphan extends DataClass implements Insertable<Orphan> {
       required this.status,
       this.lastSeenLocation,
       required this.lastUpdated,
-      required this.supervisorId,
+      this.supervisorId,
       this.currentCountry,
       this.currentGovernorate,
       this.currentCity,
@@ -2451,7 +2449,9 @@ class Orphan extends DataClass implements Insertable<Orphan> {
       map['last_seen_location'] = Variable<String>(lastSeenLocation);
     }
     map['last_updated'] = Variable<DateTime>(lastUpdated);
-    map['supervisor_id'] = Variable<String>(supervisorId);
+    if (!nullToAbsent || supervisorId != null) {
+      map['supervisor_id'] = Variable<String>(supervisorId);
+    }
     if (!nullToAbsent || currentCountry != null) {
       map['current_country'] = Variable<String>(currentCountry);
     }
@@ -2723,7 +2723,9 @@ class Orphan extends DataClass implements Insertable<Orphan> {
           ? const Value.absent()
           : Value(lastSeenLocation),
       lastUpdated: Value(lastUpdated),
-      supervisorId: Value(supervisorId),
+      supervisorId: supervisorId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(supervisorId),
       currentCountry: currentCountry == null && nullToAbsent
           ? const Value.absent()
           : Value(currentCountry),
@@ -2977,7 +2979,7 @@ class Orphan extends DataClass implements Insertable<Orphan> {
           .fromJson(serializer.fromJson<int>(json['status'])),
       lastSeenLocation: serializer.fromJson<String?>(json['lastSeenLocation']),
       lastUpdated: serializer.fromJson<DateTime>(json['lastUpdated']),
-      supervisorId: serializer.fromJson<String>(json['supervisorId']),
+      supervisorId: serializer.fromJson<String?>(json['supervisorId']),
       currentCountry: serializer.fromJson<String?>(json['currentCountry']),
       currentGovernorate:
           serializer.fromJson<String?>(json['currentGovernorate']),
@@ -3118,7 +3120,7 @@ class Orphan extends DataClass implements Insertable<Orphan> {
           serializer.toJson<int>($OrphansTable.$converterstatus.toJson(status)),
       'lastSeenLocation': serializer.toJson<String?>(lastSeenLocation),
       'lastUpdated': serializer.toJson<DateTime>(lastUpdated),
-      'supervisorId': serializer.toJson<String>(supervisorId),
+      'supervisorId': serializer.toJson<String?>(supervisorId),
       'currentCountry': serializer.toJson<String?>(currentCountry),
       'currentGovernorate': serializer.toJson<String?>(currentGovernorate),
       'currentCity': serializer.toJson<String?>(currentCity),
@@ -3229,7 +3231,7 @@ class Orphan extends DataClass implements Insertable<Orphan> {
           OrphanStatus? status,
           Value<String?> lastSeenLocation = const Value.absent(),
           DateTime? lastUpdated,
-          String? supervisorId,
+          Value<String?> supervisorId = const Value.absent(),
           Value<String?> currentCountry = const Value.absent(),
           Value<String?> currentGovernorate = const Value.absent(),
           Value<String?> currentCity = const Value.absent(),
@@ -3326,7 +3328,8 @@ class Orphan extends DataClass implements Insertable<Orphan> {
             ? lastSeenLocation.value
             : this.lastSeenLocation,
         lastUpdated: lastUpdated ?? this.lastUpdated,
-        supervisorId: supervisorId ?? this.supervisorId,
+        supervisorId:
+            supervisorId.present ? supervisorId.value : this.supervisorId,
         currentCountry:
             currentCountry.present ? currentCountry.value : this.currentCountry,
         currentGovernorate: currentGovernorate.present
@@ -4066,7 +4069,7 @@ class OrphansCompanion extends UpdateCompanion<Orphan> {
   final Value<OrphanStatus> status;
   final Value<String?> lastSeenLocation;
   final Value<DateTime> lastUpdated;
-  final Value<String> supervisorId;
+  final Value<String?> supervisorId;
   final Value<String?> currentCountry;
   final Value<String?> currentGovernorate;
   final Value<String?> currentCity;
@@ -4255,7 +4258,7 @@ class OrphansCompanion extends UpdateCompanion<Orphan> {
     required OrphanStatus status,
     this.lastSeenLocation = const Value.absent(),
     required DateTime lastUpdated,
-    required String supervisorId,
+    this.supervisorId = const Value.absent(),
     this.currentCountry = const Value.absent(),
     this.currentGovernorate = const Value.absent(),
     this.currentCity = const Value.absent(),
@@ -4341,8 +4344,7 @@ class OrphansCompanion extends UpdateCompanion<Orphan> {
         gender = Value(gender),
         dateOfBirth = Value(dateOfBirth),
         status = Value(status),
-        lastUpdated = Value(lastUpdated),
-        supervisorId = Value(supervisorId);
+        lastUpdated = Value(lastUpdated);
   static Insertable<Orphan> custom({
     Expression<String>? orphanId,
     Expression<String>? firstName,
@@ -4578,7 +4580,7 @@ class OrphansCompanion extends UpdateCompanion<Orphan> {
       Value<OrphanStatus>? status,
       Value<String?>? lastSeenLocation,
       Value<DateTime>? lastUpdated,
-      Value<String>? supervisorId,
+      Value<String?>? supervisorId,
       Value<String?>? currentCountry,
       Value<String?>? currentGovernorate,
       Value<String?>? currentCity,
@@ -5632,7 +5634,7 @@ typedef $$OrphansTableCreateCompanionBuilder = OrphansCompanion Function({
   required OrphanStatus status,
   Value<String?> lastSeenLocation,
   required DateTime lastUpdated,
-  required String supervisorId,
+  Value<String?> supervisorId,
   Value<String?> currentCountry,
   Value<String?> currentGovernorate,
   Value<String?> currentCity,
@@ -5727,7 +5729,7 @@ typedef $$OrphansTableUpdateCompanionBuilder = OrphansCompanion Function({
   Value<OrphanStatus> status,
   Value<String?> lastSeenLocation,
   Value<DateTime> lastUpdated,
-  Value<String> supervisorId,
+  Value<String?> supervisorId,
   Value<String?> currentCountry,
   Value<String?> currentGovernorate,
   Value<String?> currentCity,
@@ -5816,9 +5818,9 @@ final class $$OrphansTableReferences
       db.supervisors.createAlias($_aliasNameGenerator(
           db.orphans.supervisorId, db.supervisors.supervisorId));
 
-  $$SupervisorsTableProcessedTableManager get supervisorId {
-    final $_column = $_itemColumn<String>('supervisor_id')!;
-
+  $$SupervisorsTableProcessedTableManager? get supervisorId {
+    final $_column = $_itemColumn<String>('supervisor_id');
+    if ($_column == null) return null;
     final manager = $$SupervisorsTableTableManager($_db, $_db.supervisors)
         .filter((f) => f.supervisorId.sqlEquals($_column));
     final item = $_typedResult.readTableOrNull(_supervisorIdTable($_db));
@@ -6912,7 +6914,7 @@ class $$OrphansTableTableManager extends RootTableManager<
             Value<OrphanStatus> status = const Value.absent(),
             Value<String?> lastSeenLocation = const Value.absent(),
             Value<DateTime> lastUpdated = const Value.absent(),
-            Value<String> supervisorId = const Value.absent(),
+            Value<String?> supervisorId = const Value.absent(),
             Value<String?> currentCountry = const Value.absent(),
             Value<String?> currentGovernorate = const Value.absent(),
             Value<String?> currentCity = const Value.absent(),
@@ -7103,7 +7105,7 @@ class $$OrphansTableTableManager extends RootTableManager<
             required OrphanStatus status,
             Value<String?> lastSeenLocation = const Value.absent(),
             required DateTime lastUpdated,
-            required String supervisorId,
+            Value<String?> supervisorId = const Value.absent(),
             Value<String?> currentCountry = const Value.absent(),
             Value<String?> currentGovernorate = const Value.absent(),
             Value<String?> currentCity = const Value.absent(),

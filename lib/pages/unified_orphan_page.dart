@@ -347,26 +347,229 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
     _tooltipOverlay = null;
   }
 
+  // Helper method for compact view display
+  Widget _buildInfoRow(IconData icon, String label, String value,
+      {Color? valueColor}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 20, color: Colors.grey.shade600),
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 2,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontWeight: FontWeight.w500,
+                color: Colors.grey.shade700,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Text(
+              value.isEmpty ? 'Not specified' : value,
+              style: TextStyle(
+                color: value.isEmpty
+                    ? Colors.grey.shade400
+                    : (valueColor ?? Colors.black87),
+                fontWeight:
+                    valueColor != null ? FontWeight.w500 : FontWeight.normal,
+                fontStyle: value.isEmpty ? FontStyle.italic : FontStyle.normal,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOrphanProfileHeader() {
+    if (_orphan == null) return const SizedBox.shrink();
+
+    String fullName =
+        '${_firstNameController.text} ${_fatherNameController.text} ${_grandfatherNameController.text} ${_familyNameController.text}'
+            .trim();
+    if (fullName.isEmpty) fullName = 'Unknown Orphan';
+
+    // Get initials for fallback
+    String initials = '';
+    if (_firstNameController.text.isNotEmpty) {
+      initials += _firstNameController.text[0];
+    }
+    if (_fatherNameController.text.isNotEmpty) {
+      initials += _fatherNameController.text[0];
+    }
+    if (initials.isEmpty) initials = '?';
+
+    return Card(
+      elevation: 4,
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          children: [
+            // Profile Picture or Avatar
+            Container(
+              width: 100,
+              height: 100,
+              child: _recentPhoto != null
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(50),
+                      child: Image.file(
+                        _recentPhoto!,
+                        width: 100,
+                        height: 100,
+                        fit: BoxFit.cover,
+                      ),
+                    )
+                  : CircleAvatar(
+                      radius: 50,
+                      backgroundColor: _selectedStatus == OrphanStatus.active
+                          ? Colors.blue.shade600
+                          : Colors.grey.shade600,
+                      child: Text(
+                        initials.toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              fullName,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            // Age calculation
+            if (_dayController.text.isNotEmpty &&
+                _monthController.text.isNotEmpty &&
+                _yearController.text.isNotEmpty) ...[
+              Builder(
+                builder: (context) {
+                  final day = int.tryParse(_dayController.text) ?? 1;
+                  final month = int.tryParse(_monthController.text) ?? 1;
+                  final year = int.tryParse(_yearController.text) ?? 2000;
+                  final birthDate = DateTime(year, month, day);
+                  final age = DateTime.now().year - birthDate.year;
+                  final hasHadBirthday = DateTime.now()
+                      .isAfter(DateTime(DateTime.now().year, month, day));
+                  final actualAge = hasHadBirthday ? age : age - 1;
+
+                  return Text(
+                    '$actualAge years old',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey.shade600,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    textAlign: TextAlign.center,
+                  );
+                },
+              ),
+              const SizedBox(height: 4),
+            ],
+            // Date of birth
+            if (_dayController.text.isNotEmpty &&
+                _monthController.text.isNotEmpty &&
+                _yearController.text.isNotEmpty) ...[
+              Text(
+                'Born ${_dayController.text}/${_monthController.text}/${_yearController.text}',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey.shade500,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+            ],
+            // Status badge
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: _selectedStatus == OrphanStatus.active
+                    ? Colors.green.shade100
+                    : Colors.orange.shade100,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Text(
+                _selectedStatus.toString().split('.').last.toUpperCase(),
+                style: TextStyle(
+                  color: _selectedStatus == OrphanStatus.active
+                      ? Colors.green.shade700
+                      : Colors.orange.shade700,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            // Supervisor info
+            if (_selectedSupervisorId != null) ...[
+              const SizedBox(height: 12),
+              FutureBuilder<List<Supervisor>>(
+                future:
+                    context.read<SupervisorRepository>().getAllSupervisors(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    final supervisor = snapshot.data!.firstWhere(
+                      (s) => s.supervisorId == _selectedSupervisorId,
+                      orElse: () => throw Exception('Supervisor not found'),
+                    );
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.blue.shade200),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.supervisor_account,
+                              size: 16, color: Colors.blue.shade600),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Supervised by ${supervisor.firstName} ${supervisor.familyName}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.blue.shade700,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(
         title: Text(isCreateMode ? 'Add New Orphan' : 'Orphan Details'),
-        backgroundColor: Colors.blue.shade50,
-        foregroundColor: Colors.blue.shade700,
         actions: isCreateMode
             ? [
                 ElevatedButton(
                   onPressed: _submitForm,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green.shade600,
-                    foregroundColor: Colors.white,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
                   child: const Text('Submit',
                       style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
@@ -381,6 +584,10 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
+                  if (isViewMode && _orphan != null) ...[
+                    _buildOrphanProfileHeader(),
+                    const SizedBox(height: 16),
+                  ],
                   _buildOrphanDetailsSection(),
                   const SizedBox(height: 16),
                   _buildSupervisorSection(),
@@ -414,8 +621,6 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
                       child: ElevatedButton(
                         onPressed: _submitForm,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green.shade600,
-                          foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 18),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -457,6 +662,8 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
   Widget _buildCollapsibleSection(String key, String title, IconData icon,
       Widget content, String? tooltip) {
     final isExpanded = _sectionExpanded[key] ?? false;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Card(
       elevation: 2,
@@ -474,7 +681,9 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
+                  color: isDark
+                      ? const Color(0xFF30363D) // Darker header in dark mode
+                      : Colors.blue.shade50,
                   borderRadius: isExpanded
                       ? const BorderRadius.only(
                           topLeft: Radius.circular(12),
@@ -484,7 +693,11 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
                 ),
                 child: Row(
                   children: [
-                    Icon(icon, color: Colors.blue.shade700),
+                    Icon(
+                      icon,
+                      color:
+                          isDark ? Colors.blue.shade300 : Colors.blue.shade700,
+                    ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
@@ -492,13 +705,16 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Colors.blue.shade700,
+                          color: isDark
+                              ? Colors.blue.shade300
+                              : Colors.blue.shade700,
                         ),
                       ),
                     ),
                     Icon(
                       isExpanded ? Icons.expand_less : Icons.expand_more,
-                      color: Colors.blue.shade700,
+                      color:
+                          isDark ? Colors.blue.shade300 : Colors.blue.shade700,
                     ),
                   ],
                 ),
@@ -518,6 +734,8 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
   Widget _buildViewSection(String key, String title, IconData icon,
       Widget content, bool hasEdit, String? tooltip) {
     final isEditing = _sectionEditing[key] ?? false;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Card(
       elevation: 2,
@@ -529,7 +747,9 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.blue.shade50,
+                color: isDark
+                    ? const Color(0xFF30363D) // Darker header in dark mode
+                    : Colors.blue.shade50,
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(12),
                   topRight: Radius.circular(12),
@@ -537,7 +757,10 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
               ),
               child: Row(
                 children: [
-                  Icon(icon, color: Colors.blue.shade700),
+                  Icon(
+                    icon,
+                    color: isDark ? Colors.blue.shade300 : Colors.blue.shade700,
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
@@ -545,7 +768,9 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.blue.shade700,
+                        color: isDark
+                            ? Colors.blue.shade300
+                            : Colors.blue.shade700,
                       ),
                     ),
                   ),
@@ -648,7 +873,7 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
       dateOfBirth: birthDate,
       status: _selectedStatus,
       lastUpdated: DateTime.now(),
-      supervisorId: _selectedSupervisorId ?? 'temp_supervisor',
+      supervisorId: drift.Value(_selectedSupervisorId),
 
       // Father details
       fatherDateOfDeath: fatherDeathDate != null
@@ -815,6 +1040,8 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
       dateOfBirth: drift.Value(birthDate),
       status: drift.Value(_selectedStatus),
       lastUpdated: drift.Value(DateTime.now()),
+      supervisorId:
+          drift.Value(_selectedSupervisorId), // FIX: Include supervisor update
 
       // Father details
       fatherDateOfDeath: fatherDeathDate != null
@@ -949,148 +1176,174 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
   Widget _buildOrphanDetailsContent() {
     final isEditing = isCreateMode || (_sectionEditing['orphan'] ?? false);
 
-    return Column(
-      children: [
-        // 4-part Arabic name structure
-        MouseRegion(
-          onEnter: (event) =>
-              _showTooltip(context, event.position, 'الاسم الأول'),
-          onExit: (event) => _hideTooltip(),
-          child: TextFormField(
-            controller: _firstNameController,
-            decoration: const InputDecoration(labelText: 'First Name *'),
-            enabled: isEditing,
-            validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+    if (isEditing) {
+      return Column(
+        children: [
+          // 4-part Arabic name structure
+          MouseRegion(
+            onEnter: (event) =>
+                _showTooltip(context, event.position, 'الاسم الأول'),
+            onExit: (event) => _hideTooltip(),
+            child: TextFormField(
+              controller: _firstNameController,
+              decoration: const InputDecoration(labelText: 'First Name *'),
+              validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+            ),
           ),
-        ),
-        const SizedBox(height: 16),
-        MouseRegion(
-          onEnter: (event) =>
-              _showTooltip(context, event.position, 'اسم الوالد'),
-          onExit: (event) => _hideTooltip(),
-          child: TextFormField(
-            controller: _fatherNameController,
-            decoration: const InputDecoration(labelText: "Father's Name *"),
-            enabled: isEditing,
-            validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+          const SizedBox(height: 16),
+          MouseRegion(
+            onEnter: (event) =>
+                _showTooltip(context, event.position, 'اسم الوالد'),
+            onExit: (event) => _hideTooltip(),
+            child: TextFormField(
+              controller: _fatherNameController,
+              decoration: const InputDecoration(labelText: "Father's Name *"),
+              validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+            ),
           ),
-        ),
-        const SizedBox(height: 16),
-        MouseRegion(
-          onEnter: (event) => _showTooltip(context, event.position, 'اسم الجد'),
-          onExit: (event) => _hideTooltip(),
-          child: TextFormField(
-            controller: _grandfatherNameController,
-            decoration:
-                const InputDecoration(labelText: "Grandfather's Name *"),
-            enabled: isEditing,
-            validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+          const SizedBox(height: 16),
+          MouseRegion(
+            onEnter: (event) =>
+                _showTooltip(context, event.position, 'اسم الجد'),
+            onExit: (event) => _hideTooltip(),
+            child: TextFormField(
+              controller: _grandfatherNameController,
+              decoration:
+                  const InputDecoration(labelText: "Grandfather's Name *"),
+              validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+            ),
           ),
-        ),
-        const SizedBox(height: 16),
-        MouseRegion(
-          onEnter: (event) =>
-              _showTooltip(context, event.position, 'اسم العائلة'),
-          onExit: (event) => _hideTooltip(),
-          child: TextFormField(
-            controller: _familyNameController,
-            decoration: const InputDecoration(labelText: 'Family Name *'),
-            enabled: isEditing,
-            validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+          const SizedBox(height: 16),
+          MouseRegion(
+            onEnter: (event) =>
+                _showTooltip(context, event.position, 'اسم العائلة'),
+            onExit: (event) => _hideTooltip(),
+            child: TextFormField(
+              controller: _familyNameController,
+              decoration: const InputDecoration(labelText: 'Family Name *'),
+              validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+            ),
           ),
-        ),
-        const SizedBox(height: 16),
-        const Text('Date of Birth *',
-            style: TextStyle(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: MouseRegion(
-                onEnter: (event) =>
-                    _showTooltip(context, event.position, 'اليوم'),
-                onExit: (event) => _hideTooltip(),
-                child: TextFormField(
-                  controller: _dayController,
-                  decoration: const InputDecoration(labelText: 'Day'),
-                  enabled: isEditing,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  validator: (value) =>
-                      value?.isEmpty ?? true ? 'Required' : null,
+          const SizedBox(height: 16),
+          const Text('Date of Birth *',
+              style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: MouseRegion(
+                  onEnter: (event) =>
+                      _showTooltip(context, event.position, 'اليوم'),
+                  onExit: (event) => _hideTooltip(),
+                  child: TextFormField(
+                    controller: _dayController,
+                    decoration: const InputDecoration(labelText: 'Day'),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    validator: (value) =>
+                        value?.isEmpty ?? true ? 'Required' : null,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: MouseRegion(
-                onEnter: (event) =>
-                    _showTooltip(context, event.position, 'الشهر'),
-                onExit: (event) => _hideTooltip(),
-                child: TextFormField(
-                  controller: _monthController,
-                  decoration: const InputDecoration(labelText: 'Month'),
-                  enabled: isEditing,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  validator: (value) =>
-                      value?.isEmpty ?? true ? 'Required' : null,
+              const SizedBox(width: 8),
+              Expanded(
+                child: MouseRegion(
+                  onEnter: (event) =>
+                      _showTooltip(context, event.position, 'الشهر'),
+                  onExit: (event) => _hideTooltip(),
+                  child: TextFormField(
+                    controller: _monthController,
+                    decoration: const InputDecoration(labelText: 'Month'),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    validator: (value) =>
+                        value?.isEmpty ?? true ? 'Required' : null,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: MouseRegion(
-                onEnter: (event) =>
-                    _showTooltip(context, event.position, 'السنة'),
-                onExit: (event) => _hideTooltip(),
-                child: TextFormField(
-                  controller: _yearController,
-                  decoration: const InputDecoration(labelText: 'Year'),
-                  enabled: isEditing,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  validator: (value) =>
-                      value?.isEmpty ?? true ? 'Required' : null,
+              const SizedBox(width: 8),
+              Expanded(
+                child: MouseRegion(
+                  onEnter: (event) =>
+                      _showTooltip(context, event.position, 'السنة'),
+                  onExit: (event) => _hideTooltip(),
+                  child: TextFormField(
+                    controller: _yearController,
+                    decoration: const InputDecoration(labelText: 'Year'),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    validator: (value) =>
+                        value?.isEmpty ?? true ? 'Required' : null,
+                  ),
                 ),
               ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          MouseRegion(
+            onEnter: (event) => _showTooltip(context, event.position, 'الحالة'),
+            onExit: (event) => _hideTooltip(),
+            child: DropdownButtonFormField<OrphanStatus>(
+              value: _selectedStatus,
+              decoration: const InputDecoration(labelText: 'Status'),
+              items: OrphanStatus.values.map((status) {
+                return DropdownMenuItem(
+                  value: status,
+                  child: Text(status.toString().split('.').last.toUpperCase()),
+                );
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedStatus = value!;
+                });
+              },
             ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        MouseRegion(
-          onEnter: (event) => _showTooltip(context, event.position, 'الحالة'),
-          onExit: (event) => _hideTooltip(),
-          child: DropdownButtonFormField<OrphanStatus>(
-            value: _selectedStatus,
-            decoration: const InputDecoration(labelText: 'Status'),
-            items: OrphanStatus.values.map((status) {
-              return DropdownMenuItem(
-                value: status,
-                child: Text(status.toString().split('.').last.toUpperCase()),
-              );
-            }).toList(),
-            onChanged: isEditing
-                ? (value) {
-                    setState(() {
-                      _selectedStatus = value!;
-                    });
-                  }
-                : null,
           ),
-        ),
-        const SizedBox(height: 16),
-        Tooltip(
-          message: 'تعليقات إضافية',
-          child: TextFormField(
-            controller: _orphanDetailsCommentsController,
-            decoration: const InputDecoration(labelText: 'Additional Comments'),
-            enabled: isEditing,
-            maxLines: 3,
+          const SizedBox(height: 16),
+          Tooltip(
+            message: 'تعليقات إضافية',
+            child: TextFormField(
+              controller: _orphanDetailsCommentsController,
+              decoration:
+                  const InputDecoration(labelText: 'Additional Comments'),
+              maxLines: 3,
+            ),
           ),
-        ),
-      ],
-    );
+        ],
+      );
+    } else {
+      // Compact view mode
+      String dateOfBirth = '';
+      if (_dayController.text.isNotEmpty &&
+          _monthController.text.isNotEmpty &&
+          _yearController.text.isNotEmpty) {
+        dateOfBirth =
+            '${_dayController.text}/${_monthController.text}/${_yearController.text}';
+      }
+
+      return Column(
+        children: [
+          _buildInfoRow(Icons.person, 'First Name', _firstNameController.text),
+          _buildInfoRow(Icons.person_outline, "Father's Name",
+              _fatherNameController.text),
+          _buildInfoRow(Icons.family_restroom, "Grandfather's Name",
+              _grandfatherNameController.text),
+          _buildInfoRow(Icons.group, 'Family Name', _familyNameController.text),
+          _buildInfoRow(Icons.cake, 'Date of Birth', dateOfBirth),
+          _buildInfoRow(
+            Icons.check_circle,
+            'Status',
+            _selectedStatus.toString().split('.').last.toUpperCase(),
+            valueColor: _selectedStatus == OrphanStatus.active
+                ? Colors.green
+                : Colors.orange,
+          ),
+          if (_orphanDetailsCommentsController.text.isNotEmpty)
+            _buildInfoRow(Icons.comment, 'Comments',
+                _orphanDetailsCommentsController.text),
+        ],
+      );
+    }
   }
 
   Widget _buildFatherDetailsSection() {
@@ -1106,76 +1359,95 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
   Widget _buildFatherDetailsContent() {
     final isEditing = isCreateMode || (_sectionEditing['father'] ?? false);
 
-    return Column(
-      children: [
-        Tooltip(
-          message: 'اسم الوالد',
-          child: TextFormField(
-            controller: _fatherNameController,
-            decoration: const InputDecoration(labelText: "Father's Name *"),
-            enabled: isEditing,
-            validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+    if (isEditing) {
+      return Column(
+        children: [
+          Tooltip(
+            message: 'اسم الوالد',
+            child: TextFormField(
+              controller: _fatherNameController,
+              decoration: const InputDecoration(labelText: "Father's Name *"),
+              validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
+            ),
           ),
-        ),
-        const SizedBox(height: 16),
-        const Text('Date of Death',
-            style: TextStyle(fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: TextFormField(
-                controller: _fatherDeathDayController,
-                decoration: const InputDecoration(labelText: 'Day'),
-                enabled: isEditing,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          const SizedBox(height: 16),
+          const Text('Date of Death',
+              style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  controller: _fatherDeathDayController,
+                  decoration: const InputDecoration(labelText: 'Day'),
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                ),
               ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: TextFormField(
-                controller: _fatherDeathMonthController,
-                decoration: const InputDecoration(labelText: 'Month'),
-                enabled: isEditing,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              const SizedBox(width: 8),
+              Expanded(
+                child: TextFormField(
+                  controller: _fatherDeathMonthController,
+                  decoration: const InputDecoration(labelText: 'Month'),
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                ),
               ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: TextFormField(
-                controller: _fatherDeathYearController,
-                decoration: const InputDecoration(labelText: 'Year'),
-                enabled: isEditing,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              const SizedBox(width: 8),
+              Expanded(
+                child: TextFormField(
+                  controller: _fatherDeathYearController,
+                  decoration: const InputDecoration(labelText: 'Year'),
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _fatherCauseOfDeathController,
-          decoration: const InputDecoration(labelText: 'Cause of Death'),
-          enabled: isEditing,
-          maxLines: 2,
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _fatherOccupationController,
-          decoration: const InputDecoration(labelText: 'Occupation'),
-          enabled: isEditing,
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _fatherDetailsCommentsController,
-          decoration: const InputDecoration(labelText: 'Additional Comments'),
-          enabled: isEditing,
-          maxLines: 3,
-        ),
-      ],
-    );
+            ],
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _fatherCauseOfDeathController,
+            decoration: const InputDecoration(labelText: 'Cause of Death'),
+            maxLines: 2,
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _fatherOccupationController,
+            decoration: const InputDecoration(labelText: 'Occupation'),
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _fatherDetailsCommentsController,
+            decoration: const InputDecoration(labelText: 'Additional Comments'),
+            maxLines: 3,
+          ),
+        ],
+      );
+    } else {
+      // Compact view mode
+      String fatherDeathDate = '';
+      if (_fatherDeathDayController.text.isNotEmpty &&
+          _fatherDeathMonthController.text.isNotEmpty &&
+          _fatherDeathYearController.text.isNotEmpty) {
+        fatherDeathDate =
+            '${_fatherDeathDayController.text}/${_fatherDeathMonthController.text}/${_fatherDeathYearController.text}';
+      }
+
+      return Column(
+        children: [
+          _buildInfoRow(
+              Icons.person, "Father's Name", _fatherNameController.text),
+          _buildInfoRow(Icons.calendar_today, 'Date of Death', fatherDeathDate),
+          _buildInfoRow(Icons.medical_information, 'Cause of Death',
+              _fatherCauseOfDeathController.text),
+          _buildInfoRow(
+              Icons.work, 'Occupation', _fatherOccupationController.text),
+          if (_fatherDetailsCommentsController.text.isNotEmpty)
+            _buildInfoRow(Icons.comment, 'Comments',
+                _fatherDetailsCommentsController.text),
+        ],
+      );
+    }
   }
 
   Widget _buildMotherDetailsSection() {
@@ -1191,86 +1463,113 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
   Widget _buildMotherDetailsContent() {
     final isEditing = isCreateMode || (_sectionEditing['mother'] ?? false);
 
-    return Column(
-      children: [
-        TextFormField(
-          controller: _motherNameController,
-          decoration: const InputDecoration(labelText: "Mother's Name"),
-          enabled: isEditing,
-        ),
-        const SizedBox(height: 16),
-        DropdownButtonFormField<bool>(
-          value: _motherAlive,
-          decoration: const InputDecoration(labelText: 'Mother Alive'),
-          items: const [
-            DropdownMenuItem(value: true, child: Text('Yes')),
-            DropdownMenuItem(value: false, child: Text('No')),
-          ],
-          onChanged: isEditing
-              ? (value) => setState(() => _motherAlive = value)
-              : null,
-        ),
-        const SizedBox(height: 16),
-        if (_motherAlive == false) ...[
-          const Text('Date of Death',
-              style: TextStyle(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: TextFormField(
-                  controller: _motherDeathDayController,
-                  decoration: const InputDecoration(labelText: 'Day'),
-                  enabled: isEditing,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: TextFormField(
-                  controller: _motherDeathMonthController,
-                  decoration: const InputDecoration(labelText: 'Month'),
-                  enabled: isEditing,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: TextFormField(
-                  controller: _motherDeathYearController,
-                  decoration: const InputDecoration(labelText: 'Year'),
-                  enabled: isEditing,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                ),
-              ),
+    if (isEditing) {
+      return Column(
+        children: [
+          TextFormField(
+            controller: _motherNameController,
+            decoration: const InputDecoration(labelText: "Mother's Name"),
+          ),
+          const SizedBox(height: 16),
+          DropdownButtonFormField<bool>(
+            value: _motherAlive,
+            decoration: const InputDecoration(labelText: 'Mother Alive'),
+            items: const [
+              DropdownMenuItem(value: true, child: Text('Yes')),
+              DropdownMenuItem(value: false, child: Text('No')),
             ],
+            onChanged: (value) => setState(() => _motherAlive = value),
+          ),
+          const SizedBox(height: 16),
+          if (_motherAlive == false) ...[
+            const Text('Date of Death',
+                style: TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: _motherDeathDayController,
+                    decoration: const InputDecoration(labelText: 'Day'),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextFormField(
+                    controller: _motherDeathMonthController,
+                    decoration: const InputDecoration(labelText: 'Month'),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextFormField(
+                    controller: _motherDeathYearController,
+                    decoration: const InputDecoration(labelText: 'Year'),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _motherCauseOfDeathController,
+              decoration: const InputDecoration(labelText: 'Cause of Death'),
+              maxLines: 2,
+            ),
+            const SizedBox(height: 16),
+          ],
+          TextFormField(
+            controller: _motherOccupationController,
+            decoration: const InputDecoration(labelText: 'Occupation'),
           ),
           const SizedBox(height: 16),
           TextFormField(
-            controller: _motherCauseOfDeathController,
-            decoration: const InputDecoration(labelText: 'Cause of Death'),
-            enabled: isEditing,
-            maxLines: 2,
+            controller: _motherDetailsCommentsController,
+            decoration: const InputDecoration(labelText: 'Additional Comments'),
+            maxLines: 3,
           ),
-          const SizedBox(height: 16),
         ],
-        TextFormField(
-          controller: _motherOccupationController,
-          decoration: const InputDecoration(labelText: 'Occupation'),
-          enabled: isEditing,
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _motherDetailsCommentsController,
-          decoration: const InputDecoration(labelText: 'Additional Comments'),
-          enabled: isEditing,
-          maxLines: 3,
-        ),
-      ],
-    );
+      );
+    } else {
+      // Compact view mode
+      String motherAliveText =
+          _motherAlive == null ? '' : (_motherAlive! ? 'Yes' : 'No');
+      String motherDeathDate = '';
+      if (_motherDeathDayController.text.isNotEmpty &&
+          _motherDeathMonthController.text.isNotEmpty &&
+          _motherDeathYearController.text.isNotEmpty) {
+        motherDeathDate =
+            '${_motherDeathDayController.text}/${_motherDeathMonthController.text}/${_motherDeathYearController.text}';
+      }
+
+      return Column(
+        children: [
+          _buildInfoRow(Icons.person_outline, "Mother's Name",
+              _motherNameController.text),
+          _buildInfoRow(Icons.favorite, 'Mother Alive', motherAliveText,
+              valueColor: _motherAlive == true
+                  ? Colors.green
+                  : (_motherAlive == false ? Colors.orange : null)),
+          if (_motherAlive == false && motherDeathDate.isNotEmpty)
+            _buildInfoRow(
+                Icons.calendar_today, 'Date of Death', motherDeathDate),
+          if (_motherAlive == false &&
+              _motherCauseOfDeathController.text.isNotEmpty)
+            _buildInfoRow(Icons.medical_information, 'Cause of Death',
+                _motherCauseOfDeathController.text),
+          _buildInfoRow(
+              Icons.work, 'Occupation', _motherOccupationController.text),
+          if (_motherDetailsCommentsController.text.isNotEmpty)
+            _buildInfoRow(Icons.comment, 'Comments',
+                _motherDetailsCommentsController.text),
+        ],
+      );
+    }
   }
 
   Widget _buildCarerDetailsSection() {
@@ -1286,42 +1585,55 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
   Widget _buildCarerDetailsContent() {
     final isEditing = isCreateMode || (_sectionEditing['carer'] ?? false);
 
-    return Column(
-      children: [
-        TextFormField(
-          controller: _carerNameController,
-          decoration: const InputDecoration(labelText: 'Carer Name'),
-          enabled: isEditing,
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _carerRelationshipController,
-          decoration:
-              const InputDecoration(labelText: 'Relationship to Orphan'),
-          enabled: isEditing,
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _carerContactController,
-          decoration: const InputDecoration(labelText: 'Contact Information'),
-          enabled: isEditing,
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _carerAddressController,
-          decoration: const InputDecoration(labelText: 'Address'),
-          enabled: isEditing,
-          maxLines: 2,
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _carerDetailsCommentsController,
-          decoration: const InputDecoration(labelText: 'Additional Comments'),
-          enabled: isEditing,
-          maxLines: 3,
-        ),
-      ],
-    );
+    if (isEditing) {
+      return Column(
+        children: [
+          TextFormField(
+            controller: _carerNameController,
+            decoration: const InputDecoration(labelText: 'Carer Name'),
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _carerRelationshipController,
+            decoration:
+                const InputDecoration(labelText: 'Relationship to Orphan'),
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _carerContactController,
+            decoration: const InputDecoration(labelText: 'Contact Information'),
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _carerAddressController,
+            decoration: const InputDecoration(labelText: 'Address'),
+            maxLines: 2,
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _carerDetailsCommentsController,
+            decoration: const InputDecoration(labelText: 'Additional Comments'),
+            maxLines: 3,
+          ),
+        ],
+      );
+    } else {
+      // Compact view mode
+      return Column(
+        children: [
+          _buildInfoRow(Icons.person, 'Carer Name', _carerNameController.text),
+          _buildInfoRow(Icons.family_restroom, 'Relationship to Orphan',
+              _carerRelationshipController.text),
+          _buildInfoRow(Icons.contact_phone, 'Contact Information',
+              _carerContactController.text),
+          _buildInfoRow(
+              Icons.location_on, 'Address', _carerAddressController.text),
+          if (_carerDetailsCommentsController.text.isNotEmpty)
+            _buildInfoRow(Icons.comment, 'Comments',
+                _carerDetailsCommentsController.text),
+        ],
+      );
+    }
   }
 
   Widget _buildEducationSection() {
@@ -1337,60 +1649,84 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
   Widget _buildEducationContent() {
     final isEditing = isCreateMode || (_sectionEditing['education'] ?? false);
 
-    return Column(
-      children: [
-        DropdownButtonFormField<EducationLevel>(
-          value: _educationLevel,
-          decoration: const InputDecoration(labelText: 'Education Level'),
-          items: EducationLevel.values.map((level) {
-            return DropdownMenuItem(
-              value: level,
-              child: Text(level
-                  .toString()
-                  .split('.')
-                  .last
-                  .replaceAll('_', ' ')
-                  .toUpperCase()),
-            );
-          }).toList(),
-          onChanged: isEditing
-              ? (value) => setState(() => _educationLevel = value)
-              : null,
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _schoolNameController,
-          decoration: const InputDecoration(labelText: 'School Name'),
-          enabled: isEditing,
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _gradeController,
-          decoration: const InputDecoration(labelText: 'Grade'),
-          enabled: isEditing,
-        ),
-        const SizedBox(height: 16),
-        DropdownButtonFormField<bool>(
-          value: _needsEducationalSupport,
-          decoration:
-              const InputDecoration(labelText: 'Needs Educational Support'),
-          items: const [
-            DropdownMenuItem(value: true, child: Text('Yes')),
-            DropdownMenuItem(value: false, child: Text('No')),
-          ],
-          onChanged: isEditing
-              ? (value) => setState(() => _needsEducationalSupport = value)
-              : null,
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _educationCommentsController,
-          decoration: const InputDecoration(labelText: 'Additional Comments'),
-          enabled: isEditing,
-          maxLines: 3,
-        ),
-      ],
-    );
+    if (isEditing) {
+      return Column(
+        children: [
+          DropdownButtonFormField<EducationLevel>(
+            value: _educationLevel,
+            decoration: const InputDecoration(labelText: 'Education Level'),
+            items: EducationLevel.values.map((level) {
+              return DropdownMenuItem(
+                value: level,
+                child: Text(level
+                    .toString()
+                    .split('.')
+                    .last
+                    .replaceAll('_', ' ')
+                    .toUpperCase()),
+              );
+            }).toList(),
+            onChanged: (value) => setState(() => _educationLevel = value),
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _schoolNameController,
+            decoration: const InputDecoration(labelText: 'School Name'),
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _gradeController,
+            decoration: const InputDecoration(labelText: 'Grade'),
+          ),
+          const SizedBox(height: 16),
+          DropdownButtonFormField<bool>(
+            value: _needsEducationalSupport,
+            decoration:
+                const InputDecoration(labelText: 'Needs Educational Support'),
+            items: const [
+              DropdownMenuItem(value: true, child: Text('Yes')),
+              DropdownMenuItem(value: false, child: Text('No')),
+            ],
+            onChanged: (value) =>
+                setState(() => _needsEducationalSupport = value),
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _educationCommentsController,
+            decoration: const InputDecoration(labelText: 'Additional Comments'),
+            maxLines: 3,
+          ),
+        ],
+      );
+    } else {
+      // Compact view mode
+      String educationLevelText = _educationLevel
+              ?.toString()
+              .split('.')
+              .last
+              .replaceAll('_', ' ')
+              .toUpperCase() ??
+          '';
+
+      String needsSupport = _needsEducationalSupport == null
+          ? ''
+          : (_needsEducationalSupport! ? 'Yes' : 'No');
+
+      return Column(
+        children: [
+          _buildInfoRow(Icons.school, 'Education Level', educationLevelText),
+          _buildInfoRow(
+              Icons.business, 'School Name', _schoolNameController.text),
+          _buildInfoRow(Icons.grade, 'Grade', _gradeController.text),
+          _buildInfoRow(Icons.help, 'Needs Educational Support', needsSupport,
+              valueColor:
+                  _needsEducationalSupport == true ? Colors.orange : null),
+          if (_educationCommentsController.text.isNotEmpty)
+            _buildInfoRow(
+                Icons.comment, 'Comments', _educationCommentsController.text),
+        ],
+      );
+    }
   }
 
   Widget _buildHealthSection() {
@@ -1406,61 +1742,95 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
   Widget _buildHealthContent() {
     final isEditing = isCreateMode || (_sectionEditing['health'] ?? false);
 
-    return Column(
-      children: [
-        DropdownButtonFormField<HealthStatus>(
-          value: _healthStatus,
-          decoration: const InputDecoration(labelText: 'Health Status'),
-          items: HealthStatus.values.map((status) {
-            return DropdownMenuItem(
-              value: status,
-              child: Text(status
-                  .toString()
-                  .split('.')
-                  .last
-                  .replaceAll('_', ' ')
-                  .toUpperCase()),
-            );
-          }).toList(),
-          onChanged: isEditing
-              ? (value) => setState(() => _healthStatus = value)
-              : null,
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _medicalConditionsController,
-          decoration: const InputDecoration(labelText: 'Medical Conditions'),
-          enabled: isEditing,
-          maxLines: 3,
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _medicationsController,
-          decoration: const InputDecoration(labelText: 'Current Medications'),
-          enabled: isEditing,
-          maxLines: 2,
-        ),
-        const SizedBox(height: 16),
-        DropdownButtonFormField<bool>(
-          value: _needsMedicalSupport,
-          decoration: const InputDecoration(labelText: 'Needs Medical Support'),
-          items: const [
-            DropdownMenuItem(value: true, child: Text('Yes')),
-            DropdownMenuItem(value: false, child: Text('No')),
-          ],
-          onChanged: isEditing
-              ? (value) => setState(() => _needsMedicalSupport = value)
-              : null,
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _healthCommentsController,
-          decoration: const InputDecoration(labelText: 'Additional Comments'),
-          enabled: isEditing,
-          maxLines: 3,
-        ),
-      ],
-    );
+    if (isEditing) {
+      return Column(
+        children: [
+          DropdownButtonFormField<HealthStatus>(
+            value: _healthStatus,
+            decoration: const InputDecoration(labelText: 'Health Status'),
+            items: HealthStatus.values.map((status) {
+              return DropdownMenuItem(
+                value: status,
+                child: Text(status
+                    .toString()
+                    .split('.')
+                    .last
+                    .replaceAll('_', ' ')
+                    .toUpperCase()),
+              );
+            }).toList(),
+            onChanged: (value) => setState(() => _healthStatus = value),
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _medicalConditionsController,
+            decoration: const InputDecoration(labelText: 'Medical Conditions'),
+            maxLines: 3,
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _medicationsController,
+            decoration: const InputDecoration(labelText: 'Current Medications'),
+            maxLines: 2,
+          ),
+          const SizedBox(height: 16),
+          DropdownButtonFormField<bool>(
+            value: _needsMedicalSupport,
+            decoration:
+                const InputDecoration(labelText: 'Needs Medical Support'),
+            items: const [
+              DropdownMenuItem(value: true, child: Text('Yes')),
+              DropdownMenuItem(value: false, child: Text('No')),
+            ],
+            onChanged: (value) => setState(() => _needsMedicalSupport = value),
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _healthCommentsController,
+            decoration: const InputDecoration(labelText: 'Additional Comments'),
+            maxLines: 3,
+          ),
+        ],
+      );
+    } else {
+      // Compact view mode
+      String healthStatusText = _healthStatus
+              ?.toString()
+              .split('.')
+              .last
+              .replaceAll('_', ' ')
+              .toUpperCase() ??
+          '';
+
+      String needsMedicalSupportText = _needsMedicalSupport == null
+          ? ''
+          : (_needsMedicalSupport! ? 'Yes' : 'No');
+
+      Color? healthStatusColor;
+      if (_healthStatus == HealthStatus.good) {
+        healthStatusColor = Colors.green;
+      } else if (_healthStatus == HealthStatus.fair ||
+          _healthStatus == HealthStatus.poor) {
+        healthStatusColor = Colors.orange;
+      }
+
+      return Column(
+        children: [
+          _buildInfoRow(Icons.favorite, 'Health Status', healthStatusText,
+              valueColor: healthStatusColor),
+          _buildInfoRow(Icons.medical_information, 'Medical Conditions',
+              _medicalConditionsController.text),
+          _buildInfoRow(Icons.medication, 'Current Medications',
+              _medicationsController.text),
+          _buildInfoRow(
+              Icons.help, 'Needs Medical Support', needsMedicalSupportText,
+              valueColor: _needsMedicalSupport == true ? Colors.orange : null),
+          if (_healthCommentsController.text.isNotEmpty)
+            _buildInfoRow(
+                Icons.comment, 'Comments', _healthCommentsController.text),
+        ],
+      );
+    }
   }
 
   Widget _buildAccommodationSection() {
@@ -1477,54 +1847,79 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
     final isEditing =
         isCreateMode || (_sectionEditing['accommodation'] ?? false);
 
-    return Column(
-      children: [
-        DropdownButtonFormField<AccommodationType>(
-          value: _accommodationType,
-          decoration: const InputDecoration(labelText: 'Accommodation Type'),
-          items: AccommodationType.values.map((type) {
-            return DropdownMenuItem(
-              value: type,
-              child: Text(type
-                  .toString()
-                  .split('.')
-                  .last
-                  .replaceAll('_', ' ')
-                  .toUpperCase()),
-            );
-          }).toList(),
-          onChanged: isEditing
-              ? (value) => setState(() => _accommodationType = value)
-              : null,
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _accommodationAddressController,
-          decoration: const InputDecoration(labelText: 'Address'),
-          enabled: isEditing,
-          maxLines: 2,
-        ),
-        const SizedBox(height: 16),
-        DropdownButtonFormField<bool>(
-          value: _needsHousingSupport,
-          decoration: const InputDecoration(labelText: 'Needs Housing Support'),
-          items: const [
-            DropdownMenuItem(value: true, child: Text('Yes')),
-            DropdownMenuItem(value: false, child: Text('No')),
-          ],
-          onChanged: isEditing
-              ? (value) => setState(() => _needsHousingSupport = value)
-              : null,
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _accommodationCommentsController,
-          decoration: const InputDecoration(labelText: 'Additional Comments'),
-          enabled: isEditing,
-          maxLines: 3,
-        ),
-      ],
-    );
+    if (isEditing) {
+      return Column(
+        children: [
+          DropdownButtonFormField<AccommodationType>(
+            value: _accommodationType,
+            decoration: const InputDecoration(labelText: 'Accommodation Type'),
+            items: AccommodationType.values.map((type) {
+              return DropdownMenuItem(
+                value: type,
+                child: Text(type
+                    .toString()
+                    .split('.')
+                    .last
+                    .replaceAll('_', ' ')
+                    .toUpperCase()),
+              );
+            }).toList(),
+            onChanged: (value) => setState(() => _accommodationType = value),
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _accommodationAddressController,
+            decoration: const InputDecoration(labelText: 'Address'),
+            maxLines: 2,
+          ),
+          const SizedBox(height: 16),
+          DropdownButtonFormField<bool>(
+            value: _needsHousingSupport,
+            decoration:
+                const InputDecoration(labelText: 'Needs Housing Support'),
+            items: const [
+              DropdownMenuItem(value: true, child: Text('Yes')),
+              DropdownMenuItem(value: false, child: Text('No')),
+            ],
+            onChanged: (value) => setState(() => _needsHousingSupport = value),
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _accommodationCommentsController,
+            decoration: const InputDecoration(labelText: 'Additional Comments'),
+            maxLines: 3,
+          ),
+        ],
+      );
+    } else {
+      // Compact view mode
+      String accommodationTypeText = _accommodationType
+              ?.toString()
+              .split('.')
+              .last
+              .replaceAll('_', ' ')
+              .toUpperCase() ??
+          '';
+
+      String needsHousingSupportText = _needsHousingSupport == null
+          ? ''
+          : (_needsHousingSupport! ? 'Yes' : 'No');
+
+      return Column(
+        children: [
+          _buildInfoRow(
+              Icons.home, 'Accommodation Type', accommodationTypeText),
+          _buildInfoRow(Icons.location_on, 'Address',
+              _accommodationAddressController.text),
+          _buildInfoRow(
+              Icons.help, 'Needs Housing Support', needsHousingSupportText,
+              valueColor: _needsHousingSupport == true ? Colors.orange : null),
+          if (_accommodationCommentsController.text.isNotEmpty)
+            _buildInfoRow(Icons.comment, 'Comments',
+                _accommodationCommentsController.text),
+        ],
+      );
+    }
   }
 
   Widget _buildIslamicEducationSection() {
@@ -1540,43 +1935,60 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
   Widget _buildIslamicEducationContent() {
     final isEditing = isCreateMode || (_sectionEditing['islamic'] ?? false);
 
-    return Column(
-      children: [
-        TextFormField(
-          controller: _quranMemorizationController,
-          decoration: const InputDecoration(labelText: 'Quran Memorization'),
-          enabled: isEditing,
-          maxLines: 2,
-        ),
-        const SizedBox(height: 16),
-        DropdownButtonFormField<bool>(
-          value: _attendsIslamicSchool,
-          decoration:
-              const InputDecoration(labelText: 'Attends Islamic School'),
-          items: const [
-            DropdownMenuItem(value: true, child: Text('Yes')),
-            DropdownMenuItem(value: false, child: Text('No')),
-          ],
-          onChanged: isEditing
-              ? (value) => setState(() => _attendsIslamicSchool = value)
-              : null,
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _islamicEducationLevelController,
-          decoration:
-              const InputDecoration(labelText: 'Islamic Education Level'),
-          enabled: isEditing,
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _islamicEducationCommentsController,
-          decoration: const InputDecoration(labelText: 'Additional Comments'),
-          enabled: isEditing,
-          maxLines: 3,
-        ),
-      ],
-    );
+    if (isEditing) {
+      return Column(
+        children: [
+          TextFormField(
+            controller: _quranMemorizationController,
+            decoration: const InputDecoration(labelText: 'Quran Memorization'),
+            maxLines: 2,
+          ),
+          const SizedBox(height: 16),
+          DropdownButtonFormField<bool>(
+            value: _attendsIslamicSchool,
+            decoration:
+                const InputDecoration(labelText: 'Attends Islamic School'),
+            items: const [
+              DropdownMenuItem(value: true, child: Text('Yes')),
+              DropdownMenuItem(value: false, child: Text('No')),
+            ],
+            onChanged: (value) => setState(() => _attendsIslamicSchool = value),
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _islamicEducationLevelController,
+            decoration:
+                const InputDecoration(labelText: 'Islamic Education Level'),
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _islamicEducationCommentsController,
+            decoration: const InputDecoration(labelText: 'Additional Comments'),
+            maxLines: 3,
+          ),
+        ],
+      );
+    } else {
+      // Compact view mode
+      String attendsIslamicSchoolText = _attendsIslamicSchool == null
+          ? ''
+          : (_attendsIslamicSchool! ? 'Yes' : 'No');
+
+      return Column(
+        children: [
+          _buildInfoRow(Icons.menu_book, 'Quran Memorization',
+              _quranMemorizationController.text),
+          _buildInfoRow(
+              Icons.school, 'Attends Islamic School', attendsIslamicSchoolText,
+              valueColor: _attendsIslamicSchool == true ? Colors.green : null),
+          _buildInfoRow(Icons.grade, 'Islamic Education Level',
+              _islamicEducationLevelController.text),
+          if (_islamicEducationCommentsController.text.isNotEmpty)
+            _buildInfoRow(Icons.comment, 'Comments',
+                _islamicEducationCommentsController.text),
+        ],
+      );
+    }
   }
 
   Widget _buildHobbiesSection() {
@@ -1592,37 +2004,50 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
   Widget _buildHobbiesContent() {
     final isEditing = isCreateMode || (_sectionEditing['hobbies'] ?? false);
 
-    return Column(
-      children: [
-        TextFormField(
-          controller: _hobbiesController,
-          decoration: const InputDecoration(labelText: 'Hobbies & Interests'),
-          enabled: isEditing,
-          maxLines: 2,
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _skillsController,
-          decoration: const InputDecoration(labelText: 'Skills & Talents'),
-          enabled: isEditing,
-          maxLines: 2,
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _aspirationsController,
-          decoration: const InputDecoration(labelText: 'Aspirations & Dreams'),
-          enabled: isEditing,
-          maxLines: 2,
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _hobbiesCommentsController,
-          decoration: const InputDecoration(labelText: 'Additional Comments'),
-          enabled: isEditing,
-          maxLines: 3,
-        ),
-      ],
-    );
+    if (isEditing) {
+      return Column(
+        children: [
+          TextFormField(
+            controller: _hobbiesController,
+            decoration: const InputDecoration(labelText: 'Hobbies & Interests'),
+            maxLines: 2,
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _skillsController,
+            decoration: const InputDecoration(labelText: 'Skills & Talents'),
+            maxLines: 2,
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _aspirationsController,
+            decoration:
+                const InputDecoration(labelText: 'Aspirations & Dreams'),
+            maxLines: 2,
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _hobbiesCommentsController,
+            decoration: const InputDecoration(labelText: 'Additional Comments'),
+            maxLines: 3,
+          ),
+        ],
+      );
+    } else {
+      // Compact view mode
+      return Column(
+        children: [
+          _buildInfoRow(Icons.sports_esports, 'Hobbies & Interests',
+              _hobbiesController.text),
+          _buildInfoRow(Icons.star, 'Skills & Talents', _skillsController.text),
+          _buildInfoRow(Icons.rocket_launch, 'Aspirations & Dreams',
+              _aspirationsController.text),
+          if (_hobbiesCommentsController.text.isNotEmpty)
+            _buildInfoRow(
+                Icons.comment, 'Comments', _hobbiesCommentsController.text),
+        ],
+      );
+    }
   }
 
   Widget _buildSiblingsSection() {
@@ -1638,32 +2063,44 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
   Widget _buildSiblingsContent() {
     final isEditing = isCreateMode || (_sectionEditing['siblings'] ?? false);
 
-    return Column(
-      children: [
-        TextFormField(
-          controller: _numberOfSiblingsController,
-          decoration: const InputDecoration(labelText: 'Number of Siblings'),
-          enabled: isEditing,
-          keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _siblingsDetailsController,
-          decoration: const InputDecoration(
-              labelText: 'Siblings Details (names, ages, status)'),
-          enabled: isEditing,
-          maxLines: 3,
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _siblingsCommentsController,
-          decoration: const InputDecoration(labelText: 'Additional Comments'),
-          enabled: isEditing,
-          maxLines: 3,
-        ),
-      ],
-    );
+    if (isEditing) {
+      return Column(
+        children: [
+          TextFormField(
+            controller: _numberOfSiblingsController,
+            decoration: const InputDecoration(labelText: 'Number of Siblings'),
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _siblingsDetailsController,
+            decoration: const InputDecoration(
+                labelText: 'Siblings Details (names, ages, status)'),
+            maxLines: 3,
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _siblingsCommentsController,
+            decoration: const InputDecoration(labelText: 'Additional Comments'),
+            maxLines: 3,
+          ),
+        ],
+      );
+    } else {
+      // Compact view mode
+      return Column(
+        children: [
+          _buildInfoRow(Icons.people, 'Number of Siblings',
+              _numberOfSiblingsController.text),
+          _buildInfoRow(Icons.family_restroom, 'Siblings Details',
+              _siblingsDetailsController.text),
+          if (_siblingsCommentsController.text.isNotEmpty)
+            _buildInfoRow(
+                Icons.comment, 'Comments', _siblingsCommentsController.text),
+        ],
+      );
+    }
   }
 
   Widget _buildAdditionalInfoSection() {
@@ -1679,23 +2116,35 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
   Widget _buildAdditionalInfoContent() {
     final isEditing = isCreateMode || (_sectionEditing['additional'] ?? false);
 
-    return Column(
-      children: [
-        TextFormField(
-          controller: _additionalNotesController,
-          decoration: const InputDecoration(labelText: 'Additional Notes'),
-          enabled: isEditing,
-          maxLines: 3,
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _urgentNeedsController,
-          decoration: const InputDecoration(labelText: 'Urgent Needs'),
-          enabled: isEditing,
-          maxLines: 2,
-        ),
-      ],
-    );
+    if (isEditing) {
+      return Column(
+        children: [
+          TextFormField(
+            controller: _additionalNotesController,
+            decoration: const InputDecoration(labelText: 'Additional Notes'),
+            maxLines: 3,
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _urgentNeedsController,
+            decoration: const InputDecoration(labelText: 'Urgent Needs'),
+            maxLines: 2,
+          ),
+        ],
+      );
+    } else {
+      // Compact view mode
+      return Column(
+        children: [
+          _buildInfoRow(
+              Icons.note, 'Additional Notes', _additionalNotesController.text),
+          _buildInfoRow(
+              Icons.priority_high, 'Urgent Needs', _urgentNeedsController.text,
+              valueColor:
+                  _urgentNeedsController.text.isNotEmpty ? Colors.red : null),
+        ],
+      );
+    }
   }
 
   Widget _buildSupervisorSection() {
@@ -1722,13 +2171,64 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
           return const Text('No supervisors available.');
         }
         final supervisors = snapshot.data!;
+
+        // Handle display value for null case (no supervisor assigned)
+        String? displayValue = _selectedSupervisorId;
+
         return Column(
           children: [
             Tooltip(
               message: ' المشرف المعين',
               child: DropdownButtonFormField<String>(
-                value: _selectedSupervisorId,
-                decoration: const InputDecoration(labelText: 'Supervisor *'),
+                value: displayValue,
+                decoration: InputDecoration(
+                  labelText: 'Supervisor *',
+                  labelStyle: TextStyle(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white70
+                        : Colors.black87,
+                  ),
+                  helperText: _selectedSupervisorId == null
+                      ? 'No supervisor assigned'
+                      : null,
+                  helperStyle: TextStyle(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.orange[300]
+                        : Colors.orange[600],
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(
+                              0xFF30363D) // Better border color for dark mode
+                          : Colors.grey[400]!,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(
+                              0xFF30363D) // Better border color for dark mode
+                          : Colors.grey[400]!,
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF58A6FF) // Better blue for dark mode
+                          : Colors.blue[600]!,
+                      width: 2,
+                    ),
+                  ),
+                  filled: true,
+                  fillColor: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(
+                          0xFF21262D) // Better fill color for dark mode
+                      : Colors.grey[50],
+                ),
                 items: supervisors.map((supervisor) {
                   final isActive = supervisor.active ?? true;
                   return DropdownMenuItem(
@@ -1773,26 +2273,31 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
                 }).toList(),
                 onChanged: isEditing
                     ? (value) {
-                        // Find the selected supervisor to check if it's active
-                        final selectedSupervisor = supervisors.firstWhere(
-                          (s) => s.supervisorId == value,
-                        );
-                        final isActive = selectedSupervisor.active ?? true;
-
-                        // Only allow selection if supervisor is active OR it's the current assignment
-                        if (isActive || value == _selectedSupervisorId) {
-                          setState(() => _selectedSupervisorId = value);
+                        if (value == null) {
+                          // User cleared selection, set to null
+                          setState(() => _selectedSupervisorId = null);
                         } else {
-                          // Show warning for inactive supervisor
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                'Cannot assign orphan to inactive supervisor: ${selectedSupervisor.firstName} ${selectedSupervisor.familyName}',
-                              ),
-                              backgroundColor: Colors.orange,
-                              duration: const Duration(seconds: 3),
-                            ),
+                          // Find the selected supervisor to check if it's active
+                          final selectedSupervisor = supervisors.firstWhere(
+                            (s) => s.supervisorId == value,
                           );
+                          final isActive = selectedSupervisor.active ?? true;
+
+                          // Only allow selection if supervisor is active OR it's the current assignment
+                          if (isActive || value == _selectedSupervisorId) {
+                            setState(() => _selectedSupervisorId = value);
+                          } else {
+                            // Show warning for inactive supervisor
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'Cannot assign orphan to inactive supervisor: ${selectedSupervisor.firstName} ${selectedSupervisor.familyName}',
+                                ),
+                                backgroundColor: Colors.orange,
+                                duration: const Duration(seconds: 3),
+                              ),
+                            );
+                          }
                         }
                       }
                     : null,

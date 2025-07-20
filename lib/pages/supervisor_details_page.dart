@@ -22,13 +22,6 @@ class SupervisorDetailsPage extends StatelessWidget {
         foregroundColor: Colors.white,
         actions: [
           IconButton(
-            icon: const Icon(Icons.edit, color: Colors.white),
-            onPressed: () {
-              context.push('/edit-supervisor/$supervisorId');
-            },
-            tooltip: 'Edit Supervisor',
-          ),
-          IconButton(
             icon: const Icon(Icons.delete, color: Colors.red),
             onPressed: () {
               _showDeleteConfirmation(context, supervisorRepository);
@@ -62,16 +55,16 @@ class SupervisorDetailsPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildHeaderCard(supervisor),
+                _buildHeaderCard(context, supervisor),
                 const SizedBox(height: 16),
-                _buildContactCard(supervisor),
+                _buildContactCard(context, supervisor),
                 const SizedBox(height: 16),
-                _buildProfessionalCard(supervisor),
+                _buildProfessionalCard(context, supervisor),
                 const SizedBox(height: 16),
-                _buildAssignedOrphansCard(orphanRepository),
+                _buildAssignedOrphansCard(context, orphanRepository),
                 if (supervisor.notes?.isNotEmpty == true) ...[
                   const SizedBox(height: 16),
-                  _buildNotesCard(supervisor),
+                  _buildNotesCard(context, supervisor),
                 ],
               ],
             ),
@@ -81,7 +74,7 @@ class SupervisorDetailsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildHeaderCard(Supervisor supervisor) {
+  Widget _buildHeaderCard(BuildContext context, Supervisor supervisor) {
     return Card(
       elevation: 4,
       child: Padding(
@@ -108,9 +101,12 @@ class SupervisorDetailsPage extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               SupervisorRepository.getFullName(supervisor),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white
+                    : Colors.black87,
               ),
               textAlign: TextAlign.center,
             ),
@@ -119,7 +115,9 @@ class SupervisorDetailsPage extends StatelessWidget {
               supervisor.position,
               style: TextStyle(
                 fontSize: 16,
-                color: Colors.grey.shade600,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white70
+                    : Colors.grey.shade600,
                 fontWeight: FontWeight.w500,
               ),
               textAlign: TextAlign.center,
@@ -130,7 +128,9 @@ class SupervisorDetailsPage extends StatelessWidget {
                 supervisor.organization!,
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.grey.shade500,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white60
+                      : Colors.grey.shade500,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -141,62 +141,74 @@ class SupervisorDetailsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildContactCard(Supervisor supervisor) {
+  Widget _buildContactCard(BuildContext context, Supervisor supervisor) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Contact Information',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white
+                    : Colors.black87,
               ),
             ),
             const SizedBox(height: 12),
-            _buildInfoRow(Icons.phone, 'Phone', supervisor.phoneNumber),
+            _buildInfoRow(
+                context, Icons.phone, 'Phone', supervisor.phoneNumber),
             if (supervisor.email?.isNotEmpty == true)
-              _buildInfoRow(Icons.email, 'Email', supervisor.email!),
+              _buildInfoRow(context, Icons.email, 'Email', supervisor.email!),
             if (supervisor.alternateContact?.isNotEmpty == true)
-              _buildInfoRow(Icons.contact_phone, 'Alternate Contact',
+              _buildInfoRow(context, Icons.contact_phone, 'Alternate Contact',
                   supervisor.alternateContact!),
-            _buildInfoRow(Icons.location_on, 'Address', supervisor.address),
-            _buildInfoRow(Icons.location_city, 'City', supervisor.city),
+            _buildInfoRow(
+                context, Icons.location_on, 'Address', supervisor.address),
+            _buildInfoRow(
+                context, Icons.location_city, 'City', supervisor.city),
             if (supervisor.district?.isNotEmpty == true)
-              _buildInfoRow(Icons.map, 'District', supervisor.district!),
+              _buildInfoRow(
+                  context, Icons.map, 'District', supervisor.district!),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildProfessionalCard(Supervisor supervisor) {
+  Widget _buildProfessionalCard(BuildContext context, Supervisor supervisor) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Professional Information',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white
+                    : Colors.black87,
               ),
             ),
             const SizedBox(height: 12),
-            _buildInfoRow(Icons.work, 'Position', supervisor.position),
+            _buildInfoRow(context, Icons.work, 'Position', supervisor.position),
             if (supervisor.organization?.isNotEmpty == true)
-              _buildInfoRow(
-                  Icons.business, 'Organization', supervisor.organization!),
+              _buildInfoRow(context, Icons.business, 'Organization',
+                  supervisor.organization!),
             _buildInfoRow(
+              context,
               Icons.calendar_today,
               'Date Joined',
               '${supervisor.dateJoined.day}/${supervisor.dateJoined.month}/${supervisor.dateJoined.year}',
             ),
             _buildInfoRow(
+              context,
               Icons.check_circle,
               'Status',
               supervisor.active ? 'Active' : 'Inactive',
@@ -208,18 +220,22 @@ class SupervisorDetailsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildAssignedOrphansCard(OrphanRepository orphanRepository) {
+  Widget _buildAssignedOrphansCard(
+      BuildContext context, OrphanRepository orphanRepository) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Assigned Orphans',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white
+                    : Colors.black87,
               ),
             ),
             const SizedBox(height: 12),
@@ -234,7 +250,9 @@ class SupervisorDetailsPage extends StatelessWidget {
                   return Text(
                     'No orphans assigned to this supervisor',
                     style: TextStyle(
-                      color: Colors.grey.shade600,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white60
+                          : Colors.grey.shade600,
                       fontStyle: FontStyle.italic,
                     ),
                   );
@@ -245,9 +263,12 @@ class SupervisorDetailsPage extends StatelessWidget {
                   children: [
                     Text(
                       '${orphans.length} orphan${orphans.length != 1 ? 's' : ''} assigned',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w500,
                         fontSize: 16,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white
+                            : Colors.black87,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -266,10 +287,23 @@ class SupervisorDetailsPage extends StatelessWidget {
                               ),
                             ),
                             title: Text(
-                                '${orphan.firstName.isNotEmpty ? orphan.firstName : 'Unknown'} ${orphan.fatherName.isNotEmpty ? orphan.fatherName : ''} ${orphan.grandfatherName.isNotEmpty ? orphan.grandfatherName : ''} ${orphan.familyName.isNotEmpty ? orphan.familyName : ''}'
-                                    .trim()),
+                              '${orphan.firstName.isNotEmpty ? orphan.firstName : 'Unknown'} ${orphan.fatherName.isNotEmpty ? orphan.fatherName : ''} ${orphan.grandfatherName.isNotEmpty ? orphan.grandfatherName : ''} ${orphan.familyName.isNotEmpty ? orphan.familyName : ''}'
+                                  .trim(),
+                              style: TextStyle(
+                                color: Theme.of(context).brightness ==
+                                        Brightness.dark
+                                    ? Colors.white
+                                    : Colors.black87,
+                              ),
+                            ),
                             subtitle: Text(
                               'Status: ${orphan.status.toString().split('.').last}',
+                              style: TextStyle(
+                                color: Theme.of(context).brightness ==
+                                        Brightness.dark
+                                    ? Colors.white70
+                                    : Colors.grey[600],
+                              ),
                             ),
                             trailing:
                                 const Icon(Icons.arrow_forward_ios, size: 16),
@@ -288,24 +322,32 @@ class SupervisorDetailsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildNotesCard(Supervisor supervisor) {
+  Widget _buildNotesCard(BuildContext context, Supervisor supervisor) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Notes',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white
+                    : Colors.black87,
               ),
             ),
             const SizedBox(height: 12),
             Text(
               supervisor.notes!,
-              style: const TextStyle(fontSize: 14),
+              style: TextStyle(
+                fontSize: 14,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white70
+                    : Colors.black87,
+              ),
             ),
           ],
         ),
@@ -313,14 +355,21 @@ class SupervisorDetailsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String label, String value,
+  Widget _buildInfoRow(
+      BuildContext context, IconData icon, String label, String value,
       {Color? valueColor}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: Colors.grey.shade600),
+          Icon(
+            icon,
+            size: 20,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.white60
+                : Colors.grey.shade600,
+          ),
           const SizedBox(width: 12),
           Expanded(
             flex: 2,
@@ -328,7 +377,9 @@ class SupervisorDetailsPage extends StatelessWidget {
               label,
               style: TextStyle(
                 fontWeight: FontWeight.w500,
-                color: Colors.grey.shade700,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white70
+                    : Colors.grey.shade700,
               ),
             ),
           ),
@@ -337,7 +388,10 @@ class SupervisorDetailsPage extends StatelessWidget {
             child: Text(
               value,
               style: TextStyle(
-                color: valueColor ?? Colors.black87,
+                color: valueColor ??
+                    (Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white
+                        : Colors.black87),
                 fontWeight:
                     valueColor != null ? FontWeight.w500 : FontWeight.normal,
               ),

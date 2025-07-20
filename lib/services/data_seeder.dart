@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:drift/drift.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
+import 'package:uuid/uuid.dart';
 import '../database.dart';
 
 class DataSeeder {
@@ -693,20 +694,25 @@ class DataSeeder {
   ];
 
   Future<void> seedData() async {
-    print('🌱 Starting data seeding...');
+    try {
+      print('🌱 Starting data seeding...');
 
-    // Clear existing data first
-    await _clearExistingData();
+      // Clear existing data first
+      await _clearExistingData();
 
-    // Create supervisors first
-    final supervisors = await _createSupervisors();
-    print('✅ Created ${supervisors.length} supervisors');
+      // Create supervisors first
+      final supervisors = await _createSupervisors();
+      print('✅ Created ${supervisors.length} supervisors');
 
-    // Create orphans
-    await _createOrphans(supervisors);
-    print('✅ Created 8 orphans');
+      // Create orphans
+      await _createOrphans(supervisors);
+      print('✅ Created 8 orphans');
 
-    print('🎉 Data seeding completed successfully!');
+      print('🎉 Data seeding completed successfully!');
+    } catch (e) {
+      print('❌ SEEDER ERROR: $e');
+      rethrow; // Re-throw so UI can handle it
+    }
   }
 
   Future<void> _clearExistingData() async {
@@ -724,6 +730,7 @@ class DataSeeder {
       final isActive = i != 2; // Make supervisor 3 inactive
 
       final supervisor = SupervisorsCompanion.insert(
+        supervisorId: Value(Uuid().v4()), // Explicitly generate UUID
         firstName: isArabic
             ? arabicFirstNames[i % arabicFirstNames.length]
             : englishFirstNames[i % englishFirstNames.length],
@@ -752,9 +759,16 @@ class DataSeeder {
         active: Value(isActive),
       );
 
-      final createdSupervisor =
-          await database.into(database.supervisors).insertReturning(supervisor);
-      supervisors.add(createdSupervisor);
+      try {
+        final createdSupervisor = await database
+            .into(database.supervisors)
+            .insertReturning(supervisor);
+        supervisors.add(createdSupervisor);
+        print('✅ Created supervisor ${i + 1}');
+      } catch (e) {
+        print('❌ Error creating supervisor ${i + 1}: $e');
+        rethrow;
+      }
     }
 
     return supervisors;
@@ -763,9 +777,25 @@ class DataSeeder {
   Future<void> _createOrphans(List<Supervisor> supervisors) async {
     for (int i = 0; i < 8; i++) {
       final isGirl = i.isEven;
-      // Assign orphan 7 (index 7) specifically to the inactive supervisor (index 2)
-      final supervisor =
-          i == 7 ? supervisors[2] : supervisors[i % supervisors.length];
+
+      // Supervisor assignment logic:
+      // - Orphan 7 (index 7) → inactive supervisor (index 2)
+      // - Orphans 5, 6, 8 (indices 4, 5, 7) → no supervisor (unsupervised)
+      // - Others → active supervisors
+      String? assignedSupervisorId;
+      if (i == 7) {
+        // Assign to inactive supervisor
+        assignedSupervisorId = supervisors[2].supervisorId;
+      } else if (i >= 4 && i <= 6) {
+        // Leave unsupervised (no supervisor assigned)
+        assignedSupervisorId = null;
+      } else {
+        // Assign to active supervisors (cycling through available ones)
+        final activeSupervisors =
+            supervisors.where((s) => s.active ?? true).toList();
+        assignedSupervisorId =
+            activeSupervisors[i % activeSupervisors.length].supervisorId;
+      }
 
       // Generate realistic dates
       final birthDate = DateTime.now().subtract(Duration(
@@ -787,6 +817,7 @@ class DataSeeder {
           birthDate.add(Duration(days: _random.nextInt(2 * 365)));
 
       final orphan = OrphansCompanion.insert(
+        orphanId: Value(Uuid().v4()), // Explicitly generate UUID
         firstName: isEnglish
             ? englishFirstNames[_random.nextInt(englishFirstNames.length)]
             : arabicFirstNames[_random.nextInt(arabicFirstNames.length)],
@@ -811,7 +842,7 @@ class DataSeeder {
         idNumber: Value('ID${1000000 + _random.nextInt(9000000)}'),
         status: orphanStatus,
         lastUpdated: DateTime.now(),
-        supervisorId: supervisor.supervisorId,
+        supervisorId: Value(assignedSupervisorId), // Now properly nullable
 
         // Address details
         currentCountry: Value(isEnglish ? 'Syria' : 'سوريا'),
@@ -897,20 +928,26 @@ class DataSeeder {
         urgentNeeds: Value(_getUrgentNeeds(isEnglish)),
       );
 
-      // Insert the orphan first
-      await database.into(database.orphans).insert(orphan);
+      try {
+        // Insert the orphan first
+        await database.into(database.orphans).insert(orphan);
+        print('✅ Created orphan ${i + 1}');
 
-      // Create sample document attachments for this orphan
-      // Use a simple document ID since we can't easily get the orphan UUID back
-      final documentId =
-          'orphan_${i + 1}_${DateTime.now().millisecondsSinceEpoch}';
-      await _createSampleDocuments(documentId, i + 1);
+        // Create sample document attachments for this orphan
+        // Use a simple document ID since we can't easily get the orphan UUID back
+        final documentId =
+            'orphan_${i + 1}_${DateTime.now().millisecondsSinceEpoch}';
+        await _createSampleDocuments(documentId, i + 1);
 
-      // Update the orphan with document paths
-      await _updateOrphanDocuments(documentId, i);
+        // Update the orphan with document paths
+        await _updateOrphanDocuments(documentId, i);
 
-      // Copy a placeholder image for this orphan
-      await _copyPlaceholderImage(i + 1);
+        // Copy a placeholder image for this orphan
+        await _copyPlaceholderImage(i + 1);
+      } catch (e) {
+        print('❌ Error creating orphan ${i + 1}: $e');
+        rethrow;
+      }
     }
   }
 

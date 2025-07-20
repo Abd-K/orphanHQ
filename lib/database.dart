@@ -87,7 +87,7 @@ class Orphans extends Table {
   TextColumn get lastSeenLocation => text().nullable()();
   DateTimeColumn get lastUpdated => dateTime()();
   TextColumn get supervisorId =>
-      text().references(Supervisors, #supervisorId)();
+      text().nullable().references(Supervisors, #supervisorId)();
 
   // Current Address (عنوانه الحالي)
   TextColumn get currentCountry => text().nullable()(); // البلد
