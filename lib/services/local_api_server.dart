@@ -11,6 +11,7 @@ import 'package:orphan_hq/repositories/supervisor_repository.dart';
 import 'package:orphan_hq/services/tunnel_service.dart';
 import 'package:orphan_hq/services/network_info_service.dart';
 import 'package:orphan_hq/services/ngrok_service.dart';
+import 'package:uuid/uuid.dart';
 
 class LocalApiServer {
   HttpServer? _server;
@@ -108,6 +109,7 @@ class LocalApiServer {
       print('Public API endpoints:');
       print('  GET  /api/status          - Server status');
       print('  POST /api/orphans         - Create new orphan');
+      print('  POST /api/orphans/:id/updateStatus - Update orphan status');
       print('  GET  /api/supervisors/:id - Get supervisor details');
       print('');
       print('Internal endpoints (hidden from UI):');
@@ -136,27 +138,49 @@ class LocalApiServer {
   // Authentication middleware
   Middleware get _authMiddleware => (Handler innerHandler) {
         return (Request request) async {
-          // Allow OPTIONS requests for CORS preflight
-          if (request.method == 'OPTIONS') {
+          try {
+            // Allow OPTIONS requests for CORS preflight
+            if (request.method == 'OPTIONS') {
+              print('🔓 CORS preflight request - allowing');
+              return innerHandler(request);
+            }
+
+            // Check for API key in header or query parameter
+            final apiKeyHeader = request.headers['x-api-key'];
+            final apiKeyQuery = request.url.queryParameters['api_key'];
+
+            if (apiKeyHeader != _apiKey && apiKeyQuery != _apiKey) {
+              print(
+                  '❌ Authentication failed for ${request.method} ${request.url.path}');
+              print('📝 Provided API key header: ${apiKeyHeader ?? 'none'}');
+              print('📝 Provided API key query: ${apiKeyQuery ?? 'none'}');
+              print('📝 Expected API key: $_apiKey');
+
+              return Response.unauthorized(
+                jsonEncode({
+                  'error': 'Unauthorized',
+                  'message':
+                      'Valid API key required. Include in X-API-Key header or api_key query parameter.'
+                }),
+                headers: {'content-type': 'application/json'},
+              );
+            }
+
+            print(
+                '✅ Authentication successful for ${request.method} ${request.url.path}');
             return innerHandler(request);
-          }
+          } catch (e, stackTrace) {
+            print('❌ Authentication middleware error: $e');
+            print('❌ Stack trace: $stackTrace');
 
-          // Check for API key in header or query parameter
-          final apiKeyHeader = request.headers['x-api-key'];
-          final apiKeyQuery = request.url.queryParameters['api_key'];
-
-          if (apiKeyHeader != _apiKey && apiKeyQuery != _apiKey) {
-            return Response.unauthorized(
-              jsonEncode({
-                'error': 'Unauthorized',
-                'message':
-                    'Valid API key required. Include in X-API-Key header or api_key query parameter.'
+            return Response.internalServerError(
+              body: jsonEncode({
+                'error': 'Authentication Error',
+                'message': 'An error occurred during authentication: $e'
               }),
               headers: {'content-type': 'application/json'},
             );
           }
-
-          return innerHandler(request);
         };
       };
 
@@ -165,37 +189,63 @@ class LocalApiServer {
         final path = request.url.path;
         final method = request.method;
 
+        print('🔵 $method $path - Request received');
+        print('📝 Headers: ${request.headers}');
+        print('📝 Query params: ${request.url.queryParameters}');
+
         try {
           // API Status endpoint
           if (method == 'GET' && path == 'api/status') {
+            print('✅ Routing to status endpoint');
             return _handleStatus(request);
           }
 
           // Orphans endpoints
           if (method == 'GET' && path == 'api/orphans') {
+            print('✅ Routing to get orphans endpoint');
             return _handleGetOrphans(request);
           }
 
           if (method == 'POST' && path == 'api/orphans') {
+            print('✅ Routing to create orphan endpoint');
             return _handleCreateOrphan(request);
           }
 
           if (method == 'GET' && path.startsWith('api/orphans/')) {
             final orphanId = path.substring('api/orphans/'.length);
+            print('✅ Routing to get orphan endpoint with ID: $orphanId');
             return _handleGetOrphan(request, orphanId);
+          }
+
+          if (method == 'POST' && path.contains('/updateStatus')) {
+            // Extract orphan ID from path like "api/orphans/123/updateStatus"
+            final pathParts = path.split('/');
+            if (pathParts.length == 4 &&
+                pathParts[0] == 'api' &&
+                pathParts[1] == 'orphans' &&
+                pathParts[3] == 'updateStatus') {
+              final orphanId = pathParts[2];
+              print(
+                  '✅ Routing to update orphan status endpoint with ID: $orphanId');
+              return _handleUpdateOrphanStatus(request, orphanId);
+            }
           }
 
           // Supervisors endpoints
           if (method == 'GET' && path == 'api/supervisors') {
+            print('✅ Routing to get supervisors endpoint');
             return _handleGetSupervisors(request);
           }
 
           if (method == 'GET' && path.startsWith('api/supervisors/')) {
             final supervisorId = path.substring('api/supervisors/'.length);
+            print(
+                '✅ Routing to get supervisor endpoint with ID: $supervisorId');
             return _handleGetSupervisor(request, supervisorId);
           }
 
           // 404 for unknown endpoints
+          print('❌ No route found for $method $path');
           return Response.notFound(
             jsonEncode({
               'error': 'Not Found',
@@ -204,13 +254,14 @@ class LocalApiServer {
             headers: {'content-type': 'application/json'},
           );
         } catch (e, stackTrace) {
-          print('❌ API Error: $e');
-          print('Stack trace: $stackTrace');
+          print('❌ API Error in router: $e');
+          print('❌ Request details: $method $path');
+          print('❌ Stack trace: $stackTrace');
 
           return Response.internalServerError(
             body: jsonEncode({
               'error': 'Internal Server Error',
-              'message': 'An error occurred while processing your request.'
+              'message': 'An error occurred while processing your request: $e'
             }),
             headers: {'content-type': 'application/json'},
           );
@@ -229,6 +280,7 @@ class LocalApiServer {
           'public': [
             'GET /api/status',
             'POST /api/orphans',
+            'POST /api/orphans/:id/updateStatus',
             'GET /api/supervisors/:id',
           ],
           'internal': [
@@ -307,9 +359,38 @@ class LocalApiServer {
   // Create new orphan
   Future<Response> _handleCreateOrphan(Request request) async {
     try {
+      print('🔵 POST /api/orphans - Request received');
+
       // Read request body
       final body = await request.readAsString();
-      final jsonData = jsonDecode(body) as Map<String, dynamic>;
+      print('📝 Request body: $body');
+
+      if (body.isEmpty) {
+        print('❌ Error: Empty request body');
+        return Response.badRequest(
+          body: jsonEncode({
+            'error': 'Bad Request',
+            'message': 'Request body cannot be empty'
+          }),
+          headers: {'content-type': 'application/json'},
+        );
+      }
+
+      // Parse JSON
+      Map<String, dynamic> jsonData;
+      try {
+        jsonData = jsonDecode(body) as Map<String, dynamic>;
+        print('✅ JSON parsed successfully');
+      } catch (e) {
+        print('❌ JSON parsing error: $e');
+        return Response.badRequest(
+          body: jsonEncode({
+            'error': 'Invalid JSON',
+            'message': 'Request body must be valid JSON: $e'
+          }),
+          headers: {'content-type': 'application/json'},
+        );
+      }
 
       // Validate required fields
       final requiredFields = [
@@ -321,25 +402,35 @@ class LocalApiServer {
         'gender'
       ];
 
+      final missingFields = <String>[];
       for (final field in requiredFields) {
         if (!jsonData.containsKey(field) ||
             jsonData[field] == null ||
             jsonData[field].toString().isEmpty) {
-          return Response.badRequest(
-            body: jsonEncode({
-              'error': 'Validation Error',
-              'message': 'Missing required field: $field'
-            }),
-            headers: {'content-type': 'application/json'},
-          );
+          missingFields.add(field);
         }
       }
+
+      if (missingFields.isNotEmpty) {
+        print('❌ Missing required fields: $missingFields');
+        return Response.badRequest(
+          body: jsonEncode({
+            'error': 'Validation Error',
+            'message': 'Missing required fields: ${missingFields.join(', ')}'
+          }),
+          headers: {'content-type': 'application/json'},
+        );
+      }
+
+      print('✅ Required fields validation passed');
 
       // Parse date of birth
       DateTime dateOfBirth;
       try {
         dateOfBirth = DateTime.parse(jsonData['date_of_birth']);
+        print('✅ Date of birth parsed: $dateOfBirth');
       } catch (e) {
+        print('❌ Date parsing error: $e');
         return Response.badRequest(
           body: jsonEncode({
             'error': 'Validation Error',
@@ -356,7 +447,9 @@ class LocalApiServer {
         gender = Gender.values.firstWhere((g) =>
             g.toString().split('.').last ==
             jsonData['gender'].toString().toLowerCase());
+        print('✅ Gender parsed: $gender');
       } catch (e) {
+        print('❌ Gender parsing error: $e');
         return Response.badRequest(
           body: jsonEncode({
             'error': 'Validation Error',
@@ -374,7 +467,9 @@ class LocalApiServer {
           status = OrphanStatus.values.firstWhere((s) =>
               s.toString().split('.').last ==
               jsonData['status'].toString().toLowerCase());
+          print('✅ Status parsed: $status');
         } catch (e) {
+          print('❌ Status parsing error: $e');
           return Response.badRequest(
             body: jsonEncode({
               'error': 'Validation Error',
@@ -386,8 +481,15 @@ class LocalApiServer {
         }
       }
 
+      print('✅ All validation passed, creating orphan data...');
+
+      // Generate UUID for orphan
+      final orphanUuid = Uuid().v4();
+      print('✅ Generated orphan UUID: $orphanUuid');
+
       // Create orphan data
       final orphanData = OrphansCompanion(
+        orphanId: drift.Value(orphanUuid), // Explicitly set the UUID
         firstName: drift.Value(jsonData['first_name']),
         fatherName: drift.Value(jsonData['father_name']),
         grandfatherName: drift.Value(jsonData['grandfather_name']),
@@ -524,27 +626,161 @@ class LocalApiServer {
         urgentNeeds: jsonData['urgent_needs'] != null
             ? drift.Value(jsonData['urgent_needs'])
             : const drift.Value.absent(),
+        qrCodePath:
+            const drift.Value.absent(), // QR code generated after creation
       );
 
+      print('✅ Orphan data created successfully');
+
       // Insert orphan into database
-      final orphanId = await _orphanRepository.createOrphan(orphanData);
+      try {
+        final orphanId = await _orphanRepository.createOrphan(orphanData);
+        print('✅ Orphan inserted successfully with ID: $orphanId');
+
+        return Response.ok(
+          jsonEncode({
+            'success': true,
+            'message': 'Orphan created successfully',
+            'data': {
+              'id': orphanId.toString(),
+              'orphan_id': orphanUuid,
+              'message': 'Orphan created with database ID: $orphanId',
+              'qr_code': 'QR code generated automatically'
+            },
+          }),
+          headers: {'content-type': 'application/json'},
+        );
+      } catch (e, stackTrace) {
+        print('❌ Database insertion error: $e');
+        print('❌ Error stack trace: $stackTrace');
+        return Response.internalServerError(
+          body: jsonEncode({
+            'error': 'Database Error',
+            'message': 'Failed to create orphan: $e'
+          }),
+          headers: {'content-type': 'application/json'},
+        );
+      }
+    } catch (e, stackTrace) {
+      print('❌ Unexpected error in /api/orphans POST: $e');
+      print('❌ Stack trace: $stackTrace');
+      return Response.internalServerError(
+        body: jsonEncode({
+          'error': 'Internal Server Error',
+          'message': 'An unexpected error occurred: $e'
+        }),
+        headers: {'content-type': 'application/json'},
+      );
+    }
+  }
+
+  // Update orphan status
+  Future<Response> _handleUpdateOrphanStatus(
+      Request request, String orphanId) async {
+    try {
+      print('🔵 POST /api/orphans/$orphanId/updateStatus - Request received');
+
+      // Read request body
+      final body = await request.readAsString();
+      print('📝 Request body: $body');
+
+      if (body.isEmpty) {
+        print('❌ Error: Empty request body');
+        return Response.badRequest(
+          body: jsonEncode({
+            'error': 'Bad Request',
+            'message': 'Request body cannot be empty'
+          }),
+          headers: {'content-type': 'application/json'},
+        );
+      }
+
+      // Parse JSON
+      Map<String, dynamic> jsonData;
+      try {
+        jsonData = jsonDecode(body) as Map<String, dynamic>;
+        print('✅ JSON parsed successfully');
+      } catch (e) {
+        print('❌ JSON parsing error: $e');
+        return Response.badRequest(
+          body: jsonEncode({
+            'error': 'Invalid JSON',
+            'message': 'Request body must be valid JSON: $e'
+          }),
+          headers: {'content-type': 'application/json'},
+        );
+      }
+
+      // Validate status field
+      if (!jsonData.containsKey('status') ||
+          jsonData['status'] == null ||
+          jsonData['status'].toString().isEmpty) {
+        print('❌ Error: Missing status field');
+        return Response.badRequest(
+          body: jsonEncode({
+            'error': 'Validation Error',
+            'message': 'Missing required field: status'
+          }),
+          headers: {'content-type': 'application/json'},
+        );
+      }
+
+      // Parse status
+      OrphanStatus status;
+      try {
+        status = OrphanStatus.values.firstWhere((s) =>
+            s.toString().split('.').last ==
+            jsonData['status'].toString().toLowerCase());
+        print('✅ Status parsed: $status');
+      } catch (e) {
+        print('❌ Status parsing error: $e');
+        return Response.badRequest(
+          body: jsonEncode({
+            'error': 'Validation Error',
+            'message':
+                'Invalid status. Must be one of: ${OrphanStatus.values.map((s) => s.toString().split('.').last).join(', ')}'
+          }),
+          headers: {'content-type': 'application/json'},
+        );
+      }
+
+      // Check if orphan exists
+      final orphan = await _orphanRepository.getOrphanById(orphanId);
+      if (orphan == null) {
+        print('❌ Orphan not found: $orphanId');
+        return Response.notFound(
+          jsonEncode({
+            'error': 'Not Found',
+            'message': 'Orphan with ID $orphanId not found'
+          }),
+          headers: {'content-type': 'application/json'},
+        );
+      }
+
+      // Update status
+      await _orphanRepository.updateOrphanStatus(orphanId, status);
+      print('✅ Orphan with ID $orphanId status updated to: $status');
 
       return Response.ok(
         jsonEncode({
           'success': true,
-          'message': 'Orphan created successfully',
+          'message': 'Orphan status updated successfully',
           'data': {
-            'id': orphanId.toString(),
-            'message': 'Orphan created with database ID: $orphanId'
+            'id': orphan.orphanId,
+            'orphan_id': orphan.orphanId,
+            'status': status.toString().split('.').last,
+            'last_updated': DateTime.now().toIso8601String(),
           },
         }),
         headers: {'content-type': 'application/json'},
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('❌ Error updating orphan status: $e');
+      print('❌ Stack trace: $stackTrace');
       return Response.internalServerError(
         body: jsonEncode({
-          'error': 'Database Error',
-          'message': 'Failed to create orphan: $e'
+          'error': 'Internal Server Error',
+          'message': 'Failed to update orphan status: $e'
         }),
         headers: {'content-type': 'application/json'},
       );
@@ -644,6 +880,7 @@ class LocalApiServer {
       'status': orphan.status.toString().split('.').last,
       'supervisor_id': orphan.supervisorId,
       'last_updated': orphan.lastUpdated.toIso8601String(),
+      'last_status_update': orphan.lastStatusUpdate?.toIso8601String(),
 
       // Father details
       'father': {
@@ -690,26 +927,37 @@ class LocalApiServer {
         'needs_housing_support': orphan.needsHousingSupport,
       },
 
-      // Islamic education
+      // Islamic Education
       'islamic_education': {
         'quran_memorization': orphan.quranMemorization,
         'attends_islamic_school': orphan.attendsIslamicSchool,
         'level': orphan.islamicEducationLevel,
       },
 
-      // Personal details
+      // Personal Development
       'personal': {
         'hobbies': orphan.hobbies,
         'skills': orphan.skills,
         'aspirations': orphan.aspirations,
+      },
+
+      // Family
+      'family': {
         'number_of_siblings': orphan.numberOfSiblings,
         'siblings_details': orphan.siblingsDetails,
       },
 
-      // Additional info
-      'additional_notes': orphan.additionalNotes,
-      'urgent_needs': orphan.urgentNeeds,
-      'has_documents': orphan.documentsPath != null,
+      // Additional Information
+      'additional': {
+        'notes': orphan.additionalNotes,
+        'urgent_needs': orphan.urgentNeeds,
+        'special_circumstances': orphan.specialCircumstances,
+      },
+
+      // Documents
+      'documents': {
+        'path': orphan.documentsPath,
+      },
     };
   }
 

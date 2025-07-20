@@ -86,6 +86,8 @@ class Orphans extends Table {
   IntColumn get status => intEnum<OrphanStatus>()();
   TextColumn get lastSeenLocation => text().nullable()();
   DateTimeColumn get lastUpdated => dateTime()();
+  DateTimeColumn get lastStatusUpdate =>
+      dateTime().nullable()(); // Track when status was last changed
   TextColumn get supervisorId =>
       text().nullable().references(Supervisors, #supervisorId)();
 
@@ -205,6 +207,7 @@ class Orphans extends Table {
   // Attachments (file paths or references)
   // TextColumn get photoPath => text().nullable()();
   TextColumn get documentsPath => text().nullable()();
+  TextColumn get qrCodePath => text().nullable()();
 
   @override
   Set<Column> get primaryKey => {orphanId};
@@ -250,7 +253,7 @@ class AppDb extends _$AppDb {
   AppDb() : super(_openConnection());
 
   @override
-  int get schemaVersion => 6; // Updated for lastName to 4-part name migration
+  int get schemaVersion => 8; // Updated for QR code path addition
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -318,6 +321,28 @@ class AppDb extends _$AppDb {
               // so we'll just make sure new inserts don't require it
             } catch (e) {
               print('lastName column migration handled: $e');
+            }
+          }
+
+          if (from < 7) {
+            // Migration for QR code path addition (version 7)
+            try {
+              await m.addColumn(orphans, orphans.qrCodePath);
+              print('Added qrCodePath column to orphans table');
+            } catch (e) {
+              print(
+                  'Could not add qrCodePath column (might already exist): $e');
+            }
+          }
+
+          if (from < 8) {
+            // Migration for lastStatusUpdate field addition (version 8)
+            try {
+              await m.addColumn(orphans, orphans.lastStatusUpdate);
+              print('Added lastStatusUpdate column to orphans table');
+            } catch (e) {
+              print(
+                  'Could not add lastStatusUpdate column (might already exist): $e');
             }
           }
 

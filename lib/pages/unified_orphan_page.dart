@@ -8,6 +8,8 @@ import '../database.dart';
 import '../repositories/orphan_repository.dart';
 import '../repositories/supervisor_repository.dart';
 import '../services/image_service.dart';
+import '../services/qr_code_service.dart';
+import '../widgets/qr_code_widget.dart';
 
 class UnifiedOrphanPage extends StatefulWidget {
   final String? orphanId; // null for create mode, id for view mode
@@ -151,6 +153,7 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
 
   Orphan? _orphan;
   bool _isLoading = true;
+  String? _qrCodeData;
 
   @override
   void initState() {
@@ -175,10 +178,33 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
         _populateControllers(orphan);
         _isLoading = false;
       });
+
+      // Load QR code data and file
+      await _loadQRCodeData(orphan);
     } else {
       setState(() {
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _loadQRCodeData(Orphan orphan) async {
+    try {
+      // Generate QR code data
+      _qrCodeData = QRCodeService.createQRData(orphan);
+
+      // Try to load existing QR code data
+      final existingQRData = await QRCodeService.getQRCodeData(orphan.orphanId);
+
+      // If no QR code data exists, generate one
+      if (existingQRData == null && orphan.qrCodePath == null) {
+        final orphanRepository = context.read<OrphanRepository>();
+        await orphanRepository.regenerateQRCode(orphan.orphanId);
+      }
+
+      setState(() {});
+    } catch (e) {
+      print('Error loading QR code data: $e');
     }
   }
 
@@ -414,177 +440,179 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
 
     return Card(
       elevation: 4,
-      child: Padding(
+      child: Container(
         padding: const EdgeInsets.all(20.0),
-        child: Column(
+        child: Stack(
           children: [
-            // Profile Picture or Avatar
-            Container(
-              width: 250,
-              height: 250,
-              child: _recentPhoto != null
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(125),
-                      child: Image.file(
-                        _recentPhoto!,
-                        width: 250,
-                        height: 250,
-                        fit: BoxFit.cover,
-                      ),
-                    )
-                  : CircleAvatar(
-                      radius: 125,
-                      backgroundColor: _selectedStatus == OrphanStatus.active
-                          ? Colors.blue.shade600
-                          : Colors.grey.shade600,
-                      child: Text(
-                        initials.toUpperCase(),
-                        style: const TextStyle(
-                          fontSize: 60,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              fullName,
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).textTheme.headlineMedium?.color,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            // Age calculation
-            if (_dayController.text.isNotEmpty &&
-                _monthController.text.isNotEmpty &&
-                _yearController.text.isNotEmpty) ...[
-              Builder(
-                builder: (context) {
-                  final day = int.tryParse(_dayController.text) ?? 1;
-                  final month = int.tryParse(_monthController.text) ?? 1;
-                  final year = int.tryParse(_yearController.text) ?? 2000;
-                  final birthDate = DateTime(year, month, day);
-                  final age = DateTime.now().year - birthDate.year;
-                  final hasHadBirthday = DateTime.now()
-                      .isAfter(DateTime(DateTime.now().year, month, day));
-                  final actualAge = hasHadBirthday ? age : age - 1;
-
-                  return Text(
-                    '$actualAge years old',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Theme.of(context).textTheme.bodyMedium?.color,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    textAlign: TextAlign.center,
-                  );
-                },
-              ),
-              const SizedBox(height: 4),
-            ],
-            // Date of birth
-            if (_dayController.text.isNotEmpty &&
-                _monthController.text.isNotEmpty &&
-                _yearController.text.isNotEmpty) ...[
-              Text(
-                'Born ${_dayController.text}/${_monthController.text}/${_yearController.text}',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Theme.of(context).textTheme.bodySmall?.color,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 12),
-            ],
-            // Status badge
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: _selectedStatus == OrphanStatus.active
-                    ? (Theme.of(context).brightness == Brightness.dark
-                        ? const Color(0xFF0D4429)
-                        : Colors.green.shade100)
-                    : (Theme.of(context).brightness == Brightness.dark
-                        ? const Color(0xFF3D1B1B)
-                        : Colors.orange.shade100),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Text(
-                _selectedStatus.toString().split('.').last.toUpperCase(),
-                style: TextStyle(
-                  color: _selectedStatus == OrphanStatus.active
-                      ? (Theme.of(context).brightness == Brightness.dark
-                          ? const Color(0xFF3FB950)
-                          : Colors.green.shade700)
-                      : (Theme.of(context).brightness == Brightness.dark
-                          ? const Color(0xFFF78166)
-                          : Colors.orange.shade700),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-            // Supervisor info
-            if (_selectedSupervisorId != null) ...[
-              const SizedBox(height: 12),
-              FutureBuilder<List<Supervisor>>(
-                future:
-                    context.read<SupervisorRepository>().getAllSupervisors(),
-                builder: (context, snapshot) {
-                  if (snapshot.hasData) {
-                    final supervisor = snapshot.data!.firstWhere(
-                      (s) => s.supervisorId == _selectedSupervisorId,
-                      orElse: () => throw Exception('Supervisor not found'),
-                    );
-                    return Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? const Color(0xFF0D1117)
-                            : Colors.blue.shade50,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? const Color(0xFF58A6FF)
-                              : Colors.blue.shade200,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.supervisor_account,
-                            size: 16,
-                            color:
-                                Theme.of(context).brightness == Brightness.dark
-                                    ? const Color(0xFF58A6FF)
-                                    : Colors.blue.shade600,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Supervised by ${supervisor.firstName} ${supervisor.familyName}',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Theme.of(context).brightness ==
-                                      Brightness.dark
-                                  ? const Color(0xFF58A6FF)
-                                  : Colors.blue.shade700,
-                              fontWeight: FontWeight.w500,
+            // Centered profile content (unaffected by QR code)
+            Center(
+              child: Column(
+                children: [
+                  // Profile Picture or Avatar
+                  Container(
+                    width: 250,
+                    height: 250,
+                    child: _recentPhoto != null
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(125),
+                            child: Image.file(
+                              _recentPhoto!,
+                              width: 250,
+                              height: 250,
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                        : CircleAvatar(
+                            radius: 125,
+                            backgroundColor:
+                                _selectedStatus == OrphanStatus.active
+                                    ? Colors.blue.shade600
+                                    : Colors.grey.shade600,
+                            child: Text(
+                              initials.toUpperCase(),
+                              style: const TextStyle(
+                                fontSize: 60,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
-                        ],
+                  ),
+                  const SizedBox(height: 16),
+                  // Name
+                  Text(
+                    fullName,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  // Date of birth
+                  Text(
+                    'Born ${_dayController.text}/${_monthController.text}/${_yearController.text}',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Theme.of(context).textTheme.bodySmall?.color,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  // Status badge
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: _selectedStatus == OrphanStatus.active
+                          ? (Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFF0D4429)
+                              : Colors.green.shade100)
+                          : (Theme.of(context).brightness == Brightness.dark
+                              ? const Color(0xFF3D1B1B)
+                              : Colors.orange.shade100),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Text(
+                      _selectedStatus.toString().split('.').last.toUpperCase(),
+                      style: TextStyle(
+                        color: _selectedStatus == OrphanStatus.active
+                            ? (Theme.of(context).brightness == Brightness.dark
+                                ? const Color(0xFF3FB950)
+                                : Colors.green.shade700)
+                            : (Theme.of(context).brightness == Brightness.dark
+                                ? const Color(0xFFF78166)
+                                : Colors.orange.shade700),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
                       ),
-                    );
-                  }
-                  return const SizedBox.shrink();
-                },
+                    ),
+                  ),
+                  // Supervisor info
+                  if (_selectedSupervisorId != null) ...[
+                    const SizedBox(height: 12),
+                    FutureBuilder<Supervisor?>(
+                      future: context
+                          .read<SupervisorRepository>()
+                          .getSupervisorById(_selectedSupervisorId!),
+                      builder: (context, snapshot) {
+                        if (snapshot.hasData && snapshot.data != null) {
+                          final supervisor = snapshot.data!;
+                          return Text(
+                            'Supervisor: ${supervisor.firstName} ${supervisor.familyName}',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color:
+                                  Theme.of(context).textTheme.bodySmall?.color,
+                            ),
+                            textAlign: TextAlign.center,
+                          );
+                        }
+                        return const SizedBox.shrink();
+                      },
+                    ),
+                  ],
+                ],
               ),
-            ],
+            ),
+            // QR Code positioned absolutely in top-right corner
+            if (_qrCodeData != null)
+              Positioned(
+                top: 0,
+                right: 0,
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.grey[600]!
+                          : Colors.grey[300]!,
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      QRCodeWidget(
+                        orphanId: _orphan!.orphanId,
+                        qrData: _qrCodeData!,
+                        size: 180.0,
+                        showBorder: false,
+                        showDownloadButton: true,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'QR Code',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Theme.of(context).textTheme.bodySmall?.color,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Tap to view',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.color
+                              ?.withOpacity(0.7),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -863,168 +891,194 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
   }
 
   Future<void> _submitForm() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    final orphanRepository = context.read<OrphanRepository>();
-
-    // Parse birth date
-    final day = int.tryParse(_dayController.text) ?? 1;
-    final month = int.tryParse(_monthController.text) ?? 1;
-    final year = int.tryParse(_yearController.text) ?? 2000;
-    final birthDate = DateTime(year, month, day);
-
-    // Parse father death date if provided
-    DateTime? fatherDeathDate;
-    if (_fatherDeathDayController.text.isNotEmpty &&
-        _fatherDeathMonthController.text.isNotEmpty &&
-        _fatherDeathYearController.text.isNotEmpty) {
-      final fDay = int.tryParse(_fatherDeathDayController.text) ?? 1;
-      final fMonth = int.tryParse(_fatherDeathMonthController.text) ?? 1;
-      final fYear = int.tryParse(_fatherDeathYearController.text) ?? 2000;
-      fatherDeathDate = DateTime(fYear, fMonth, fDay);
+    if (!_formKey.currentState!.validate()) {
+      return;
     }
 
-    // Parse mother death date if provided
-    DateTime? motherDeathDate;
-    if (_motherDeathDayController.text.isNotEmpty &&
-        _motherDeathMonthController.text.isNotEmpty &&
-        _motherDeathYearController.text.isNotEmpty) {
-      final mDay = int.tryParse(_motherDeathDayController.text) ?? 1;
-      final mMonth = int.tryParse(_motherDeathMonthController.text) ?? 1;
-      final mYear = int.tryParse(_motherDeathYearController.text) ?? 2000;
-      motherDeathDate = DateTime(mYear, mMonth, mDay);
-    }
+    try {
+      // Parse date of birth
+      final day = int.tryParse(_dayController.text) ?? 1;
+      final month = int.tryParse(_monthController.text) ?? 1;
+      final year = int.tryParse(_yearController.text) ?? 2000;
+      final birthDate = DateTime(year, month, day);
 
-    final companion = OrphansCompanion.insert(
-      firstName: _firstNameController.text,
-      lastName: drift.Value(_familyNameController.text), // Legacy field
-      fatherName: _fatherNameController.text,
-      grandfatherName: _grandfatherNameController.text,
-      familyName: _familyNameController.text,
-      gender: Gender.male, // Default - you may want to add gender selection
-      dateOfBirth: birthDate,
-      status: _selectedStatus,
-      lastUpdated: DateTime.now(),
-      supervisorId: drift.Value(_selectedSupervisorId),
+      // Parse father's death date if provided
+      DateTime? fatherDeathDate;
+      if (_fatherDeathDayController.text.isNotEmpty &&
+          _fatherDeathMonthController.text.isNotEmpty &&
+          _fatherDeathYearController.text.isNotEmpty) {
+        final fatherDeathDay =
+            int.tryParse(_fatherDeathDayController.text) ?? 1;
+        final fatherDeathMonth =
+            int.tryParse(_fatherDeathMonthController.text) ?? 1;
+        final fatherDeathYear =
+            int.tryParse(_fatherDeathYearController.text) ?? 2000;
+        fatherDeathDate =
+            DateTime(fatherDeathYear, fatherDeathMonth, fatherDeathDay);
+      }
 
-      // Father details
-      fatherDateOfDeath: fatherDeathDate != null
-          ? drift.Value(fatherDeathDate)
-          : const drift.Value.absent(),
-      fatherCauseOfDeath: _fatherCauseOfDeathController.text.isEmpty
-          ? const drift.Value.absent()
-          : drift.Value(_fatherCauseOfDeathController.text),
-      fatherWork: _fatherOccupationController.text.isEmpty
-          ? const drift.Value.absent()
-          : drift.Value(_fatherOccupationController.text),
+      // Parse mother's death date if provided
+      DateTime? motherDeathDate;
+      if (_motherDeathDayController.text.isNotEmpty &&
+          _motherDeathMonthController.text.isNotEmpty &&
+          _motherDeathYearController.text.isNotEmpty) {
+        final motherDeathDay =
+            int.tryParse(_motherDeathDayController.text) ?? 1;
+        final motherDeathMonth =
+            int.tryParse(_motherDeathMonthController.text) ?? 1;
+        final motherDeathYear =
+            int.tryParse(_motherDeathYearController.text) ?? 2000;
+        motherDeathDate =
+            DateTime(motherDeathYear, motherDeathMonth, motherDeathDay);
+      }
 
-      // Mother details
-      motherFirstName: _motherNameController.text.isEmpty
-          ? const drift.Value.absent()
-          : drift.Value(_motherNameController.text),
-      motherAlive: _motherAlive != null
-          ? drift.Value(_motherAlive!)
-          : const drift.Value.absent(),
-      motherDateOfDeath: motherDeathDate != null
-          ? drift.Value(motherDeathDate)
-          : const drift.Value.absent(),
-      motherCauseOfDeath: _motherCauseOfDeathController.text.isEmpty
-          ? const drift.Value.absent()
-          : drift.Value(_motherCauseOfDeathController.text),
-      motherWork: _motherOccupationController.text.isEmpty
-          ? const drift.Value.absent()
-          : drift.Value(_motherOccupationController.text),
+      final companion = OrphansCompanion.insert(
+        firstName: _firstNameController.text,
+        lastName: drift.Value(_familyNameController.text), // Legacy field
+        fatherName: _fatherNameController.text,
+        grandfatherName: _grandfatherNameController.text,
+        familyName: _familyNameController.text,
+        gender: Gender.male, // Default - you may want to add gender selection
+        dateOfBirth: birthDate,
+        status: _selectedStatus,
+        lastUpdated: DateTime.now(),
+        supervisorId: drift.Value(_selectedSupervisorId),
 
-      // Guardian details
-      guardianName: _carerNameController.text.isEmpty
-          ? const drift.Value.absent()
-          : drift.Value(_carerNameController.text),
-      guardianRelationship: _carerRelationshipController.text.isEmpty
-          ? const drift.Value.absent()
-          : drift.Value(_carerRelationshipController.text),
+        // Father details
+        fatherDateOfDeath: fatherDeathDate != null
+            ? drift.Value(fatherDeathDate)
+            : const drift.Value.absent(),
+        fatherCauseOfDeath: _fatherCauseOfDeathController.text.isEmpty
+            ? const drift.Value.absent()
+            : drift.Value(_fatherCauseOfDeathController.text),
+        fatherWork: _fatherOccupationController.text.isEmpty
+            ? const drift.Value.absent()
+            : drift.Value(_fatherOccupationController.text),
 
-      // Education
-      educationLevel: _educationLevel != null
-          ? drift.Value(_educationLevel!)
-          : const drift.Value.absent(),
-      schoolName: _schoolNameController.text.isEmpty
-          ? const drift.Value.absent()
-          : drift.Value(_schoolNameController.text),
-      grade: _gradeController.text.isEmpty
-          ? const drift.Value.absent()
-          : drift.Value(_gradeController.text),
+        // Mother details
+        motherFirstName: _motherNameController.text.isEmpty
+            ? const drift.Value.absent()
+            : drift.Value(_motherNameController.text),
+        motherAlive: _motherAlive != null
+            ? drift.Value(_motherAlive!)
+            : const drift.Value.absent(),
+        motherDateOfDeath: motherDeathDate != null
+            ? drift.Value(motherDeathDate)
+            : const drift.Value.absent(),
+        motherCauseOfDeath: _motherCauseOfDeathController.text.isEmpty
+            ? const drift.Value.absent()
+            : drift.Value(_motherCauseOfDeathController.text),
+        motherWork: _motherOccupationController.text.isEmpty
+            ? const drift.Value.absent()
+            : drift.Value(_motherOccupationController.text),
 
-      // Health
-      healthStatus: _healthStatus != null
-          ? drift.Value(_healthStatus!)
-          : const drift.Value.absent(),
-      medicalConditions: _medicalConditionsController.text.isEmpty
-          ? const drift.Value.absent()
-          : drift.Value(_medicalConditionsController.text),
-      medications: _medicationsController.text.isEmpty
-          ? const drift.Value.absent()
-          : drift.Value(_medicationsController.text),
-      needsMedicalSupport: _needsMedicalSupport != null
-          ? drift.Value(_needsMedicalSupport!)
-          : const drift.Value.absent(),
+        // Guardian details
+        guardianName: _carerNameController.text.isEmpty
+            ? const drift.Value.absent()
+            : drift.Value(_carerNameController.text),
+        guardianRelationship: _carerRelationshipController.text.isEmpty
+            ? const drift.Value.absent()
+            : drift.Value(_carerRelationshipController.text),
 
-      // Accommodation
-      accommodationType: _accommodationType != null
-          ? drift.Value(_accommodationType!)
-          : const drift.Value.absent(),
-      accommodationAddress: _accommodationAddressController.text.isEmpty
-          ? const drift.Value.absent()
-          : drift.Value(_accommodationAddressController.text),
-      needsHousingSupport: _needsHousingSupport != null
-          ? drift.Value(_needsHousingSupport!)
-          : const drift.Value.absent(),
+        // Education details
+        educationLevel: _educationLevel != null
+            ? drift.Value(_educationLevel!)
+            : const drift.Value.absent(),
+        schoolName: _schoolNameController.text.isEmpty
+            ? const drift.Value.absent()
+            : drift.Value(_schoolNameController.text),
+        grade: _gradeController.text.isEmpty
+            ? const drift.Value.absent()
+            : drift.Value(_gradeController.text),
 
-      // Islamic Education & Hobbies
-      quranMemorization: _quranMemorizationController.text.isEmpty
-          ? const drift.Value.absent()
-          : drift.Value(_quranMemorizationController.text),
-      attendsIslamicSchool: _attendsIslamicSchool != null
-          ? drift.Value(_attendsIslamicSchool!)
-          : const drift.Value.absent(),
-      islamicEducationLevel: _islamicEducationLevelController.text.isEmpty
-          ? const drift.Value.absent()
-          : drift.Value(_islamicEducationLevelController.text),
-      hobbies: _hobbiesController.text.isEmpty
-          ? const drift.Value.absent()
-          : drift.Value(_hobbiesController.text),
-      skills: _skillsController.text.isEmpty
-          ? const drift.Value.absent()
-          : drift.Value(_skillsController.text),
-      aspirations: _aspirationsController.text.isEmpty
-          ? const drift.Value.absent()
-          : drift.Value(_aspirationsController.text),
+        // Health details
+        healthStatus: _healthStatus != null
+            ? drift.Value(_healthStatus!)
+            : const drift.Value.absent(),
+        medicalConditions: _medicalConditionsController.text.isEmpty
+            ? const drift.Value.absent()
+            : drift.Value(_medicalConditionsController.text),
+        medications: _medicationsController.text.isEmpty
+            ? const drift.Value.absent()
+            : drift.Value(_medicationsController.text),
+        needsMedicalSupport: _needsMedicalSupport != null
+            ? drift.Value(_needsMedicalSupport!)
+            : const drift.Value.absent(),
 
-      // Siblings & Additional
-      numberOfSiblings: _numberOfSiblingsController.text.isEmpty
-          ? const drift.Value.absent()
-          : drift.Value(int.tryParse(_numberOfSiblingsController.text)),
-      siblingsDetails: _siblingsDetailsController.text.isEmpty
-          ? const drift.Value.absent()
-          : drift.Value(_siblingsDetailsController.text),
-      additionalNotes: _additionalNotesController.text.isEmpty
-          ? const drift.Value.absent()
-          : drift.Value(_additionalNotesController.text),
-      urgentNeeds: _urgentNeedsController.text.isEmpty
-          ? const drift.Value.absent()
-          : drift.Value(_urgentNeedsController.text),
-    );
+        // Accommodation details
+        accommodationType: _accommodationType != null
+            ? drift.Value(_accommodationType!)
+            : const drift.Value.absent(),
+        accommodationAddress: _accommodationAddressController.text.isEmpty
+            ? const drift.Value.absent()
+            : drift.Value(_accommodationAddressController.text),
+        needsHousingSupport: _needsHousingSupport != null
+            ? drift.Value(_needsHousingSupport!)
+            : const drift.Value.absent(),
 
-    await orphanRepository.createOrphan(companion);
+        // Islamic Education details
+        quranMemorization: _quranMemorizationController.text.isEmpty
+            ? const drift.Value.absent()
+            : drift.Value(_quranMemorizationController.text),
+        attendsIslamicSchool: _attendsIslamicSchool != null
+            ? drift.Value(_attendsIslamicSchool!)
+            : const drift.Value.absent(),
+        islamicEducationLevel: _islamicEducationLevelController.text.isEmpty
+            ? const drift.Value.absent()
+            : drift.Value(_islamicEducationLevelController.text),
 
-    // For new orphans, we need to get the created orphan to update document paths
-    // Since createOrphan doesn't return the orphan, we'll need to find it by the unique timestamp
-    final createdOrphan = await _findRecentlyCreatedOrphan();
-    if (createdOrphan != null) {
-      await _saveDocumentAttachments(createdOrphan.orphanId);
-    }
+        // Hobbies and Skills
+        hobbies: _hobbiesController.text.isEmpty
+            ? const drift.Value.absent()
+            : drift.Value(_hobbiesController.text),
+        skills: _skillsController.text.isEmpty
+            ? const drift.Value.absent()
+            : drift.Value(_skillsController.text),
+        aspirations: _aspirationsController.text.isEmpty
+            ? const drift.Value.absent()
+            : drift.Value(_aspirationsController.text),
 
-    if (mounted) {
-      context.go('/orphans');
+        // Siblings
+        numberOfSiblings: _numberOfSiblingsController.text.isEmpty
+            ? const drift.Value.absent()
+            : drift.Value(int.tryParse(_numberOfSiblingsController.text) ?? 0),
+        siblingsDetails: _siblingsDetailsController.text.isEmpty
+            ? const drift.Value.absent()
+            : drift.Value(_siblingsDetailsController.text),
+
+        // Additional notes
+        additionalNotes: _additionalNotesController.text.isEmpty
+            ? const drift.Value.absent()
+            : drift.Value(_additionalNotesController.text),
+        urgentNeeds: _urgentNeedsController.text.isEmpty
+            ? const drift.Value.absent()
+            : drift.Value(_urgentNeedsController.text),
+      );
+
+      final orphanRepository = context.read<OrphanRepository>();
+      final orphanId = await orphanRepository.createOrphan(companion);
+
+      // Show success message
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Orphan created successfully! QR code generated.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        // Navigate to the orphan's profile
+        context.push('/orphan/$orphanId');
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error creating orphan: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 

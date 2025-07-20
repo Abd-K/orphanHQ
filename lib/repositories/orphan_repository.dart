@@ -1,13 +1,82 @@
 import 'package:drift/drift.dart' as drift;
 import 'package:orphan_hq/database.dart';
+import '../services/qr_code_service.dart';
 
 class OrphanRepository {
   final AppDb _db;
 
   OrphanRepository(this._db);
 
-  Future<int> createOrphan(OrphansCompanion orphan) {
-    return _db.into(_db.orphans).insert(orphan);
+  Future<int> createOrphan(OrphansCompanion orphan) async {
+    try {
+      print('🔵 Creating orphan in repository...');
+
+      // Insert the orphan first
+      final orphanId = await _db.into(_db.orphans).insert(orphan);
+      print('✅ Orphan inserted with database ID: $orphanId');
+
+      // Get the created orphan to generate QR code
+      // Use the orphanId from the companion object since we explicitly set it
+      if (orphan.orphanId.value != null) {
+        final createdOrphan = await getOrphanById(orphan.orphanId.value);
+        if (createdOrphan != null) {
+          print(
+              '✅ Retrieved created orphan with ID: ${createdOrphan.orphanId}');
+          await _generateAndUpdateQRCode(createdOrphan);
+        } else {
+          print('⚠️ Could not retrieve created orphan for QR code generation');
+        }
+      } else {
+        print('⚠️ No orphanId in companion object for QR code generation');
+      }
+
+      return orphanId;
+    } catch (e, stackTrace) {
+      print('❌ Error in createOrphan: $e');
+      print('❌ Stack trace: $stackTrace');
+      rethrow;
+    }
+  }
+
+  Future<void> _generateAndUpdateQRCode(Orphan orphan) async {
+    try {
+      // Generate QR code
+      final qrCodePath = await QRCodeService.generateAndSaveQRCode(orphan);
+
+      if (qrCodePath != null) {
+        // Update orphan with QR code path
+        await (_db.update(_db.orphans)
+              ..where((tbl) => tbl.orphanId.equals(orphan.orphanId)))
+            .write(OrphansCompanion(
+          qrCodePath: drift.Value(qrCodePath),
+        ));
+      }
+    } catch (e) {
+      print('Error generating QR code for orphan ${orphan.orphanId}: $e');
+    }
+  }
+
+  Future<void> regenerateQRCode(String orphanId) async {
+    final orphan = await getOrphanById(orphanId);
+    if (orphan != null) {
+      await _generateAndUpdateQRCode(orphan);
+    }
+  }
+
+  Future<void> deleteQRCode(String orphanId) async {
+    try {
+      // Delete QR code file
+      await QRCodeService.deleteQRCodeFile(orphanId);
+
+      // Update orphan record to remove QR code path
+      await (_db.update(_db.orphans)
+            ..where((tbl) => tbl.orphanId.equals(orphanId)))
+          .write(OrphansCompanion(
+        qrCodePath: const drift.Value.absent(),
+      ));
+    } catch (e) {
+      print('Error deleting QR code for orphan $orphanId: $e');
+    }
   }
 
   Stream<List<Orphan>> getAllOrphans() {
@@ -32,6 +101,8 @@ class OrphanRepository {
         .write(
       OrphansCompanion(
         status: drift.Value(status),
+        lastStatusUpdate: drift.Value(DateTime.now()),
+        lastUpdated: drift.Value(DateTime.now()),
       ),
     );
   }
