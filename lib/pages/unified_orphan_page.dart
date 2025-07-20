@@ -521,9 +521,13 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
                           ? (Theme.of(context).brightness == Brightness.dark
                               ? const Color(0xFF0D4429)
                               : Colors.green.shade100)
-                          : (Theme.of(context).brightness == Brightness.dark
-                              ? const Color(0xFF3D1B1B)
-                              : Colors.orange.shade100),
+                          : _selectedStatus == OrphanStatus.missing
+                              ? (Theme.of(context).brightness == Brightness.dark
+                                  ? const Color(0xFF2D1B1B)
+                                  : Colors.red.shade100)
+                              : (Theme.of(context).brightness == Brightness.dark
+                                  ? const Color(0xFF3D1B1B)
+                                  : Colors.orange.shade100),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Text(
@@ -533,9 +537,15 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
                             ? (Theme.of(context).brightness == Brightness.dark
                                 ? const Color(0xFF3FB950)
                                 : Colors.green.shade700)
-                            : (Theme.of(context).brightness == Brightness.dark
-                                ? const Color(0xFFF78166)
-                                : Colors.orange.shade700),
+                            : _selectedStatus == OrphanStatus.missing
+                                ? (Theme.of(context).brightness ==
+                                        Brightness.dark
+                                    ? const Color(0xFFF78166)
+                                    : Colors.red.shade700)
+                                : (Theme.of(context).brightness ==
+                                        Brightness.dark
+                                    ? const Color(0xFFF78166)
+                                    : Colors.orange.shade700),
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -1466,7 +1476,9 @@ class _UnifiedOrphanPageState extends State<UnifiedOrphanPage> {
             _selectedStatus.toString().split('.').last.toUpperCase(),
             valueColor: _selectedStatus == OrphanStatus.active
                 ? Colors.green
-                : Colors.orange,
+                : _selectedStatus == OrphanStatus.missing
+                    ? Colors.red
+                    : Colors.orange,
           ),
           if (_orphanDetailsCommentsController.text.isNotEmpty)
             _buildInfoRow(Icons.comment, 'Comments',
