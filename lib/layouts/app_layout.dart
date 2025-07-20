@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:orphan_hq/services/app_localizations.dart';
 
 class AppLayout extends StatefulWidget {
   final Widget child;
@@ -94,21 +95,22 @@ class _AppLayoutState extends State<AppLayout> {
               children: [
                 _buildNavigationItem(
                   icon: Icons.child_care,
-                  title: 'Orphans',
+                  title: AppLocalizations.of(context)!.translate('orphans'),
                   route: '/',
                   isActive: widget.currentRoute == '/' ||
                       widget.currentRoute.startsWith('/orphan'),
                 ),
                 _buildNavigationItem(
                   icon: Icons.people,
-                  title: 'Supervisors',
+                  title:
+                  AppLocalizations.of(context)!.translate('supervisors'),
                   route: '/supervisors',
                   isActive: widget.currentRoute == '/supervisors' ||
                       widget.currentRoute.startsWith('/supervisor'),
                 ),
                 _buildNavigationItem(
                   icon: Icons.warning,
-                  title: 'Emergency',
+                  title: AppLocalizations.of(context)!.translate('emergency'),
                   route: '/emergency',
                   isActive: widget.currentRoute == '/emergency',
                   iconColor: Colors.red[600],
@@ -116,7 +118,7 @@ class _AppLayoutState extends State<AppLayout> {
                 const Divider(height: 32),
                 _buildNavigationItem(
                   icon: Icons.settings,
-                  title: 'Settings',
+                  title: AppLocalizations.of(context)!.translate('settings'),
                   route: '/settings',
                   isActive: widget.currentRoute == '/settings',
                 ),
@@ -172,7 +174,8 @@ class _AppLayoutState extends State<AppLayout> {
             context.go(route);
           }
         },
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        contentPadding:
+        const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         dense: true,
       ),
     );
